@@ -14,7 +14,10 @@ class HKK_API UCPlayerAnimInstance : public UAnimInstance
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	float CurrentSpeed = 0.f;
+	float CurrentSpeedXY = 0.f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	float CurrentSpeedZ = 0.f;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	float AimingAngle;
@@ -26,7 +29,10 @@ protected:
 	bool bBusterL = false;
 
 	TObjectPtr<class APawn> OwningPawn;
+	TObjectPtr<class IICharacterMovement> Owning_Interface_CharacterMovemnet;
+
 	FOnAiming* OnAiming;
+	FOnPlayAnimation* OnPlayAnimation;
 public:
 
 	virtual void NativeBeginPlay() override;
@@ -34,5 +40,5 @@ public:
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
 	UFUNCTION()
-	void CallBack_OnAiming(float Yaw);
+	void CallBack_OnPlayAnimation(UAnimSequence* PlayAnimation);
 };

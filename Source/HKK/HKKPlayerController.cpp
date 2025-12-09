@@ -81,6 +81,7 @@ void AHKKPlayerController::SetupInputComponent()
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &AHKKPlayerController::JumpReleased);
 
 		EnhancedInputComponent->BindAction(MouseMoveAction, ETriggerEvent::Triggered, this, &AHKKPlayerController::MouseMoved);
+		EnhancedInputComponent->BindAction(MouseAttackAction, ETriggerEvent::Triggered, this, &AHKKPlayerController::Attack0_RFistTriggered);
 	}
 	else
 	{
@@ -213,5 +214,12 @@ void AHKKPlayerController::JumpReleased()
 void AHKKPlayerController::MouseMoved(const FInputActionValue& Value)
 {
 	FVector2D InputVector = Value.Get<FVector2D>();
-	UE_LOG(LogTemp, Log, TEXT("Mouse Moved X : %f, Y : %f"), InputVector.X, InputVector.Y);
+	//UE_LOG(LogTemp, Log, TEXT("Mouse Moved X : %f, Y : %f"), InputVector.X, InputVector.Y);
+}
+
+void AHKKPlayerController::Attack0_RFistTriggered(const FInputActionValue& Value)
+{
+	int8 Attack_Index = FMath::TruncToInt(Value.Get<float>());
+	OnAttack.Broadcast(Attack_Index);
+	UE_LOG(LogTemp, Log, TEXT("Attack0_RFistTriggered : %d"), Attack_Index);
 }

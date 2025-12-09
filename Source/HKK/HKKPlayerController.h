@@ -53,15 +53,28 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
 	UInputAction* MouseMoveAction;
 
-	FORCEINLINE FOnAiming* GetOnAiming() { return &OnAiming; }
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
+	UInputAction* MouseAttackAction;
+
+	FOnAiming* GetOnAiming() { return &OnAiming; }
+	FOnPlayAnimation* GetOnPlayAnimation() { return &OnPlayAnimation; }
+	FOnAttack* GetOnAttack() { return &OnAttack; }
 
 protected:
 	/** True if the controlled character should navigate to the mouse cursor. */
 	uint32 bMoveToMouseCursor : 1;
+
 	
+	/*
+		Delegates Start
+	*/
 	// Aiming Rotation
 	FOnAiming OnAiming;
-
+	FOnPlayAnimation OnPlayAnimation;
+	FOnAttack OnAttack;
+	/*
+		Delegates End
+	*/
 	FInputModeGameOnly InputModeGameOnly;
 
 	virtual void SetupInputComponent() override;
@@ -81,6 +94,7 @@ protected:
 	void Jump();
 	void JumpReleased();
 	void MouseMoved(const FInputActionValue& Value);
+	void Attack0_RFistTriggered(const FInputActionValue& Value);
 private:
 	FVector CachedDestination;
 	FVector CachedDirection;

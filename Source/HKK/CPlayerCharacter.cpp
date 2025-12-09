@@ -5,12 +5,16 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "HKKPlayerController.h"
+#include "Component/CCharacterAnimationComponent.h"
+#include "Net/UnrealNetwork.h"
 
 
 ACPlayerCharacter::ACPlayerCharacter()
 {
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 
+	bReplicates = true;
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
@@ -34,23 +38,61 @@ ACPlayerCharacter::ACPlayerCharacter()
 
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
+	GetMesh()->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
+
+	AnimationComponent = CreateDefaultSubobject<UCCharacterAnimationComponent>(TEXT("AnimationComponent"));
+	//ConstructorHelpers::FObjectFinder<UCCharacterAnimationComponent> AnimComponentFinder(TEXT("/Game/_Player/Blueprint/Animation/BP_Robo_AnimationComponent.BP_Robo_AnimationComponent"));
+	//if (AnimComponentFinder.Succeeded()) AnimationComponent = AnimComponentFinder.Object;
 }
 
 void ACPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	AHKKPlayerController* tempController = Cast<AHKKPlayerController>(GetController());
+	if (tempController == nullptr) return;
+	OnAiming = tempController->GetOnAiming();
+	if (OnAiming != nullptr)
+	{
+		OnAiming->AddLambda([&](float Yaw) {
+			Server_OnAiming(Yaw);
+			}
+		);
+	}
+	OnPlayAnimation = tempController->GetOnPlayAnimation();
+	OnAttack = tempController->GetOnAttack();
+	if (OnAttack != nullptr)
+	{
+		OnAttack->AddUFunction(this, TEXT("Callback_OnAttack"));
+	}
 }
 
 void ACPlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
+	Server_RefreshVelocity_Implementation();
 }
 
-//void ACPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-//{
-//	Super::SetupPlayerInputComponent(PlayerInputComponent);
-//
-//}
-//
+void ACPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ACPlayerCharacter, CharacterMovementState);
+}
+
+void ACPlayerCharacter::Callback_OnAttack(int8 AttackType)
+{
+	if (AnimationComponent == nullptr) return;
+	OnPlayAnimation->Broadcast(AnimationComponent->GetAnimationSequence(AttackType));
+}
+
+void ACPlayerCharacter::Server_RefreshVelocity_Implementation()
+{
+	CharacterMovementState.Velocity = GetVelocity();
+}
+
+void ACPlayerCharacter::Server_OnAiming_Implementation(float Yaw)
+{
+	CharacterMovementState.FacingYaw = Yaw;
+}
+
