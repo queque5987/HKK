@@ -7,6 +7,8 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "HKKPlayerController.h"
 #include "Component/CCharacterAnimationComponent.h"
+#include "Component/CCharacterCombatComponent.h"
+#include "Interface/Character/ICharacterAnimInstance.h" 
 #include "Net/UnrealNetwork.h"
 
 
@@ -41,8 +43,7 @@ ACPlayerCharacter::ACPlayerCharacter()
 	GetMesh()->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
 
 	AnimationComponent = CreateDefaultSubobject<UCCharacterAnimationComponent>(TEXT("AnimationComponent"));
-	//ConstructorHelpers::FObjectFinder<UCCharacterAnimationComponent> AnimComponentFinder(TEXT("/Game/_Player/Blueprint/Animation/BP_Robo_AnimationComponent.BP_Robo_AnimationComponent"));
-	//if (AnimComponentFinder.Succeeded()) AnimationComponent = AnimComponentFinder.Object;
+	CombatComponent = CreateDefaultSubobject<UCCharacterCombatComponent>(TEXT("CombatComponent"));
 }
 
 void ACPlayerCharacter::BeginPlay()
@@ -65,6 +66,7 @@ void ACPlayerCharacter::BeginPlay()
 	{
 		OnAttack->AddUFunction(this, TEXT("Callback_OnAttack"));
 	}
+	IAnimInstace = Cast<IICharacterAnimInstance>(GetMesh()->GetAnimInstance()); // TODO Cast To Interface & Save
 }
 
 void ACPlayerCharacter::Tick(float DeltaTime)
@@ -80,10 +82,52 @@ void ACPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	DOREPLIFETIME(ACPlayerCharacter, CharacterMovementState);
 }
 
+void ACPlayerCharacter::Multicast_PlayAnimation_Implementation(UAnimSequence* PlayAnimation)
+{
+	if (IAnimInstace == nullptr)
+	{
+		IAnimInstace = Cast<IICharacterAnimInstance>(GetMesh()->GetAnimInstance());
+		UE_LOG(LogTemp, Warning, TEXT("[%s] Multicast_PlayAttackAnimation_Implementation Called_AnimInstance Casted."), *UEnum::GetValueAsString(GetLocalRole()));
+	}
+	if (IAnimInstace != nullptr)
+	{
+		IAnimInstace->PlaySlotAnimation(PlayAnimation, TEXT("AttackSlot"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[%s] Multicast_PlayAttackAnimation_Implementation Called_AnimInstance Failed."), *UEnum::GetValueAsString(GetLocalRole()));
+	}
+}
+
+void ACPlayerCharacter::Server_PlayAnimation_Implementation(UAnimSequence* PlayAnimation)
+{
+	Multicast_PlayAnimation(PlayAnimation);
+}
+
 void ACPlayerCharacter::Callback_OnAttack(int8 AttackType)
 {
 	if (AnimationComponent == nullptr) return;
-	OnPlayAnimation->Broadcast(AnimationComponent->GetAnimationSequence(AttackType));
+	Server_PlayAnimation(AnimationComponent->GetAnimationSequence(AttackType));
+}
+
+bool ACPlayerCharacter::HitTraceStart(FHitTraceConfig* HitTraceConfig, float MaxTraceTime)
+{
+	//return CombatComponent == nullptr ? false : CombatComponent->HitTraceStart(&HitTraceConfig, MaxTraceTime);
+	if (CombatComponent != nullptr) CombatComponent->Multicast_HitTraceStart(*HitTraceConfig, MaxTraceTime);
+	return CombatComponent == nullptr ? false : true;
+}
+
+bool ACPlayerCharacter::HitTraceEnd()
+{
+	if (CombatComponent == nullptr) return false;
+	CombatComponent->HitTraceEnd();
+	return true;
+}
+
+bool ACPlayerCharacter::HitTrace(FHitTraceConfig* HitTraceConfig)
+{
+	UE_LOG(LogTemp, Warning, TEXT("[%s] HitTrace Called."), *UEnum::GetValueAsString(GetLocalRole()));
+	return false;
 }
 
 void ACPlayerCharacter::Server_RefreshVelocity_Implementation()

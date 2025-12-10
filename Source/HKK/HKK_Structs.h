@@ -4,6 +4,20 @@
 #include "HKK_Structs.generated.h"
 
 USTRUCT(BlueprintType)
+struct FHitTraceConfig
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FName TraceStartBoneName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FName TraceEndBoneName;
+
+	USkeletalMeshComponent* TraceMesh;
+
+};
+USTRUCT(BlueprintType)
 struct FCharacterMovementState
 {
 	GENERATED_BODY()

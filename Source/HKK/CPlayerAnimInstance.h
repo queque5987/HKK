@@ -3,10 +3,11 @@
 #include "CoreMinimal.h"
 #include "Animation/AnimInstance.h"
 #include "HKK_Delegates.h"
+#include "Interface/Character/ICharacterAnimInstance.h"
 #include "CPlayerAnimInstance.generated.h"
 
 UCLASS()
-class HKK_API UCPlayerAnimInstance : public UAnimInstance
+class HKK_API UCPlayerAnimInstance : public UAnimInstance, public IICharacterAnimInstance
 {
 	GENERATED_BODY()
 
@@ -41,4 +42,14 @@ public:
 
 	UFUNCTION()
 	void CallBack_OnPlayAnimation(UAnimSequence* PlayAnimation);
+
+	/*
+		CharacterAnimInstance Start
+	*/
+public:
+	virtual void PlaySlotAnimation(class UAnimSequence* ToPlayAnimation, FName SlotName, float BlendInTime = 0.25f, float BlendOutTime = 0.25f, float InPlayRate = 1.f, int32 LoopCount = 1, float BlendOutTriggerTime = -1.f, float InTimeToStartMontageAt = 0.f) override;
+	/*
+		CharacterAnimInstance End
+	*/
+
 };

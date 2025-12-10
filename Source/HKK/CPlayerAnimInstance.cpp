@@ -49,11 +49,17 @@ void UCPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			AimingAngle		= tempState->FacingYaw;
 		}
 	}
+	
 }
 
 void UCPlayerAnimInstance::CallBack_OnPlayAnimation(UAnimSequence* PlayAnimation)
 {
-	PlaySlotAnimationAsDynamicMontage(PlayAnimation, TEXT("DefaultSlot"));
+	PlaySlotAnimationAsDynamicMontage(PlayAnimation, TEXT("AttackSlot"));
+}
+
+void UCPlayerAnimInstance::PlaySlotAnimation(UAnimSequence* ToPlayAnimation, FName SlotName, float BlendInTime, float BlendOutTime, float InPlayRate, int32 LoopCount, float BlendOutTriggerTime, float InTimeToStartMontageAt)
+{
+	PlaySlotAnimationAsDynamicMontage(ToPlayAnimation, SlotName, BlendInTime, BlendOutTime, InPlayRate, LoopCount, BlendOutTriggerTime, InTimeToStartMontageAt);
 }
 
 //void UCPlayerAnimInstance::CallBack_OnAiming(float Yaw)

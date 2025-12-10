@@ -221,5 +221,5 @@ void AHKKPlayerController::Attack0_RFistTriggered(const FInputActionValue& Value
 {
 	int8 Attack_Index = FMath::TruncToInt(Value.Get<float>());
 	OnAttack.Broadcast(Attack_Index);
-	UE_LOG(LogTemp, Log, TEXT("Attack0_RFistTriggered : %d"), Attack_Index);
+	//UE_LOG(LogTemp, Log, TEXT("Attack0_RFistTriggered : %d"), Attack_Index);
 }
