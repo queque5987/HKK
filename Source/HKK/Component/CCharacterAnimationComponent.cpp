@@ -32,9 +32,8 @@ void UCCharacterAnimationComponent::TickComponent(float DeltaTime, ELevelTick Ti
 
 	// ...
 }
-
-UAnimSequence* UCCharacterAnimationComponent::GetAnimationSequence(int8 AnimationType)
+UAnimSequence* UCCharacterAnimationComponent::GetAnimationSequence(const EPlayerAnimation PlayerAnimation)
 {
-	return Animation_Attack_RFist;
+	return *AnimationMap.Find(PlayerAnimation);
 }
 

@@ -106,7 +106,7 @@ void ACPlayerCharacter::Server_PlayAnimation_Implementation(UAnimSequence* PlayA
 	Multicast_PlayAnimation(PlayAnimation);
 }
 
-void ACPlayerCharacter::Callback_OnAttack(int8 AttackType)
+void ACPlayerCharacter::Callback_OnAttack(const EPlayerAnimation AttackType)
 {
 	if (AnimationComponent == nullptr) return;
 	Server_PlayAnimation(AnimationComponent->GetAnimationSequence(AttackType));
@@ -114,7 +114,6 @@ void ACPlayerCharacter::Callback_OnAttack(int8 AttackType)
 
 bool ACPlayerCharacter::HitTraceStart(FHitTraceConfig* HitTraceConfig, float MaxTraceTime)
 {
-	//return CombatComponent == nullptr ? false : CombatComponent->HitTraceStart(&HitTraceConfig, MaxTraceTime);
 	if (CombatComponent != nullptr) CombatComponent->Multicast_HitTraceStart(*HitTraceConfig, MaxTraceTime);
 	return CombatComponent == nullptr ? false : true;
 }
@@ -135,7 +134,30 @@ bool ACPlayerCharacter::HitTrace(FHitTraceConfig* HitTraceConfig)
 void ACPlayerCharacter::Multicast_HitDamage_Implementation(const FHitDamageConfig& HitTraceConfig)
 {
 	UE_LOG(LogTemp, Warning, TEXT("[%s] Multicast_HitDamage : %f Direction : %s."), *UEnum::GetValueAsString(GetLocalRole()), HitTraceConfig.HitDamage, *HitTraceConfig.HitDirection.ToString());
-	LaunchCharacter(HitTraceConfig.HitDirection * 100.f, false, false);
+	if (HasAuthority())
+	{
+		FVector HitDirection = HitTraceConfig.HitDirection;
+		UAnimSequence* ToPlayReactAnim = nullptr;
+		if (AnimationComponent != nullptr)
+		{
+			float Dot_Forward = FVector::DotProduct(GetActorForwardVector(), HitDirection);
+			float Dot_Right = FVector::DotProduct(GetActorRightVector(), HitDirection);
+			if (FMath::Abs(Dot_Forward) > FMath::Abs(Dot_Right))
+			{
+				ToPlayReactAnim = AnimationComponent->GetAnimationSequence(
+					Dot_Forward > 0.f ? EPlayerAnimation::EPA_HitReact_F : EPlayerAnimation::EPA_HitReact_B
+				);
+			}
+			else
+			{
+				ToPlayReactAnim = AnimationComponent->GetAnimationSequence(
+					Dot_Right > 0.f ? EPlayerAnimation::EPA_HitReact_R : EPlayerAnimation::EPA_HitReact_L
+				);
+			}
+			if (ToPlayReactAnim != nullptr) Server_PlayAnimation(ToPlayReactAnim);
+		}
+		LaunchCharacter(HitTraceConfig.HitDirection * 100.f, false, false);
+	}
 }
 
 void ACPlayerCharacter::Server_RefreshVelocity_Implementation()

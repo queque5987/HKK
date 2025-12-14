@@ -2,8 +2,10 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "HKK_PCH.h"
 #include "CCharacterAnimationComponent.generated.h"
 
+class UAnimSequence;
 
 //UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent), Blueprintable)
@@ -18,10 +20,10 @@ protected:
 	virtual void BeginPlay() override;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UAnimSequence> Animation_Attack_RFist;
+	TMap<EPlayerAnimation, TObjectPtr<UAnimSequence>> AnimationMap;
 
 public:	
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;	
 	
-	class UAnimSequence* GetAnimationSequence(int8 AnimationType);
+	UAnimSequence* GetAnimationSequence(const EPlayerAnimation PlayerAnimation);
 };

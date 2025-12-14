@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "HKK_Delegates.h"
+#include "HKK_PCH.h"
 #include "HKK_Structs.h"
 #include "Interface/ICharacterMovement.h"
 #include "Interface/Character/ICharacterCombat.h"
@@ -64,7 +65,7 @@ public:
 	
 
 	UFUNCTION()
-	void Callback_OnAttack(int8 AttackType);
+	void Callback_OnAttack(const EPlayerAnimation AttackType);
 
 	/*
 ----- ICharacter Movement Start

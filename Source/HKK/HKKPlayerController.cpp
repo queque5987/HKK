@@ -219,7 +219,8 @@ void AHKKPlayerController::MouseMoved(const FInputActionValue& Value)
 
 void AHKKPlayerController::Attack0_RFistTriggered(const FInputActionValue& Value)
 {
-	int8 Attack_Index = FMath::TruncToInt(Value.Get<float>());
-	OnAttack.Broadcast(Attack_Index);
+	//uint8 Attack_Index = FMath::TruncToInt(Value.Get<float>());
+	//EPlayerAnimation AttackType = StaticCast<EPlayerAnimation>(Attack_Index);
+	OnAttack.Broadcast(EPlayerAnimation::EPA_Attack_RFist);
 	//UE_LOG(LogTemp, Log, TEXT("Attack0_RFistTriggered : %d"), Attack_Index);
 }
