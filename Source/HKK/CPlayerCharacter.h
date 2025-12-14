@@ -88,6 +88,9 @@ public:
 	virtual bool HitTraceEnd() override;
 	virtual bool HitTrace(FHitTraceConfig* HitTraceConfig) override;
 
+	UFUNCTION(NetMulticast, Reliable)
+	virtual void Multicast_HitDamage(const FHitDamageConfig& HitTraceConfig) override;
+
 	/*
 ----- ICharacter Combat End
 	*/

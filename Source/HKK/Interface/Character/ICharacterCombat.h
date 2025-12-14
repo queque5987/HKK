@@ -20,4 +20,5 @@ public:
 	virtual bool HitTraceStart(FHitTraceConfig* HitTraceConfig, float MaxTraceTime) { return bool(); };
 	virtual bool HitTraceEnd() { return bool(); };
 	
+	virtual void Multicast_HitDamage(const FHitDamageConfig& HitTraceConfig) {};
 };

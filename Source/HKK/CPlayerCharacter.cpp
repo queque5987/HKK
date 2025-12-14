@@ -66,7 +66,9 @@ void ACPlayerCharacter::BeginPlay()
 	{
 		OnAttack->AddUFunction(this, TEXT("Callback_OnAttack"));
 	}
-	IAnimInstace = Cast<IICharacterAnimInstance>(GetMesh()->GetAnimInstance()); // TODO Cast To Interface & Save
+	IAnimInstace = Cast<IICharacterAnimInstance>(GetMesh()->GetAnimInstance());
+
+	CombatComponent->Server_SetOwnerMeshComp(GetMesh());
 }
 
 void ACPlayerCharacter::Tick(float DeltaTime)
@@ -120,7 +122,7 @@ bool ACPlayerCharacter::HitTraceStart(FHitTraceConfig* HitTraceConfig, float Max
 bool ACPlayerCharacter::HitTraceEnd()
 {
 	if (CombatComponent == nullptr) return false;
-	CombatComponent->HitTraceEnd();
+	CombatComponent->Multicast_HitTraceEnd();
 	return true;
 }
 
@@ -128,6 +130,12 @@ bool ACPlayerCharacter::HitTrace(FHitTraceConfig* HitTraceConfig)
 {
 	UE_LOG(LogTemp, Warning, TEXT("[%s] HitTrace Called."), *UEnum::GetValueAsString(GetLocalRole()));
 	return false;
+}
+
+void ACPlayerCharacter::Multicast_HitDamage_Implementation(const FHitDamageConfig& HitTraceConfig)
+{
+	UE_LOG(LogTemp, Warning, TEXT("[%s] Multicast_HitDamage : %f Direction : %s."), *UEnum::GetValueAsString(GetLocalRole()), HitTraceConfig.HitDamage, *HitTraceConfig.HitDirection.ToString());
+	LaunchCharacter(HitTraceConfig.HitDirection * 100.f, false, false);
 }
 
 void ACPlayerCharacter::Server_RefreshVelocity_Implementation()

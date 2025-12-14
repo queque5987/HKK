@@ -4,6 +4,15 @@
 #include "HKK_Structs.generated.h"
 
 USTRUCT(BlueprintType)
+struct FHitDamageConfig
+{
+	GENERATED_BODY()
+	float HitDamage;
+	FVector HitDirection;
+	FVector HitLocation;
+
+};
+USTRUCT(BlueprintType)
 struct FHitTraceConfig
 {
 	GENERATED_BODY()
@@ -13,6 +22,9 @@ struct FHitTraceConfig
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FName TraceEndBoneName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float HitDamage;
 
 	USkeletalMeshComponent* TraceMesh;
 
