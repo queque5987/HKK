@@ -1,9 +1,9 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "HKK_Delegates.h"
+#include "HKK_PCH.h"
 #include "CPickableComponent.generated.h"
 
 
@@ -13,17 +13,21 @@ class HKK_API UCPickableComponent : public UActorComponent
 	GENERATED_BODY()
 
 public:	
-	// Sets default values for this component's properties
 	UCPickableComponent();
 
 protected:
-	// Called when the game starts
 	virtual void BeginPlay() override;
 
+	ECustomStencilValue CurrentStencilValue = ECustomStencilValue::ECSV_Item;
+	TScriptInterface<class IIPickableItem> IPickable;
+
 public:	
-	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-		
-	
+	void SetBeginOverlapEvent(TScriptInterface<class IIPickableItem> InIPickableItem);
+
+	UFUNCTION()
+	void OnComponentBeginOverlap(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	UFUNCTION()
+	void OnComponentEndOverlap(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 };

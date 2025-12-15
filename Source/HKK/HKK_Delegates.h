@@ -10,6 +10,7 @@
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnAiming, float);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnAttack, const EPlayerAnimation);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnPlayAnimation, UAnimSequence*);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnChangeStencilValue, ECustomStencilValue);
 //DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPlayAnimation, UAnimSequence*, PlayAnimation);
 class HKK_API HKK_Delegates
 {

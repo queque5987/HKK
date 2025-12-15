@@ -45,7 +45,7 @@ ACPlayerCharacter::ACPlayerCharacter()
 	AnimationComponent = CreateDefaultSubobject<UCCharacterAnimationComponent>(TEXT("AnimationComponent"));
 	CombatComponent = CreateDefaultSubobject<UCCharacterCombatComponent>(TEXT("CombatComponent"));
 	
-	GetMesh()->SetCustomDepthStencilValue((int32)ECustomStensilDepth::ECSD_CharacterDepth);
+	GetMesh()->SetCustomDepthStencilValue((int32)ECustomStencilValue::ECSV_CharacterDepth);
 	GetMesh()->SetRenderCustomDepth(true);
 }
 

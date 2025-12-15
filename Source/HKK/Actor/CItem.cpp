@@ -18,7 +18,7 @@ ACItem::ACItem()
 	StaticMeshComponent->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
 	StaticMeshComponent->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
 
-	StaticMeshComponent->SetCustomDepthStencilValue((int32)ECustomStensilDepth::ECSD_ItemDepth);
+	StaticMeshComponent->SetCustomDepthStencilValue((int32)ECustomStencilValue::ECSV_Item);
 	StaticMeshComponent->SetRenderCustomDepth(true);
 }
 
@@ -26,6 +26,11 @@ void ACItem::BeginPlay()
 {
 	Super::BeginPlay();
 	SMCurrentRelativeLocation = StaticMeshComponent->GetRelativeLocation();
+
+	if (PickableComponent != nullptr)
+	{
+		PickableComponent->SetBeginOverlapEvent(this);
+	}
 }
 
 void ACItem::Tick(float DeltaTime)
@@ -44,4 +49,19 @@ void ACItem::Tick(float DeltaTime)
 		const FQuat NewRotation{ FVector(0.f, 0.f, 1.f), FMath::DegreesToRadians(AnglePerTick)};
 		StaticMeshComponent->AddRelativeRotation(NewRotation);
 	}
+}
+
+void ACItem::OnItemStencilValueChange(ECustomStencilValue CustomStencilValue)
+{
+	StaticMeshComponent->SetCustomDepthStencilValue((int32)CustomStencilValue);
+}
+
+FComponentBeginOverlapSignature* ACItem::GetComponentBeginOverlapSignature()
+{
+	return &StaticMeshComponent->OnComponentBeginOverlap;
+}
+
+FComponentEndOverlapSignature* ACItem::GetComponentEndOverlapSignature()
+{
+	return &StaticMeshComponent->OnComponentEndOverlap;
 }

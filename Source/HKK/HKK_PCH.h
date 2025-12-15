@@ -3,11 +3,13 @@
 #include "CoreMinimal.h"
 
 UENUM(BlueprintType)
-enum class ECustomStensilDepth : uint8
+enum class ECustomStencilValue : uint8
 {
-	ECSD_Default,
-	ECSD_ItemDepth,
-	ECSD_CharacterDepth
+	ECSV_Default,
+	ECSV_Item,
+	ECSV_CharacterDepth,
+	ECSV_ItemSelected,
+	ECSV_ItemOccupied
 };
 UENUM(BlueprintType)
 enum class EPlayerAnimation : uint8

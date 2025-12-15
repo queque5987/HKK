@@ -3,10 +3,12 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "HKK_PCH.h"
+#include "HKK_Delegates.h"
+#include "Interface/IPickableItem.h"
 #include "CItem.generated.h"
 
 UCLASS()
-class HKK_API ACItem : public AActor
+class HKK_API ACItem : public AActor, public IIPickableItem
 {
 	GENERATED_BODY()
 	
@@ -41,7 +43,11 @@ protected:
 
 	virtual void BeginPlay() override;
 
+	FOnChangeStencilValue OnChangeStencilValue;
 public:	
 	virtual void Tick(float DeltaTime) override;
 	
+	virtual void OnItemStencilValueChange(ECustomStencilValue CustomStencilValue) override;
+	virtual FComponentBeginOverlapSignature* GetComponentBeginOverlapSignature() override;
+	virtual FComponentEndOverlapSignature* GetComponentEndOverlapSignature() override;
 };
