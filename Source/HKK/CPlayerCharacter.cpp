@@ -69,6 +69,7 @@ void ACPlayerCharacter::BeginPlay()
 	{
 		OnAttack->AddUFunction(this, TEXT("Callback_OnAttack"));
 	}
+	OnSetWidget = tempController->GetOnSetWidget();
 	IAnimInstace = Cast<IICharacterAnimInstance>(GetMesh()->GetAnimInstance());
 
 	CombatComponent->Server_SetOwnerMeshComp(GetMesh());
@@ -132,6 +133,11 @@ bool ACPlayerCharacter::HitTrace(FHitTraceConfig* HitTraceConfig)
 {
 	UE_LOG(LogTemp, Warning, TEXT("[%s] HitTrace Called."), *UEnum::GetValueAsString(GetLocalRole()));
 	return false;
+}
+
+void ACPlayerCharacter::SetItemInteractWidget(bool ToSet, TScriptInterface<class IIPickableItem> PickableItem)
+{
+	OnSetWidget->Broadcast(ToSet, EUserWidget::EUW_ItemInteract);
 }
 
 void ACPlayerCharacter::Multicast_HitDamage_Implementation(const FHitDamageConfig& HitTraceConfig)

@@ -3,6 +3,11 @@
 #include "CoreMinimal.h"
 
 UENUM(BlueprintType)
+enum class EUserWidget : uint8
+{
+	EUW_ItemInteract
+};
+UENUM(BlueprintType)
 enum class ECustomStencilValue : uint8
 {
 	ECSV_Default,
@@ -11,6 +16,7 @@ enum class ECustomStencilValue : uint8
 	ECSV_ItemSelected,
 	ECSV_ItemOccupied
 };
+
 UENUM(BlueprintType)
 enum class EPlayerAnimation : uint8
 {

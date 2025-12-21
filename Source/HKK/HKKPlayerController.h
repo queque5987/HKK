@@ -7,6 +7,7 @@
 #include "GameFramework/PlayerController.h"
 #include "EnhancedInputComponent.h"
 #include "HKK_Delegates.h"
+#include "Interface/Controller/IWidgetController.h"
 #include "HKKPlayerController.generated.h"
 
 /** Forward declaration to improve compiling times */
@@ -17,7 +18,7 @@ class UInputAction;
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
 UCLASS()
-class AHKKPlayerController : public APlayerController
+class AHKKPlayerController : public APlayerController, public IIWidgetController
 {
 	GENERATED_BODY()
 
@@ -56,15 +57,19 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
 	UInputAction* MouseAttackAction;
 
-	FOnAiming* GetOnAiming() { return &OnAiming; }
-	FOnPlayAnimation* GetOnPlayAnimation() { return &OnPlayAnimation; }
-	FOnAttack* GetOnAttack() { return &OnAttack; }
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class UCControllerWidgetComponent> WidgetComponent;
+
+	FORCEINLINE FOnAiming* GetOnAiming() { return &OnAiming; }
+	FORCEINLINE FOnPlayAnimation* GetOnPlayAnimation() { return &OnPlayAnimation; }
+	FORCEINLINE FOnAttack* GetOnAttack() { return &OnAttack; }
+	FORCEINLINE virtual FOnSetWidget* GetOnSetWidget() override { return &OnSetWidget; }
+
 
 protected:
 	/** True if the controlled character should navigate to the mouse cursor. */
 	uint32 bMoveToMouseCursor : 1;
 
-	
 	/*
 		Delegates Start
 	*/
@@ -72,6 +77,7 @@ protected:
 	FOnAiming OnAiming;
 	FOnPlayAnimation OnPlayAnimation;
 	FOnAttack OnAttack;
+	FOnSetWidget OnSetWidget;
 	/*
 		Delegates End
 	*/

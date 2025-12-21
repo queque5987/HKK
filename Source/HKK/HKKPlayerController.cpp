@@ -9,6 +9,7 @@
 #include "Engine/World.h"
 #include "InputActionValue.h"
 #include "EnhancedInputSubsystems.h"
+#include "Component/CControllerWidgetComponent.h"
 #include "Engine/LocalPlayer.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
@@ -20,12 +21,14 @@ AHKKPlayerController::AHKKPlayerController()
 	CachedDestination = FVector::ZeroVector;
 	FollowTime = 0.f;
 	PrimaryActorTick.bCanEverTick = true;
+	WidgetComponent = CreateDefaultSubobject<UCControllerWidgetComponent>(TEXT("WidgetComponent"));
 }
 
 void AHKKPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	if (WidgetComponent != nullptr) WidgetComponent->SetController(this);
 }
 
 void AHKKPlayerController::Tick(float DeltaSeconds)

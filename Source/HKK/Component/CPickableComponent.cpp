@@ -1,5 +1,6 @@
 #include "Component/CPickableComponent.h"
 #include "Interface/IPickableItem.h"
+#include "Interface/Character/ICharacterWidget.h"
 #include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -35,14 +36,15 @@ void UCPickableComponent::OnComponentBeginOverlap(UPrimitiveComponent* Overlappe
 	AActor* CurrentPlayer = Cast<AActor>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 	if (OtherActor == CurrentPlayer)
 	{
+		IICharacterWidget* CharacterWidget = Cast<IICharacterWidget>(OtherActor);
+		if (CharacterWidget != nullptr)
+		{
+			CharacterWidget->SetItemInteractWidget(true, IPickable);
+		}
+
 		CurrentStencilValue = CurrentStencilValue == ECustomStencilValue::ECSV_Item ? ECustomStencilValue::ECSV_ItemSelected : ECustomStencilValue::ECSV_Item;
 		IPickable->OnItemStencilValueChange(CurrentStencilValue);
 	}
-	//else
-	//{
-	//	CurrentStencilValue = ECSV_ItemOccupied;
-	//	IPickable->OnItemStencilValueChange(CurrentStencilValue);
-	//}
 }
 
 void UCPickableComponent::OnComponentEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
@@ -51,12 +53,12 @@ void UCPickableComponent::OnComponentEndOverlap(UPrimitiveComponent* OverlappedC
 	AActor* CurrentPlayer = Cast<AActor>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 	if (OtherActor == CurrentPlayer)
 	{
+		IICharacterWidget* CharacterWidget = Cast<IICharacterWidget>(OtherActor);
+		if (CharacterWidget != nullptr)
+		{
+			CharacterWidget->SetItemInteractWidget(false, IPickable);
+		}
 		CurrentStencilValue = CurrentStencilValue == ECustomStencilValue::ECSV_Item ? ECustomStencilValue::ECSV_ItemSelected : ECustomStencilValue::ECSV_Item;
 		IPickable->OnItemStencilValueChange(CurrentStencilValue);
 	}
-	//else
-	//{
-	//	CurrentStencilValue = ECustomStencilValue::ECSV_Item;
-	//	IPickable->OnItemStencilValueChange(CurrentStencilValue);
-	//}
 }

@@ -7,10 +7,11 @@
 #include "HKK_Structs.h"
 #include "Interface/ICharacterMovement.h"
 #include "Interface/Character/ICharacterCombat.h"
+#include "Interface/Character/ICharacterWidget.h"
 #include "CPlayerCharacter.generated.h"
 
 UCLASS()
-class HKK_API ACPlayerCharacter : public ACharacter, public IICharacterMovement, public IICharacterCombat
+class HKK_API ACPlayerCharacter : public ACharacter, public IICharacterMovement, public IICharacterCombat, public IICharacterWidget
 {
 	GENERATED_BODY()
 
@@ -40,6 +41,7 @@ protected:
 	FOnAiming* OnAiming;
 	FOnPlayAnimation* OnPlayAnimation;
 	FOnAttack* OnAttack;
+	FOnSetWidget* OnSetWidget;
 	/*
 ----- Delegates End
 	*/
@@ -95,4 +97,14 @@ public:
 	/*
 ----- ICharacter Combat End
 	*/
+
+	/*
+----- ICharacter Widget Start
+	*/
+	virtual void SetItemInteractWidget(bool ToSet, TScriptInterface<class IIPickableItem> PickableItem) override;
+	/*
+----- ICharacter Widget End
+	*/
+
+
 };
