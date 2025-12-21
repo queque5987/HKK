@@ -8,6 +8,7 @@
 #include "EnhancedInputComponent.h"
 #include "HKK_Delegates.h"
 #include "Interface/Controller/IWidgetController.h"
+#include "GameFramework/Character.h"
 #include "HKKPlayerController.generated.h"
 
 /** Forward declaration to improve compiling times */
@@ -57,14 +58,23 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
 	UInputAction* MouseAttackAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
+	UInputAction* InteractAction;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UCControllerWidgetComponent> WidgetComponent;
 
-	FORCEINLINE FOnAiming* GetOnAiming() { return &OnAiming; }
-	FORCEINLINE FOnPlayAnimation* GetOnPlayAnimation() { return &OnPlayAnimation; }
-	FORCEINLINE FOnAttack* GetOnAttack() { return &OnAttack; }
-	FORCEINLINE virtual FOnSetWidget* GetOnSetWidget() override { return &OnSetWidget; }
+	FORCEINLINE FOnAiming& GetOnAiming() { return OnAiming; }
+	FORCEINLINE FOnPlayAnimation& GetOnPlayAnimation() { return OnPlayAnimation; }
+	FORCEINLINE FOnAttack& GetOnAttack() { return OnAttack; }
 
+	//~ Begin IIWidgetController Interface
+	FORCEINLINE virtual FOnSetItemInteractWidget& GetOnSetItemInteractPickupWidget() override { return OnSetItemInteractPickupWidget; }
+	FORCEINLINE virtual FOnKeyInputEvent& GetOnKeyTriggered() override { return OnKeyTriggered; }
+	FORCEINLINE virtual FOnKeyInputEvent& GetOnKeyReleased() override { return OnKeyReleased; }
+	FORCEINLINE virtual FOnGetItem& GetOnGetItem() override { return OnGetItem; }
+	virtual FVector GetPlayerLocation() override { return GetCharacter() != nullptr ? GetCharacter()->GetActorLocation() : FVector::ZeroVector; };
+	//~ End IIWidgetController Interface
 
 protected:
 	/** True if the controlled character should navigate to the mouse cursor. */
@@ -77,7 +87,10 @@ protected:
 	FOnAiming OnAiming;
 	FOnPlayAnimation OnPlayAnimation;
 	FOnAttack OnAttack;
-	FOnSetWidget OnSetWidget;
+	FOnSetItemInteractWidget OnSetItemInteractPickupWidget;
+	FOnKeyInputEvent OnKeyTriggered;
+	FOnKeyInputEvent OnKeyReleased;
+	FOnGetItem OnGetItem;
 	/*
 		Delegates End
 	*/
@@ -101,6 +114,8 @@ protected:
 	void JumpReleased();
 	void MouseMoved(const FInputActionValue& Value);
 	void Attack0_RFistTriggered(const FInputActionValue& Value);
+	void InteractTriggered();
+	void InteractReleased();
 private:
 	FVector CachedDestination;
 	FVector CachedDirection;

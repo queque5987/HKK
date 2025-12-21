@@ -32,8 +32,7 @@ protected:
 	TObjectPtr<class APawn> OwningPawn;
 	TObjectPtr<class IICharacterMovement> Owning_Interface_CharacterMovemnet;
 
-	FOnAiming* OnAiming;
-	FOnPlayAnimation* OnPlayAnimation;
+	//FOnAiming* OnAiming;
 public:
 
 	virtual void NativeBeginPlay() override;

@@ -39,7 +39,7 @@ void UCPickableComponent::OnComponentBeginOverlap(UPrimitiveComponent* Overlappe
 		IICharacterWidget* CharacterWidget = Cast<IICharacterWidget>(OtherActor);
 		if (CharacterWidget != nullptr)
 		{
-			CharacterWidget->SetItemInteractWidget(true, IPickable);
+			CharacterWidget->SetItemInteractWidget(true, IPickable, IPickable->GetItemConfig());
 		}
 
 		CurrentStencilValue = CurrentStencilValue == ECustomStencilValue::ECSV_Item ? ECustomStencilValue::ECSV_ItemSelected : ECustomStencilValue::ECSV_Item;
@@ -56,7 +56,7 @@ void UCPickableComponent::OnComponentEndOverlap(UPrimitiveComponent* OverlappedC
 		IICharacterWidget* CharacterWidget = Cast<IICharacterWidget>(OtherActor);
 		if (CharacterWidget != nullptr)
 		{
-			CharacterWidget->SetItemInteractWidget(false, IPickable);
+			CharacterWidget->SetItemInteractWidget(false, IPickable, IPickable->GetItemConfig());
 		}
 		CurrentStencilValue = CurrentStencilValue == ECustomStencilValue::ECSV_Item ? ECustomStencilValue::ECSV_ItemSelected : ECustomStencilValue::ECSV_Item;
 		IPickable->OnItemStencilValueChange(CurrentStencilValue);

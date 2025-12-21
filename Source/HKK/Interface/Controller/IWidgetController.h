@@ -16,6 +16,9 @@ class HKK_API IIWidgetController
 	GENERATED_BODY()
 
 public:
-
-	virtual FOnSetWidget* GetOnSetWidget() { return nullptr; }
+	virtual FOnSetItemInteractWidget& GetOnSetItemInteractPickupWidget() = 0;
+	virtual FOnKeyInputEvent& GetOnKeyTriggered() = 0;
+	virtual FOnKeyInputEvent& GetOnKeyReleased() = 0;
+	virtual FOnGetItem& GetOnGetItem() = 0;
+	virtual FVector GetPlayerLocation() = 0;
 };

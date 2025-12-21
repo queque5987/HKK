@@ -22,11 +22,7 @@ void UCPlayerAnimInstance::NativeBeginPlay()
 	AHKKPlayerController* TempController = Cast<AHKKPlayerController>(OwningPawn->GetController());
 	if (TempController == nullptr) return;
 
-	OnPlayAnimation = TempController->GetOnPlayAnimation();
-	if (OnPlayAnimation != nullptr)
-	{
-		OnPlayAnimation->AddUFunction(this, TEXT("CallBack_OnPlayAnimation"));
-	}
+	TempController->GetOnPlayAnimation().AddUFunction(this, TEXT("CallBack_OnPlayAnimation"));
 
 }
 

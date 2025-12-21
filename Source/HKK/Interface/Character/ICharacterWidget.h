@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
-
+#include "HKK_Structs.h"
 #include "ICharacterWidget.generated.h"
 
 UINTERFACE(MinimalAPI)
@@ -17,5 +17,5 @@ class HKK_API IICharacterWidget
 
 public:
 	
-	virtual void SetItemInteractWidget(bool ToSet, TScriptInterface<class IIPickableItem> PickableItem) {};
+	virtual void SetItemInteractWidget(bool ToSet, TScriptInterface<class IIPickableItem> PickableItem, const FItemConfig& ItemConfig) {};
 };

@@ -38,10 +38,10 @@ protected:
 	/*
 ----- Delegates Start
 	*/
-	FOnAiming* OnAiming;
-	FOnPlayAnimation* OnPlayAnimation;
-	FOnAttack* OnAttack;
-	FOnSetWidget* OnSetWidget;
+	//FOnAiming* OnAiming;
+	//FOnPlayAnimation* OnPlayAnimation;
+	//FOnAttack* OnAttack;
+	FOnSetItemInteractWidget* OnSetItemInteractPickupWidget = nullptr;
 	/*
 ----- Delegates End
 	*/
@@ -101,7 +101,7 @@ public:
 	/*
 ----- ICharacter Widget Start
 	*/
-	virtual void SetItemInteractWidget(bool ToSet, TScriptInterface<class IIPickableItem> PickableItem) override;
+	virtual void SetItemInteractWidget(bool ToSet, TScriptInterface<class IIPickableItem> PickableItem, const FItemConfig& ItemConfig) override;
 	/*
 ----- ICharacter Widget End
 	*/

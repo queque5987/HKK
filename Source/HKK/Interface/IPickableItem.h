@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
 #include "HKK_PCH.h"
+#include "HKK_Structs.h"
 #include "IPickableItem.generated.h"
 
 UINTERFACE(MinimalAPI)
@@ -20,4 +21,5 @@ public:
 	virtual void OnItemStencilValueChange(ECustomStencilValue CustomStencilValue) {};
 	virtual FComponentBeginOverlapSignature* GetComponentBeginOverlapSignature() { return nullptr; };
 	virtual FComponentEndOverlapSignature* GetComponentEndOverlapSignature() { return nullptr; };
+	virtual const FItemConfig& GetItemConfig() = 0;
 };

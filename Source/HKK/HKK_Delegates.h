@@ -3,15 +3,18 @@
 #include "CoreMinimal.h"
 #include "Delegates/Delegate.h"
 #include "HKK_PCH.h"
+#include "HKK_Structs.h"
+#include "InputCoreTypes.h"
 #include "Animation/AnimSequence.h"
-
-//class UAnimSequence;
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnAiming, float);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnAttack, const EPlayerAnimation);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnPlayAnimation, UAnimSequence*);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnChangeStencilValue, ECustomStencilValue);
-DECLARE_MULTICAST_DELEGATE_TwoParams(FOnSetWidget, bool, EUserWidget);
+DECLARE_MULTICAST_DELEGATE_ThreeParams(FOnSetItemInteractWidget, bool, EUserWidget, const FItemConfig&);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnKeyInputEvent, const FKey);
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnGetItem, const FItemConfig&, AActor*);
+
 //DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPlayAnimation, UAnimSequence*, PlayAnimation);
 class HKK_API HKK_Delegates
 {

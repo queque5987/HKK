@@ -55,21 +55,14 @@ void ACPlayerCharacter::BeginPlay()
 
 	AHKKPlayerController* tempController = Cast<AHKKPlayerController>(GetController());
 	if (tempController == nullptr) return;
-	OnAiming = tempController->GetOnAiming();
-	if (OnAiming != nullptr)
-	{
-		OnAiming->AddLambda([&](float Yaw) {
-			Server_OnAiming(Yaw);
-			}
-		);
-	}
-	OnPlayAnimation = tempController->GetOnPlayAnimation();
-	OnAttack = tempController->GetOnAttack();
-	if (OnAttack != nullptr)
-	{
-		OnAttack->AddUFunction(this, TEXT("Callback_OnAttack"));
-	}
-	OnSetWidget = tempController->GetOnSetWidget();
+	tempController->GetOnAiming().AddLambda([&](float Yaw) {
+		Server_OnAiming(Yaw);
+		}
+	);
+	//OnPlayAnimation = tempController->GetOnPlayAnimation();
+	//OnAttack = tempController->GetOnAttack();
+	tempController->GetOnAttack().AddUFunction(this, TEXT("Callback_OnAttack"));
+	OnSetItemInteractPickupWidget = &tempController->GetOnSetItemInteractPickupWidget();
 	IAnimInstace = Cast<IICharacterAnimInstance>(GetMesh()->GetAnimInstance());
 
 	CombatComponent->Server_SetOwnerMeshComp(GetMesh());
@@ -135,9 +128,9 @@ bool ACPlayerCharacter::HitTrace(FHitTraceConfig* HitTraceConfig)
 	return false;
 }
 
-void ACPlayerCharacter::SetItemInteractWidget(bool ToSet, TScriptInterface<class IIPickableItem> PickableItem)
+void ACPlayerCharacter::SetItemInteractWidget(bool ToSet, TScriptInterface<class IIPickableItem> PickableItem, const FItemConfig& ItemConfig)
 {
-	OnSetWidget->Broadcast(ToSet, EUserWidget::EUW_ItemInteract);
+	OnSetItemInteractPickupWidget->Broadcast(ToSet, EUserWidget::EUW_ItemInteract, ItemConfig);
 }
 
 void ACPlayerCharacter::Multicast_HitDamage_Implementation(const FHitDamageConfig& HitTraceConfig)

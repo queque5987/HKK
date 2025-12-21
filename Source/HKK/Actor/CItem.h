@@ -41,13 +41,21 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	float fRotatingSpeed = 1.f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	FItemConfig ItemConfig;
 	virtual void BeginPlay() override;
 
 	FOnChangeStencilValue OnChangeStencilValue;
 public:	
 	virtual void Tick(float DeltaTime) override;
-	
+	/*
+----- Pickable Item Start
+	*/
 	virtual void OnItemStencilValueChange(ECustomStencilValue CustomStencilValue) override;
 	virtual FComponentBeginOverlapSignature* GetComponentBeginOverlapSignature() override;
 	virtual FComponentEndOverlapSignature* GetComponentEndOverlapSignature() override;
+	virtual FORCEINLINE const FItemConfig& GetItemConfig() override { return ItemConfig; };
+	/*
+----- Pickable Item End
+	*/
 };

@@ -29,6 +29,11 @@ void AHKKPlayerController::BeginPlay()
 	Super::BeginPlay();
 	
 	if (WidgetComponent != nullptr) WidgetComponent->SetController(this);
+	//Test
+	OnGetItem.AddLambda([this](const FItemConfig& ItemConfig, AActor* OwningActor) 
+	{
+		UE_LOG(LogTemp, Log, TEXT("OnGetItem Delegate Callback Lambda Triggered."));
+	});
 }
 
 void AHKKPlayerController::Tick(float DeltaSeconds)
@@ -85,6 +90,9 @@ void AHKKPlayerController::SetupInputComponent()
 
 		EnhancedInputComponent->BindAction(MouseMoveAction, ETriggerEvent::Triggered, this, &AHKKPlayerController::MouseMoved);
 		EnhancedInputComponent->BindAction(MouseAttackAction, ETriggerEvent::Triggered, this, &AHKKPlayerController::Attack0_RFistTriggered);
+
+		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Triggered, this, &AHKKPlayerController::InteractTriggered);
+		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Completed, this, &AHKKPlayerController::InteractReleased);
 	}
 	else
 	{
@@ -226,4 +234,14 @@ void AHKKPlayerController::Attack0_RFistTriggered(const FInputActionValue& Value
 	//EPlayerAnimation AttackType = StaticCast<EPlayerAnimation>(Attack_Index);
 	OnAttack.Broadcast(EPlayerAnimation::EPA_Attack_RFist);
 	//UE_LOG(LogTemp, Log, TEXT("Attack0_RFistTriggered : %d"), Attack_Index);
+}
+
+void AHKKPlayerController::InteractTriggered()
+{
+	OnKeyTriggered.Broadcast(FKey("E"));
+}
+
+void AHKKPlayerController::InteractReleased()
+{
+	OnKeyReleased.Broadcast(FKey("E"));
 }

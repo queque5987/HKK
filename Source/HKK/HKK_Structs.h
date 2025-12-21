@@ -1,8 +1,24 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "RenderResource.h"
 #include "HKK_Structs.generated.h"
 
+class AActor;
+
+USTRUCT(BlueprintType)
+struct FItemConfig
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FName ItemName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UTexture2D> ItemIcon;
+
+	TObjectPtr<AActor> SpawnedItemActor;
+};
 USTRUCT(BlueprintType)
 struct FHitDamageConfig
 {
@@ -26,7 +42,7 @@ struct FHitTraceConfig
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float HitDamage;
 
-	USkeletalMeshComponent* TraceMesh;
+	TObjectPtr<USkeletalMeshComponent> TraceMesh;
 
 };
 USTRUCT(BlueprintType)
