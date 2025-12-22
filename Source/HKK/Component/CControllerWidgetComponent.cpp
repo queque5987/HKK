@@ -3,6 +3,7 @@
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
 #include "Widget/CWidget_ItemInteract.h"
+#include "Widget/CWidget_HUD.h"
 
 UCControllerWidgetComponent::UCControllerWidgetComponent()
 {
@@ -57,6 +58,11 @@ void UCControllerWidgetComponent::SetController(TScriptInterface<IIWidgetControl
 	{
 		Widget_ItemInteract->AddToViewport();
 		Widget_ItemInteract->SetVisibility(ESlateVisibility::Collapsed);
+	}
+	if (Widget_HUD != nullptr)
+	{
+		Widget_HUD->AddToViewport();
+		Widget_HUD->SetVisibility(ESlateVisibility::HitTestInvisible);
 	}
 }
 

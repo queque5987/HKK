@@ -1,6 +1,7 @@
 #include "Component/CCharacterCombatComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "Interface/Character/ICharacterCombat.h"
+#include "Kismet/GameplayStatics.h"
 #include "DrawDebugHelpers.h"
 
 UCCharacterCombatComponent::UCCharacterCombatComponent()
@@ -28,7 +29,6 @@ void UCCharacterCombatComponent::TickComponent(float DeltaTime, ELevelTick TickT
 
 	if (GetOwner()->HasAuthority() && bTrace)
 	{
-		//UE_LOG(LogTemp, Warning, TEXT("[%s] UCCharacterCombatComponent::TickComponent Called."), *UEnum::GetValueAsString(GetOwnerRole()));
 		if (OwnerMeshComp != nullptr)
 		{
 			TArray<FHitResult> HitResults;
@@ -48,16 +48,12 @@ void UCCharacterCombatComponent::TickComponent(float DeltaTime, ELevelTick TickT
 				CollisionShape,
 				CollisionQueryParams
 			);
-			//float TraceTotalLength = FVector::Dist(TraceStart, TraceEnd);
-			//float CachedTraceTotalLength = FVector::Dist(CachedTraceStartLocation, CachedTraceEndLocation);
-			//FVector CachedTraceDirection = (CachedTraceEndLocation - CachedTraceStartLocation).GetSafeNormal();
+
 			for (FHitResult HitResult : HitResults)
 			{
 				IICharacterCombat* ICombat = Cast<IICharacterCombat>(HitResult.GetActor());
 				if (ICombat == nullptr) continue;
 
-				//float HitLength = FVector::Dist(TraceStart, HitResult.Location);
-				//FVector PrevHitLocation = CachedTraceStartLocation + CachedTraceDirection * (HitLength / TraceTotalLength * CachedTraceTotalLength);
 				FVector HitDirection = (HitResult.GetActor()->GetActorLocation() - GetOwner()->GetActorLocation()).GetSafeNormal();
 
 				FHitDamageConfig HitDamageConfig;

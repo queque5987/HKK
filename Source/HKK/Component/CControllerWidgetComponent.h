@@ -10,6 +10,7 @@
 
 class IIWidgetController;
 class UCWidget_ItemInteract;
+class UCWidget_HUD;
 class AActor;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -27,6 +28,8 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UCWidget_ItemInteract> Widget_ItemInteract;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UCWidget_HUD> Widget_HUD;
 	UINT16 WidgetFloating;
 
 	TObjectPtr<AActor> InteractingPickableItem;

@@ -2,6 +2,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Component/CPickableComponent.h"
 #include "Component/CWearableComponent.h"
+#include "Components/SphereComponent.h"
 
 
 ACItem::ACItem()
@@ -13,6 +14,14 @@ ACItem::ACItem()
 
 	PickableComponent = CreateDefaultSubobject<UCPickableComponent>(TEXT("PickableComponent"));
 	WearableComponent = CreateDefaultSubobject<UCWearableComponent>(TEXT("WearableComponent"));
+	Collider = CreateDefaultSubobject<USphereComponent>(TEXT("Collider"));
+
+	Collider->SetSphereRadius(100.f);
+	Collider->SetupAttachment(StaticMeshComponent);
+
+	Collider->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	Collider->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
+	Collider->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
 
 	StaticMeshComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	StaticMeshComponent->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
@@ -20,6 +29,7 @@ ACItem::ACItem()
 
 	StaticMeshComponent->SetCustomDepthStencilValue((int32)ECustomStencilValue::ECSV_Item);
 	StaticMeshComponent->SetRenderCustomDepth(true);
+
 }
 
 void ACItem::BeginPlay()
@@ -59,10 +69,10 @@ void ACItem::OnItemStencilValueChange(ECustomStencilValue CustomStencilValue)
 
 FComponentBeginOverlapSignature* ACItem::GetComponentBeginOverlapSignature()
 {
-	return &StaticMeshComponent->OnComponentBeginOverlap;
+	return &Collider->OnComponentBeginOverlap;
 }
 
 FComponentEndOverlapSignature* ACItem::GetComponentEndOverlapSignature()
 {
-	return &StaticMeshComponent->OnComponentEndOverlap;
+	return &Collider->OnComponentEndOverlap;
 }
