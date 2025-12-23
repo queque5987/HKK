@@ -3,10 +3,10 @@
 #include "CoreMinimal.h"
 #include "Animation/AnimNotifies/AnimNotifyState.h"
 #include "HKK_Structs.h"
-#include "CAnimNotify_HitTrace.generated.h"
+#include "AnimNotify_HitTrace.generated.h"
 
 UCLASS()
-class HKK_API UCAnimNotify_HitTrace : public UAnimNotifyState
+class HKK_API UAnimNotify_HitTrace : public UAnimNotifyState
 {
 	GENERATED_BODY()
 

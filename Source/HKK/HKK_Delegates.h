@@ -14,6 +14,7 @@ DECLARE_MULTICAST_DELEGATE_OneParam(FOnChangeStencilValue, ECustomStencilValue);
 DECLARE_MULTICAST_DELEGATE_ThreeParams(FOnSetItemInteractWidget, bool, EUserWidget, const FItemConfig&);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnKeyInputEvent, const FKey);
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnGetItem, const FItemConfig&, AActor*);
+DECLARE_MULTICAST_DELEGATE_ThreeParams(FOnUpdateStatFloat, const EPlayerStatType, float, float);
 
 //DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPlayAnimation, UAnimSequence*, PlayAnimation);
 class HKK_API HKK_Delegates

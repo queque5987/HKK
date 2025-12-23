@@ -5,25 +5,25 @@
 #include "HKK_PCH.h"
 #include "HKK_Delegates.h"
 #include "Interface/IPickableItem.h"
-#include "CItem.generated.h"
+#include "Item.generated.h"
 
 UCLASS()
-class HKK_API ACItem : public AActor, public IIPickableItem
+class HKK_API AItem : public AActor, public IIPickableItem
 {
 	GENERATED_BODY()
 	
 public:	
-	ACItem();
+	AItem();
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UStaticMeshComponent* StaticMeshComponent;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	class UCPickableComponent* PickableComponent;
+	class UPickableComponent* PickableComponent;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	class UCWearableComponent* WearableComponent;
+	class UWearableComponent* WearableComponent;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class USphereComponent* Collider;

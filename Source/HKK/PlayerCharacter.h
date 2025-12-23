@@ -8,20 +8,23 @@
 #include "Interface/ICharacterMovement.h"
 #include "Interface/Character/ICharacterCombat.h"
 #include "Interface/Character/ICharacterWidget.h"
-#include "CPlayerCharacter.generated.h"
+
+#include "PlayerCharacter.generated.h"
+
+class APlayerState;
 
 UCLASS()
-class HKK_API ACPlayerCharacter : public ACharacter, public IICharacterMovement, public IICharacterCombat, public IICharacterWidget
+class HKK_API APlayerCharacter : public ACharacter, public IICharacterMovement, public IICharacterCombat, public IICharacterWidget
 {
 	GENERATED_BODY()
 
 public:
-	ACPlayerCharacter();
+	APlayerCharacter();
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UCCharacterAnimationComponent> AnimationComponent;
+	TObjectPtr<class UCharacterAnimationComponent> AnimationComponent;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UCCharacterCombatComponent> CombatComponent;
+	TObjectPtr<class UCharacterCombatComponent> CombatComponent;
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
@@ -93,7 +96,9 @@ public:
 
 	UFUNCTION(NetMulticast, Reliable)
 	virtual void Multicast_HitDamage(const FHitDamageConfig& HitTraceConfig) override;
-
+	UFUNCTION(NetMulticast, Reliable)
+	virtual void Multicast_KnockBack(FVector Direction) override;
+	virtual UObject* GetPlayerStateObject() override { return (UObject*)GetPlayerState(); };
 	/*
 ----- ICharacter Combat End
 	*/

@@ -1,4 +1,4 @@
-#include "CPlayerCharacter.h"
+#include "PlayerCharacter.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -6,13 +6,17 @@
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "HKKPlayerController.h"
-#include "Component/CCharacterAnimationComponent.h"
-#include "Component/CCharacterCombatComponent.h"
+#include "Component/CharacterAnimationComponent.h"
+#include "Component/CharacterCombatComponent.h"
 #include "Interface/Character/ICharacterAnimInstance.h" 
+#include "Interface/GameFramework/IPlayerState.h"
+#include "DrawDebugHelpers.h"
 #include "Net/UnrealNetwork.h"
+#include "GameFramework/PlayerState.h"
+#include "Interface/GameFramework/IPlayerState.h"
 
 
-ACPlayerCharacter::ACPlayerCharacter()
+APlayerCharacter::APlayerCharacter()
 {
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 
@@ -42,14 +46,14 @@ ACPlayerCharacter::ACPlayerCharacter()
 	PrimaryActorTick.bStartWithTickEnabled = true;
 	GetMesh()->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
 
-	AnimationComponent = CreateDefaultSubobject<UCCharacterAnimationComponent>(TEXT("AnimationComponent"));
-	CombatComponent = CreateDefaultSubobject<UCCharacterCombatComponent>(TEXT("CombatComponent"));
+	AnimationComponent = CreateDefaultSubobject<UCharacterAnimationComponent>(TEXT("AnimationComponent"));
+	CombatComponent = CreateDefaultSubobject<UCharacterCombatComponent>(TEXT("CombatComponent"));
 	
 	GetMesh()->SetCustomDepthStencilValue((int32)ECustomStencilValue::ECSV_CharacterDepth);
 	GetMesh()->SetRenderCustomDepth(true);
 }
 
-void ACPlayerCharacter::BeginPlay()
+void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
@@ -68,25 +72,31 @@ void ACPlayerCharacter::BeginPlay()
 	CombatComponent->Server_SetOwnerMeshComp(GetMesh());
 }
 
-void ACPlayerCharacter::Tick(float DeltaTime)
+void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	Server_RefreshVelocity_Implementation();
+	IIPlayerState* PS = Cast<IIPlayerState>(GetPlayerState());
+	if (PS != nullptr)
+	{
+		FString Temp = FString::Printf(TEXT("HP : %f"), PS->Execute_GetCurrHP(GetPlayerState()));
+		DrawDebugString(GetWorld(), FVector(0.f, 0.f, 150.f), *Temp, this, FColor::Red, DeltaTime);
+	}
 }
 
-void ACPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(ACPlayerCharacter, CharacterMovementState);
+	DOREPLIFETIME(APlayerCharacter, CharacterMovementState);
 }
 
-void ACPlayerCharacter::Multicast_PlayAnimation_Implementation(UAnimSequence* PlayAnimation)
+void APlayerCharacter::Multicast_PlayAnimation_Implementation(UAnimSequence* PlayAnimation)
 {
 	if (IAnimInstace == nullptr)
 	{
 		IAnimInstace = Cast<IICharacterAnimInstance>(GetMesh()->GetAnimInstance());
-		UE_LOG(LogTemp, Warning, TEXT("[%s] Multicast_PlayAttackAnimation_Implementation Called_AnimInstance Casted."), *UEnum::GetValueAsString(GetLocalRole()));
+		UE_LOG(LogTemp, Warning, TEXT("[%s] Multicast_PlayAnimation_Implementation Called_AnimInstance Casted."), *UEnum::GetValueAsString(GetLocalRole()));
 	}
 	if (IAnimInstace != nullptr)
 	{
@@ -94,46 +104,73 @@ void ACPlayerCharacter::Multicast_PlayAnimation_Implementation(UAnimSequence* Pl
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[%s] Multicast_PlayAttackAnimation_Implementation Called_AnimInstance Failed."), *UEnum::GetValueAsString(GetLocalRole()));
+		UE_LOG(LogTemp, Warning, TEXT("[%s] Multicast_PlayAnimation_Implementation Called_AnimInstance Failed."), *UEnum::GetValueAsString(GetLocalRole()));
 	}
 }
 
-void ACPlayerCharacter::Server_PlayAnimation_Implementation(UAnimSequence* PlayAnimation)
+void APlayerCharacter::Server_PlayAnimation_Implementation(UAnimSequence* PlayAnimation)
 {
 	Multicast_PlayAnimation(PlayAnimation);
 }
 
-void ACPlayerCharacter::Callback_OnAttack(const EPlayerAnimation AttackType)
+void APlayerCharacter::Callback_OnAttack(const EPlayerAnimation AttackType)
 {
 	if (AnimationComponent == nullptr) return;
 	Server_PlayAnimation(AnimationComponent->GetAnimationSequence(AttackType));
 }
 
-bool ACPlayerCharacter::HitTraceStart(FHitTraceConfig* HitTraceConfig, float MaxTraceTime)
+bool APlayerCharacter::HitTraceStart(FHitTraceConfig* HitTraceConfig, float MaxTraceTime)
 {
-	if (CombatComponent != nullptr) CombatComponent->Multicast_HitTraceStart(*HitTraceConfig, MaxTraceTime);
+	if (CombatComponent != nullptr) CombatComponent->Server_HitTraceStart(*HitTraceConfig, MaxTraceTime);
 	return CombatComponent == nullptr ? false : true;
 }
 
-bool ACPlayerCharacter::HitTraceEnd()
+bool APlayerCharacter::HitTraceEnd()
 {
 	if (CombatComponent == nullptr) return false;
-	CombatComponent->Multicast_HitTraceEnd();
+	CombatComponent->Server_HitTraceEnd();
 	return true;
 }
 
-bool ACPlayerCharacter::HitTrace(FHitTraceConfig* HitTraceConfig)
+bool APlayerCharacter::HitTrace(FHitTraceConfig* HitTraceConfig)
 {
 	UE_LOG(LogTemp, Warning, TEXT("[%s] HitTrace Called."), *UEnum::GetValueAsString(GetLocalRole()));
 	return false;
 }
 
-void ACPlayerCharacter::SetItemInteractWidget(bool ToSet, TScriptInterface<class IIPickableItem> PickableItem, const FItemConfig& ItemConfig)
+void APlayerCharacter::Multicast_KnockBack_Implementation(FVector Direction)
+{
+	if (HasAuthority())
+	{
+		UAnimSequence* ToPlayReactAnim = nullptr;
+		if (AnimationComponent != nullptr)
+		{
+			float Dot_Forward = FVector::DotProduct(GetActorForwardVector(), Direction);
+			float Dot_Right = FVector::DotProduct(GetActorRightVector(), Direction);
+			if (FMath::Abs(Dot_Forward) > FMath::Abs(Dot_Right))
+			{
+				ToPlayReactAnim = AnimationComponent->GetAnimationSequence(
+					Dot_Forward > 0.f ? EPlayerAnimation::EPA_HitReact_F : EPlayerAnimation::EPA_HitReact_B
+				);
+			}
+			else
+			{
+				ToPlayReactAnim = AnimationComponent->GetAnimationSequence(
+					Dot_Right > 0.f ? EPlayerAnimation::EPA_HitReact_R : EPlayerAnimation::EPA_HitReact_L
+				);
+			}
+			if (ToPlayReactAnim != nullptr) Server_PlayAnimation(ToPlayReactAnim);
+		}
+		LaunchCharacter(Direction * 100.f, false, false);
+	}
+}
+
+void APlayerCharacter::SetItemInteractWidget(bool ToSet, TScriptInterface<class IIPickableItem> PickableItem, const FItemConfig& ItemConfig)
 {
 	OnSetItemInteractPickupWidget->Broadcast(ToSet, EUserWidget::EUW_ItemInteract, ItemConfig);
 }
 
-void ACPlayerCharacter::Multicast_HitDamage_Implementation(const FHitDamageConfig& HitTraceConfig)
+void APlayerCharacter::Multicast_HitDamage_Implementation(const FHitDamageConfig& HitTraceConfig)
 {
 	UE_LOG(LogTemp, Warning, TEXT("[%s] Multicast_HitDamage : %f Direction : %s."), *UEnum::GetValueAsString(GetLocalRole()), HitTraceConfig.HitDamage, *HitTraceConfig.HitDirection.ToString());
 	if (HasAuthority())
@@ -162,12 +199,12 @@ void ACPlayerCharacter::Multicast_HitDamage_Implementation(const FHitDamageConfi
 	}
 }
 
-void ACPlayerCharacter::Server_RefreshVelocity_Implementation()
+void APlayerCharacter::Server_RefreshVelocity_Implementation()
 {
 	CharacterMovementState.Velocity = GetVelocity();
 }
 
-void ACPlayerCharacter::Server_OnAiming_Implementation(float Yaw)
+void APlayerCharacter::Server_OnAiming_Implementation(float Yaw)
 {
 	CharacterMovementState.FacingYaw = Yaw;
 }

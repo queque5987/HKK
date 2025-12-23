@@ -9,8 +9,9 @@
 #include "Engine/World.h"
 #include "InputActionValue.h"
 #include "EnhancedInputSubsystems.h"
-#include "Component/CControllerWidgetComponent.h"
+#include "Component/ControllerWidgetComponent.h"
 #include "Engine/LocalPlayer.h"
+#include "DrawDebugHelpers.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -21,19 +22,20 @@ AHKKPlayerController::AHKKPlayerController()
 	CachedDestination = FVector::ZeroVector;
 	FollowTime = 0.f;
 	PrimaryActorTick.bCanEverTick = true;
-	WidgetComponent = CreateDefaultSubobject<UCControllerWidgetComponent>(TEXT("WidgetComponent"));
+	WidgetComponent = CreateDefaultSubobject<UControllerWidgetComponent>(TEXT("WidgetComponent"));
 }
 
 void AHKKPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	if (WidgetComponent != nullptr) WidgetComponent->SetController(this);
 	//Test
 	OnGetItem.AddLambda([this](const FItemConfig& ItemConfig, AActor* OwningActor) 
 	{
 		UE_LOG(LogTemp, Log, TEXT("OnGetItem Delegate Callback Lambda Triggered."));
 	});
+
+	LoadingRace();
 }
 
 void AHKKPlayerController::Tick(float DeltaSeconds)
@@ -54,6 +56,40 @@ void AHKKPlayerController::Tick(float DeltaSeconds)
 			OnAiming.Broadcast(FMath::RadiansToDegrees(Theta));
 		}
 	}
+}
+
+void AHKKPlayerController::LoadingRace()
+{
+	if (!WidgetControllerSetup)
+	{
+		if (WidgetComponent != nullptr && IsLocalController()) WidgetControllerSetup = WidgetComponent->SetController(this);
+	}
+	if (!WidgetHUDBind)
+	{
+		if (IsLocalController() && WidgetComponent != nullptr)
+		{
+			WidgetHUDBind = WidgetHUDBind = WidgetComponent->Bind_HUD(this);
+		}
+	}
+	if (WidgetControllerSetup && WidgetHUDBind) return;
+	GetWorld()->GetTimerManager().SetTimerForNextTick(this, &AHKKPlayerController::LoadingRace);
+}
+
+void AHKKPlayerController::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+
+}
+
+void AHKKPlayerController::OnPossess(APawn* InPawn)
+{
+	Super::OnPossess(InPawn);
+}
+
+void AHKKPlayerController::InitPlayerState()
+{
+	Super::InitPlayerState();
+
 }
 
 void AHKKPlayerController::SetupInputComponent()
@@ -151,7 +187,6 @@ void AHKKPlayerController::OnSetDestinationReleased()
 	FollowTime = 0.f;
 }
 
-// Triggered every frame when the input is held down
 void AHKKPlayerController::OnTouchTriggered()
 {
 	bIsTouch = true;
@@ -174,7 +209,6 @@ void AHKKPlayerController::Move(const FInputActionValue& Value)
 	FVector2D InputVector = Value.Get<FVector2D>();
 	FVector InputDirection{ InputVector.X, InputVector.Y, 0.f };
 	float CurrentInputSec = GetWorld() ? GetWorld()->GetTimeSeconds() : -1.f;
-	//UE_LOG(LogTemp, Log, TEXT("Input Direction X : %f, Y : %f"), InputDirection.X, InputDirection.Y);
 
 	APawn* ControlledPawn = GetPawn();
 
@@ -225,15 +259,11 @@ void AHKKPlayerController::JumpReleased()
 void AHKKPlayerController::MouseMoved(const FInputActionValue& Value)
 {
 	FVector2D InputVector = Value.Get<FVector2D>();
-	//UE_LOG(LogTemp, Log, TEXT("Mouse Moved X : %f, Y : %f"), InputVector.X, InputVector.Y);
 }
 
 void AHKKPlayerController::Attack0_RFistTriggered(const FInputActionValue& Value)
 {
-	//uint8 Attack_Index = FMath::TruncToInt(Value.Get<float>());
-	//EPlayerAnimation AttackType = StaticCast<EPlayerAnimation>(Attack_Index);
 	OnAttack.Broadcast(EPlayerAnimation::EPA_Attack_RFist);
-	//UE_LOG(LogTemp, Log, TEXT("Attack0_RFistTriggered : %d"), Attack_Index);
 }
 
 void AHKKPlayerController::InteractTriggered()

@@ -1,36 +1,36 @@
-#include "Component/CPickableComponent.h"
+#include "Component/PickableComponent.h"
 #include "Interface/IPickableItem.h"
 #include "Interface/Character/ICharacterWidget.h"
 #include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
 
-UCPickableComponent::UCPickableComponent()
+UPickableComponent::UPickableComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
 }
 
-void UCPickableComponent::BeginPlay()
+void UPickableComponent::BeginPlay()
 {
 	Super::BeginPlay();
 }
 
-void UCPickableComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void UPickableComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 }
 
-void UCPickableComponent::SetBeginOverlapEvent(TScriptInterface<class IIPickableItem> InIPickableItem)
+void UPickableComponent::SetBeginOverlapEvent(TScriptInterface<class IIPickableItem> InIPickableItem)
 {
 	IPickable = InIPickableItem;
 	if (IPickable != nullptr)
 	{
-		IPickable->GetComponentBeginOverlapSignature()->AddDynamic(this, &UCPickableComponent::OnComponentBeginOverlap);
-		IPickable->GetComponentEndOverlapSignature()->AddDynamic(this, &UCPickableComponent::OnComponentEndOverlap);
+		IPickable->GetComponentBeginOverlapSignature()->AddDynamic(this, &UPickableComponent::OnComponentBeginOverlap);
+		IPickable->GetComponentEndOverlapSignature()->AddDynamic(this, &UPickableComponent::OnComponentEndOverlap);
 	}
 }
 
-void UCPickableComponent::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void UPickableComponent::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (IPickable == nullptr) return;
 	AActor* CurrentPlayer = Cast<AActor>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
@@ -47,7 +47,7 @@ void UCPickableComponent::OnComponentBeginOverlap(UPrimitiveComponent* Overlappe
 	}
 }
 
-void UCPickableComponent::OnComponentEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+void UPickableComponent::OnComponentEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
 	if (IPickable == nullptr) return;
 	AActor* CurrentPlayer = Cast<AActor>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));

@@ -6,20 +6,20 @@
 #include "HKK_Structs.h"
 #include "HKK_PCH.h"
 #include "InputCoreTypes.h"
-#include "CControllerWidgetComponent.generated.h"
+#include "ControllerWidgetComponent.generated.h"
 
 class IIWidgetController;
-class UCWidget_ItemInteract;
-class UCWidget_HUD;
+class UWidget_ItemInteract;
+class UWidget_HUD;
 class AActor;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class HKK_API UCControllerWidgetComponent : public UActorComponent
+class HKK_API UControllerWidgetComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:	
-	UCControllerWidgetComponent();
+	UControllerWidgetComponent();
 
 protected:
 	virtual void BeginPlay() override;
@@ -27,9 +27,9 @@ protected:
 	TScriptInterface<IIWidgetController> WidgetController;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UCWidget_ItemInteract> Widget_ItemInteract;
+	TObjectPtr<class UWidget_ItemInteract> Widget_ItemInteract;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UCWidget_HUD> Widget_HUD;
+	TObjectPtr<class UWidget_HUD> Widget_HUD;
 	UINT16 WidgetFloating;
 
 	TObjectPtr<AActor> InteractingPickableItem;
@@ -37,8 +37,8 @@ protected:
 public:	
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	void SetController(TScriptInterface<IIWidgetController> InWidgetController);
-	
+	bool SetController(TScriptInterface<IIWidgetController> InWidgetController);
+	bool Bind_HUD(TScriptInterface<IIWidgetController> InWidgetController);
 	UFUNCTION()
 	void SetItemInteractPickupWidget(bool ToSet, EUserWidget WidgetType, const FItemConfig& ItemConfig);
 	UFUNCTION()

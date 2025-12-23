@@ -21,4 +21,5 @@ public:
 	virtual FOnKeyInputEvent& GetOnKeyReleased() = 0;
 	virtual FOnGetItem& GetOnGetItem() = 0;
 	virtual FVector GetPlayerLocation() = 0;
+	virtual class UObject* GetPlayerStateObject() = 0;
 };

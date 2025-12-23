@@ -3,18 +3,18 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "HKK_PCH.h"
-#include "CCharacterAnimationComponent.generated.h"
+#include "CharacterAnimationComponent.generated.h"
 
 class UAnimSequence;
 
 //UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent), Blueprintable)
-class HKK_API UCCharacterAnimationComponent : public UActorComponent
+class HKK_API UCharacterAnimationComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:	
-	UCCharacterAnimationComponent();
+	UCharacterAnimationComponent();
 
 protected:
 	virtual void BeginPlay() override;

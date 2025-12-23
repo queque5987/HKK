@@ -1,13 +1,13 @@
-#include "Widget/CWidget_ItemInteract.h"
+#include "Widget/Widget_ItemInteract.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Materials/MaterialInstance.h"
 #include "Components/Border.h"
 
-UCWidget_ItemInteract::UCWidget_ItemInteract(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+UWidget_ItemInteract::UWidget_ItemInteract(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
 }
 
-void UCWidget_ItemInteract::NativeConstruct()
+void UWidget_ItemInteract::NativeConstruct()
 {
 	Super::NativeConstruct();
 
@@ -18,7 +18,7 @@ void UCWidget_ItemInteract::NativeConstruct()
 	}
 }
 
-void UCWidget_ItemInteract::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
+void UWidget_ItemInteract::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 {
 	Super::NativeTick(MyGeometry, InDeltaTime);
 
@@ -33,7 +33,7 @@ void UCWidget_ItemInteract::NativeTick(const FGeometry& MyGeometry, float InDelt
 	}
 }
 
-void UCWidget_ItemInteract::ProgressCompleted()
+void UWidget_ItemInteract::ProgressCompleted()
 {
 	if (OnGetItem != nullptr)
 	{

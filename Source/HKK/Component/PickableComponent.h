@@ -4,16 +4,16 @@
 #include "Components/ActorComponent.h"
 #include "HKK_Delegates.h"
 #include "HKK_PCH.h"
-#include "CPickableComponent.generated.h"
+#include "PickableComponent.generated.h"
 
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class HKK_API UCPickableComponent : public UActorComponent
+class HKK_API UPickableComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:	
-	UCPickableComponent();
+	UPickableComponent();
 
 protected:
 	virtual void BeginPlay() override;

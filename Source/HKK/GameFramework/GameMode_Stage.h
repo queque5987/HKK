@@ -2,14 +2,14 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
-#include "CGameMode_Stage.generated.h"
+#include "GameMode_Stage.generated.h"
 
 UCLASS()
-class HKK_API ACGameMode_Stage : public AGameModeBase
+class HKK_API AGameMode_Stage : public AGameModeBase
 {
 	GENERATED_BODY()
 	
-	ACGameMode_Stage();
+	AGameMode_Stage();
 	
 	
 };

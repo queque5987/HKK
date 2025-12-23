@@ -3,7 +3,7 @@
 #include "HKKGameMode.h"
 #include "HKKPlayerController.h"
 #include "HKKCharacter.h"
-#include "CPlayerCharacter.h"
+#include "PlayerCharacter.h"
 #include "UObject/ConstructorHelpers.h"
 
 AHKKGameMode::AHKKGameMode()

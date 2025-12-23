@@ -1,16 +1,16 @@
-#include "CPlayerAnimInstance.h"
-#include "CPlayerCharacter.h"
+#include "PlayerAnimInstance.h"
+#include "PlayerCharacter.h"
 #include "HKKPlayerController.h"
 #include "Interface/ICharacterMovement.h"
 #include "HKK_Structs.h"
 #include "HKKPlayerController.h"
 
-UCPlayerAnimInstance::UCPlayerAnimInstance() : Super()
+UPlayerAnimInstance::UPlayerAnimInstance() : Super()
 {
 	OwningPawn = nullptr;
 }
 
-void UCPlayerAnimInstance::NativeBeginPlay()
+void UPlayerAnimInstance::NativeBeginPlay()
 {
 	Super::NativeBeginPlay();
 
@@ -26,7 +26,7 @@ void UCPlayerAnimInstance::NativeBeginPlay()
 
 }
 
-void UCPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
+void UPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
 	Super::NativeUpdateAnimation(DeltaSeconds);
 
@@ -48,17 +48,17 @@ void UCPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	
 }
 
-void UCPlayerAnimInstance::CallBack_OnPlayAnimation(UAnimSequence* PlayAnimation)
+void UPlayerAnimInstance::CallBack_OnPlayAnimation(UAnimSequence* PlayAnimation)
 {
 	PlaySlotAnimationAsDynamicMontage(PlayAnimation, TEXT("AttackSlot"));
 }
 
-void UCPlayerAnimInstance::PlaySlotAnimation(UAnimSequence* ToPlayAnimation, FName SlotName, float BlendInTime, float BlendOutTime, float InPlayRate, int32 LoopCount, float BlendOutTriggerTime, float InTimeToStartMontageAt)
+void UPlayerAnimInstance::PlaySlotAnimation(UAnimSequence* ToPlayAnimation, FName SlotName, float BlendInTime, float BlendOutTime, float InPlayRate, int32 LoopCount, float BlendOutTriggerTime, float InTimeToStartMontageAt)
 {
 	PlaySlotAnimationAsDynamicMontage(ToPlayAnimation, SlotName, BlendInTime, BlendOutTime, InPlayRate, LoopCount, BlendOutTriggerTime, InTimeToStartMontageAt);
 }
 
-//void UCPlayerAnimInstance::CallBack_OnAiming(float Yaw)
+//void UPlayerAnimInstance::CallBack_OnAiming(float Yaw)
 //{
 //	//SetAnimingAngle(Yaw);
 //}

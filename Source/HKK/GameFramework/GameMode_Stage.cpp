@@ -1,10 +1,10 @@
-#include "GameFramework/CGameMode_Stage.h"
+#include "GameFramework/GameMode_Stage.h"
 #include "HKKPlayerController.h"
-#include "CPlayerCharacter.h"
-#include "GameFramework/CPlayerState.h"
+#include "PlayerCharacter.h"
+#include "GameFramework/HKK_PlayerState.h"
 #include "UObject/ConstructorHelpers.h"
 
-ACGameMode_Stage::ACGameMode_Stage() : Super()
+AGameMode_Stage::AGameMode_Stage() : Super()
 {
 	PlayerControllerClass = AHKKPlayerController::StaticClass();
 	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Game/_Player/Blueprint/BP_Robo"));
@@ -19,5 +19,5 @@ ACGameMode_Stage::ACGameMode_Stage() : Super()
 		PlayerControllerClass = PlayerControllerBPClass.Class;
 	}
 
-	PlayerStateClass = ACPlayerState::StaticClass();
+	PlayerStateClass = AHKK_PlayerState::StaticClass();
 }

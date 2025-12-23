@@ -5,10 +5,12 @@
 #include "Components/Image.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
-#include "CWidget_HUD.generated.h"
+#include "Interface/Widget/IUpdatableWidget.h"
+#include "HKK_PCH.h"
+#include "Widget_HUD.generated.h"
 
 UCLASS()
-class HKK_API UCWidget_HUD : public UUserWidget
+class HKK_API UWidget_HUD : public UUserWidget, public IIUpdatableWidget
 {
 	GENERATED_BODY()
 
@@ -30,4 +32,7 @@ protected:
 
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* Text_WeaponName;
+public:
+	
+	virtual void OnUpdatePlayerStatFloat_Implementation(const EPlayerStatType PlayerStatType, float CurrStat, float MaxStat) override;
 };

@@ -6,14 +6,14 @@
 #include "Components/Border.h"
 #include "HKK_Delegates.h"
 #include "HKK_Structs.h"
-#include "CWidget_ItemInteract.generated.h"
+#include "Widget_ItemInteract.generated.h"
 
 UCLASS()
-class HKK_API UCWidget_ItemInteract : public UUserWidget
+class HKK_API UWidget_ItemInteract : public UUserWidget
 {
 	GENERATED_BODY()
 
-	UCWidget_ItemInteract(const FObjectInitializer& ObjectInitializer);
+	UWidget_ItemInteract(const FObjectInitializer& ObjectInitializer);
 protected:
 	virtual void NativeConstruct() override;
 

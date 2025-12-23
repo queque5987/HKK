@@ -62,7 +62,7 @@ public:
 	UInputAction* InteractAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UCControllerWidgetComponent> WidgetComponent;
+	TObjectPtr<class UControllerWidgetComponent> WidgetComponent;
 
 	FORCEINLINE FOnAiming& GetOnAiming() { return OnAiming; }
 	FORCEINLINE FOnPlayAnimation& GetOnPlayAnimation() { return OnPlayAnimation; }
@@ -74,8 +74,11 @@ public:
 	FORCEINLINE virtual FOnKeyInputEvent& GetOnKeyReleased() override { return OnKeyReleased; }
 	FORCEINLINE virtual FOnGetItem& GetOnGetItem() override { return OnGetItem; }
 	virtual FVector GetPlayerLocation() override { return GetCharacter() != nullptr ? GetCharacter()->GetActorLocation() : FVector::ZeroVector; };
+	virtual UObject* GetPlayerStateObject() override { return (UObject*)PlayerState; };
 	//~ End IIWidgetController Interface
-
+	virtual void OnRep_PlayerState() override;
+	virtual void OnPossess(APawn* InPawn) override;
+	virtual void InitPlayerState() override;
 protected:
 	/** True if the controlled character should navigate to the mouse cursor. */
 	uint32 bMoveToMouseCursor : 1;
@@ -95,10 +98,17 @@ protected:
 		Delegates End
 	*/
 	FInputModeGameOnly InputModeGameOnly;
+	FTimerHandle LoadingTimerHandle;
+
+	bool WidgetControllerSetup = false;
+	bool WidgetHUDBind = false;
 
 	virtual void SetupInputComponent() override;
 	virtual void BeginPlay();
 	virtual void Tick(float DeltaSeconds) override;
+
+	UFUNCTION()
+	void LoadingRace();
 
 	/** Input handlers for SetDestination action. */
 	void OnInputStarted();

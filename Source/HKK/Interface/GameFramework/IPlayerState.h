@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
-
+#include "HKK_Delegates.h"
 #include "IPlayerState.generated.h"
 
 UINTERFACE(MinimalAPI)
@@ -16,14 +16,24 @@ class HKK_API IIPlayerState
 	GENERATED_BODY()
 
 public:
-	virtual float GetCurrHP() = 0;
-	virtual float GetCurrStamina() = 0;
-	virtual float GetMaxHP() = 0;
-	virtual float GetMaxStamina() = 0;
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	float GetCurrHP();
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	float GetCurrStamina();
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	float GetMaxHP();
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	float GetMaxStamina();
 
-	virtual void SetCurrHP(float e) = 0;
-	virtual void SetCurrStamina(float e) = 0;
-	virtual void SetMaxHP(float e) = 0;
-	virtual void SetMaxStamina(float e) = 0;
-	
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void SetCurrHP(float e);
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void SetCurrStamina(float e);
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void SetMaxHP(float e);
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void SetMaxStamina(float e);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	bool BindDelegate_HUDWidget(class UObject* BindWidget);
 };

@@ -1,19 +1,19 @@
-#include "Actor/CItem.h"
+#include "Actor/Item.h"
 #include "Components/StaticMeshComponent.h"
-#include "Component/CPickableComponent.h"
-#include "Component/CWearableComponent.h"
+#include "Component/PickableComponent.h"
+#include "Component/WearableComponent.h"
 #include "Components/SphereComponent.h"
 
 
-ACItem::ACItem()
+AItem::AItem()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
 	StaticMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMeshComponent"));
 	SetRootComponent(StaticMeshComponent);
 
-	PickableComponent = CreateDefaultSubobject<UCPickableComponent>(TEXT("PickableComponent"));
-	WearableComponent = CreateDefaultSubobject<UCWearableComponent>(TEXT("WearableComponent"));
+	PickableComponent = CreateDefaultSubobject<UPickableComponent>(TEXT("PickableComponent"));
+	WearableComponent = CreateDefaultSubobject<UWearableComponent>(TEXT("WearableComponent"));
 	Collider = CreateDefaultSubobject<USphereComponent>(TEXT("Collider"));
 
 	Collider->SetSphereRadius(100.f);
@@ -32,7 +32,7 @@ ACItem::ACItem()
 
 }
 
-void ACItem::BeginPlay()
+void AItem::BeginPlay()
 {
 	Super::BeginPlay();
 	SMCurrentRelativeLocation = StaticMeshComponent->GetRelativeLocation();
@@ -44,7 +44,7 @@ void ACItem::BeginPlay()
 	ItemConfig.SpawnedItemActor = this;
 }
 
-void ACItem::Tick(float DeltaTime)
+void AItem::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
@@ -62,17 +62,17 @@ void ACItem::Tick(float DeltaTime)
 	}
 }
 
-void ACItem::OnItemStencilValueChange(ECustomStencilValue CustomStencilValue)
+void AItem::OnItemStencilValueChange(ECustomStencilValue CustomStencilValue)
 {
 	StaticMeshComponent->SetCustomDepthStencilValue((int32)CustomStencilValue);
 }
 
-FComponentBeginOverlapSignature* ACItem::GetComponentBeginOverlapSignature()
+FComponentBeginOverlapSignature* AItem::GetComponentBeginOverlapSignature()
 {
 	return &Collider->OnComponentBeginOverlap;
 }
 
-FComponentEndOverlapSignature* ACItem::GetComponentEndOverlapSignature()
+FComponentEndOverlapSignature* AItem::GetComponentEndOverlapSignature()
 {
 	return &Collider->OnComponentEndOverlap;
 }

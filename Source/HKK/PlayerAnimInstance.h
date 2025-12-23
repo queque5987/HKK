@@ -4,14 +4,14 @@
 #include "Animation/AnimInstance.h"
 #include "HKK_Delegates.h"
 #include "Interface/Character/ICharacterAnimInstance.h"
-#include "CPlayerAnimInstance.generated.h"
+#include "PlayerAnimInstance.generated.h"
 
 UCLASS()
-class HKK_API UCPlayerAnimInstance : public UAnimInstance, public IICharacterAnimInstance
+class HKK_API UPlayerAnimInstance : public UAnimInstance, public IICharacterAnimInstance
 {
 	GENERATED_BODY()
 
-	UCPlayerAnimInstance();
+	UPlayerAnimInstance();
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))

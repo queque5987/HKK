@@ -4,17 +4,17 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "CWearableComponent.generated.h"
+#include "WearableComponent.generated.h"
 
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class HKK_API UCWearableComponent : public UActorComponent
+class HKK_API UWearableComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:	
 	// Sets default values for this component's properties
-	UCWearableComponent();
+	UWearableComponent();
 
 protected:
 	// Called when the game starts

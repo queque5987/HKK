@@ -3,6 +3,12 @@
 #include "CoreMinimal.h"
 
 UENUM(BlueprintType)
+enum class EPlayerStatType : uint8
+{
+	EPST_HP,
+	EPST_Stamina
+};
+UENUM(BlueprintType)
 enum class EUserWidget : uint8
 {
 	EUW_ItemInteract
