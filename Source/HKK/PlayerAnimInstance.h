@@ -30,7 +30,7 @@ protected:
 	bool bBusterL = false;
 
 	TObjectPtr<class APawn> OwningPawn;
-	TObjectPtr<class IICharacterMovement> Owning_Interface_CharacterMovemnet;
+	class IICharacterMovement* Owning_Interface_CharacterMovemnet;
 
 	//FOnAiming* OnAiming;
 public:
