@@ -13,6 +13,7 @@
 #include "DrawDebugHelpers.h"
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/PlayerState.h"
+#include "Component/FoliageInteractSourceComponent.h"
 #include "Interface/GameFramework/IPlayerState.h"
 
 
@@ -48,7 +49,9 @@ APlayerCharacter::APlayerCharacter()
 
 	AnimationComponent = CreateDefaultSubobject<UCharacterAnimationComponent>(TEXT("AnimationComponent"));
 	CombatComponent = CreateDefaultSubobject<UCharacterCombatComponent>(TEXT("CombatComponent"));
-	
+	FoliageInteractSourceComponent = CreateDefaultSubobject< UFoliageInteractSourceComponent>(TEXT("FoliageInteractSourceComponent"));
+	FoliageInteractSourceComponent->SetupAttachment(RootComponent);
+
 	GetMesh()->SetCustomDepthStencilValue((int32)ECustomStencilValue::ECSV_CharacterDepth);
 	GetMesh()->SetRenderCustomDepth(true);
 }

@@ -33,16 +33,23 @@ public:
 
 	virtual void SetCurrHP_Implementation(float e) override {
 		CurrHP = e; 
-		OnRep_CurrHP();
+		if (HasAuthority())OnRep_CurrHP();
 	};
 	virtual void SetCurrStamina_Implementation(float e) override { CurrStamina = e; };
-	virtual void SetMaxHP_Implementation(float e) override { if (HasAuthority()) OnRep_MaxHP(); MaxHP = e; };
+	virtual void SetMaxHP_Implementation(float e) override {
+		MaxHP = e; 
+		if (HasAuthority()) OnRep_MaxHP(); 
+	};
 	virtual void SetMaxStamina_Implementation(float e) override { MaxStamina = e; };
 
 	virtual bool BindDelegate_HUDWidget_Implementation(class UObject* BindWidget) override;
 
 	UFUNCTION()
+	void OnRep_CurrStamina();
+	UFUNCTION()
 	void OnRep_CurrHP();
+	UFUNCTION()
+	void OnRep_MaxStamina();
 	UFUNCTION()
 	void OnRep_MaxHP();
 };

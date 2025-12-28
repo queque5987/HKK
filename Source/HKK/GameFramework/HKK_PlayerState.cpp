@@ -19,11 +19,20 @@ bool AHKK_PlayerState::BindDelegate_HUDWidget_Implementation(UObject* BindWidget
 	return OnUpdateStatFloat.IsBoundToObject(BindWidget);
 }
 
+void AHKK_PlayerState::OnRep_CurrStamina()
+{
+	OnUpdateStatFloat.Broadcast(EPlayerStatType::EPST_Stamina, CurrStamina, MaxStamina);
+}
+
 void AHKK_PlayerState::OnRep_CurrHP()
 {
 	OnUpdateStatFloat.Broadcast(EPlayerStatType::EPST_HP, CurrHP, MaxHP);
-	
-	if (GetOwningController() != nullptr && OnUpdateStatFloat.IsBound()) DrawDebugString(GetWorld(), FVector(0.f, 0.f, 120.f), TEXT("Hit"), GetOwningController()->GetPawn(), FColor::Red, 2.f);
+	//if (GetOwningController() != nullptr && OnUpdateStatFloat.IsBound()) DrawDebugString(GetWorld(), FVector(0.f, 0.f, 120.f), TEXT("Hit"), GetOwningController()->GetPawn(), FColor::Red, 2.f);
+}
+
+void AHKK_PlayerState::OnRep_MaxStamina()
+{
+	OnUpdateStatFloat.Broadcast(EPlayerStatType::EPST_Stamina, CurrStamina, MaxStamina);
 }
 
 void AHKK_PlayerState::OnRep_MaxHP()

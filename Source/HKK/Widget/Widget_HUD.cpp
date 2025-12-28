@@ -9,6 +9,10 @@ void UWidget_HUD::OnUpdatePlayerStatFloat_Implementation(const EPlayerStatType P
 		if (HPBar == nullptr) return;
 		HPBar->SetPercent(CurrStat / MaxStat);
 		break;
+	case(EPlayerStatType::EPST_Stamina):
+		if (StaminaBar == nullptr) return;
+		StaminaBar->SetPercent(CurrStat / MaxStat);
+		break;
 	default:
 		break;
 	}

@@ -14,8 +14,6 @@ class HKK_API UCombatLibrary : public UBlueprintFunctionLibrary
 
 public:
 	static void SendDamage(TScriptInterface<IICharacterCombat> CausedPlayer, TScriptInterface<IICharacterCombat> DamagedPlayer, FHitDamageConfig HitDamageConfig);
-
-	// sudo
 	static bool Bind_HUD(UObject* PlayerHUDObject, UObject* PlayerStateObject);
 
 private:
