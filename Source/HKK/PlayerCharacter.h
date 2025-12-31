@@ -12,6 +12,7 @@
 #include "PlayerCharacter.generated.h"
 
 class APlayerState;
+class UFoliageInteractSourceComponent;
 
 UCLASS()
 class HKK_API APlayerCharacter : public ACharacter, public IICharacterMovement, public IICharacterCombat, public IICharacterWidget
@@ -27,7 +28,7 @@ public:
 	TObjectPtr<class UCharacterCombatComponent> CombatComponent;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UFoliageInteractSourceComponent> FoliageInteractSourceComponent;
+	TObjectPtr<UFoliageInteractSourceComponent> FoliageInteractSourceComponent;
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))

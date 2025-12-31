@@ -8,6 +8,7 @@ class UBoxComponent;
 class UMaterialInstance;
 class UMaterialInstanceDynamic;
 class UTextureRenderTarget2D;
+class IICharacterMovement;
 
 UCLASS()
 class HKK_API AFoliageInteractVolume : public AActor
@@ -28,10 +29,21 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UTextureRenderTarget2D> RT_FoliageInteractImpact;
 
+	TQueue<TScriptInterface<IICharacterMovement>> InteractingSourceComponentQueue;
+	TSet<TScriptInterface<IICharacterMovement>> InteractingSourceComponentSet;
+	//UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	//TObjectPtr<UTextureRenderTarget2D> RT_FoliageInteractImpact_B;
+
+	
+	bool bFlipRT;
 	virtual void BeginPlay() override;
 
 public:	
 	virtual void Tick(float DeltaTime) override;
 	bool IsInside(const FVector& Location);
 	void SetImpulse(const FVector& ImpactLocation, float Radius);
+	void PushInteractSourceComponent(TScriptInterface<IICharacterMovement>& InSourceComponent);
+
+private:
+	void SetImpulse(TScriptInterface<IICharacterMovement>& InSourceComponent, int8 SlotIndex);
 };

@@ -16,8 +16,8 @@ class HKK_API IICharacterMovement
 	GENERATED_BODY()
 
 public:
-	
 	virtual FVector _GetVelocity() { return FVector(); };
-
+	virtual FVector _GetLocation() { return FVector(); };
+	virtual float GetComponentCollideRadius() { return float(); };
 	virtual FCharacterMovementState* GetCharacterMovementState() { return nullptr; };
 };

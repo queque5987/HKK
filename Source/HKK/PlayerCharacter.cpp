@@ -49,7 +49,7 @@ APlayerCharacter::APlayerCharacter()
 
 	AnimationComponent = CreateDefaultSubobject<UCharacterAnimationComponent>(TEXT("AnimationComponent"));
 	CombatComponent = CreateDefaultSubobject<UCharacterCombatComponent>(TEXT("CombatComponent"));
-	FoliageInteractSourceComponent = CreateDefaultSubobject< UFoliageInteractSourceComponent>(TEXT("FoliageInteractSourceComponent"));
+	FoliageInteractSourceComponent = CreateDefaultSubobject<UFoliageInteractSourceComponent>(TEXT("FoliageInteractSourceComponent"));
 	FoliageInteractSourceComponent->SetupAttachment(RootComponent);
 
 	GetMesh()->SetCustomDepthStencilValue((int32)ECustomStencilValue::ECSV_CharacterDepth);
@@ -73,6 +73,7 @@ void APlayerCharacter::BeginPlay()
 	IAnimInstace = Cast<IICharacterAnimInstance>(GetMesh()->GetAnimInstance());
 
 	CombatComponent->Server_SetOwnerMeshComp(GetMesh());
+	FoliageInteractSourceComponent->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("eye_Parent"));
 }
 
 void APlayerCharacter::Tick(float DeltaTime)
