@@ -39,3 +39,31 @@ bool UCombatLibrary::Bind_HUD(UObject* PlayerHUDObject, UObject* PlayerStateObje
 	}
 	return IIPlayerState::Execute_BindDelegate_HUDWidget(PlayerStateObject, PlayerHUDObject);
 }
+
+bool UCombatLibrary::Bind_Inventory(UObject* PlayerInventoryObject, UObject* PlayerStateObject)
+{
+	if (PlayerInventoryObject == nullptr)
+	{
+		LogWarning(3.f, TEXT("PlayerInventoryObject Not Found"));
+		return false;
+	}
+	if (PlayerStateObject == nullptr)
+	{
+		LogWarning(3.f, TEXT("PlayerStateObject Not Found"));
+		return false;
+	}
+	return IIPlayerState::Execute_BindDelegate_InventoryWidget(PlayerStateObject, PlayerInventoryObject);
+}
+
+bool UCombatLibrary::EquipItem(UObject* OwningPlayerState, AActor* EquipItem)
+{
+	if (EquipItem == nullptr || OwningPlayerState == nullptr) return false;
+	UE_LOG(LogTemp, Log, TEXT("Attaching Item %s To %s"), *EquipItem->GetFName().ToString(), *OwningPlayerState->GetFName().ToString());
+	return true;
+}
+
+bool UCombatLibrary::GetItem(UObject* ItemOwnerPlayerState, const FItemConfig& ItemConfig)
+{
+	IIPlayerState::Execute_GetItem(ItemOwnerPlayerState, ItemConfig);
+	return false;
+}

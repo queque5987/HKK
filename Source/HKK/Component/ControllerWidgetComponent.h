@@ -11,6 +11,7 @@
 class IIWidgetController;
 class UWidget_ItemInteract;
 class UWidget_HUD;
+class UWidget_Inventory;
 class AActor;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -27,9 +28,13 @@ protected:
 	TScriptInterface<IIWidgetController> WidgetController;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UWidget_ItemInteract> Widget_ItemInteract;
+	TObjectPtr<UWidget_ItemInteract> Widget_ItemInteract;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UWidget_HUD> Widget_HUD;
+	TObjectPtr<UWidget_HUD> Widget_HUD;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UWidget_Inventory> Widget_Inventory;
+	float InventoryInterval = 0.f;
+
 	UINT16 WidgetFloating;
 
 	TObjectPtr<AActor> InteractingPickableItem;
@@ -45,4 +50,6 @@ public:
 	void Callback_OnKeyTriggered(const FKey Key);
 	UFUNCTION()
 	void Callback_OnKeyReleased(const FKey Key);
+
+	bool IsControllable();
 };

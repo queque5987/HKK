@@ -8,6 +8,7 @@
 #include "EnhancedInputComponent.h"
 #include "HKK_Delegates.h"
 #include "Interface/Controller/IWidgetController.h"
+#include "Interface/Controller/ICombatController.h"
 #include "GameFramework/Character.h"
 #include "HKKPlayerController.generated.h"
 
@@ -15,11 +16,12 @@
 class UNiagaraSystem;
 class UInputMappingContext;
 class UInputAction;
+class IIPlayerState;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
 UCLASS()
-class AHKKPlayerController : public APlayerController, public IIWidgetController
+class AHKKPlayerController : public APlayerController, public IIWidgetController, public IICombatController
 {
 	GENERATED_BODY()
 
@@ -43,6 +45,12 @@ public:
 	UInputAction* SetDestinationClickAction;
 
 	/** Jump Input Action */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
+	UInputAction* UISwitchAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
+	UInputAction* ShiftAction;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
 	UInputAction* SetDestinationTouchAction;
 
@@ -68,14 +76,29 @@ public:
 	FORCEINLINE FOnPlayAnimation& GetOnPlayAnimation() { return OnPlayAnimation; }
 	FORCEINLINE FOnAttack& GetOnAttack() { return OnAttack; }
 
-	//~ Begin IIWidgetController Interface
+	/*
+-----IIWidgetController Start
+	*/
+
 	FORCEINLINE virtual FOnSetItemInteractWidget& GetOnSetItemInteractPickupWidget() override { return OnSetItemInteractPickupWidget; }
 	FORCEINLINE virtual FOnKeyInputEvent& GetOnKeyTriggered() override { return OnKeyTriggered; }
 	FORCEINLINE virtual FOnKeyInputEvent& GetOnKeyReleased() override { return OnKeyReleased; }
 	FORCEINLINE virtual FOnGetItem& GetOnGetItem() override { return OnGetItem; }
 	virtual FVector GetPlayerLocation() override { return GetCharacter() != nullptr ? GetCharacter()->GetActorLocation() : FVector::ZeroVector; };
 	virtual UObject* GetPlayerStateObject() override { return (UObject*)PlayerState; };
-	//~ End IIWidgetController Interface
+	virtual void SetCurorVisibility(bool e) override { bShowMouseCursor = e; };
+	/*
+-----IIWidgetController End
+	*/
+
+	/*
+-----IICombatController Start
+	*/
+
+	/*
+-----IICombatController End
+	*/
+
 	virtual void OnRep_PlayerState() override;
 	virtual void OnPossess(APawn* InPawn) override;
 	virtual void InitPlayerState() override;
@@ -94,14 +117,17 @@ protected:
 	FOnKeyInputEvent OnKeyTriggered;
 	FOnKeyInputEvent OnKeyReleased;
 	FOnGetItem OnGetItem;
+	FOnSetWalkSpeed OnSetWalkSpeed;
 	/*
 		Delegates End
 	*/
 	FInputModeGameOnly InputModeGameOnly;
 	FTimerHandle LoadingTimerHandle;
 
+	bool DelegateBind = false;
 	bool WidgetControllerSetup = false;
 	bool WidgetHUDBind = false;
+	bool bShiftPressed = false;
 
 	virtual void SetupInputComponent() override;
 	virtual void BeginPlay();
@@ -120,12 +146,15 @@ protected:
 	void OnClicked();
 	void Move(const FInputActionValue& Value);
 	void MoveReleased();
+	void ShiftTriggered();
+	void ShiftReleased();
 	void Jump();
 	void JumpReleased();
 	void MouseMoved(const FInputActionValue& Value);
 	void Attack0_RFistTriggered(const FInputActionValue& Value);
 	void InteractTriggered();
 	void InteractReleased();
+	void UISwitchTriggered(const FInputActionValue& Value);
 private:
 	FVector CachedDestination;
 	FVector CachedDirection;

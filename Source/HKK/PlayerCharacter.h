@@ -75,7 +75,10 @@ public:
 
 	UFUNCTION()
 	void Callback_OnAttack(const EPlayerAnimation AttackType);
-
+	UFUNCTION()
+	void Callback_OnKeyTriggered(const FKey Key);
+	UFUNCTION()
+	void Callback_OnKeyReleased(const FKey Key);
 	/*
 ----- ICharacter Movement Start
 	*/

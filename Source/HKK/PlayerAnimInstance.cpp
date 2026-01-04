@@ -43,6 +43,9 @@ void UPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			CurrentSpeedXY	= tempState->Velocity.Size2D();
 			CurrentSpeedZ	= tempState->Velocity.Z;
 			AimingAngle		= tempState->FacingYaw;
+			HeadingRadian	= tempState->HeadingRadian;
+			//UE_LOG(LogTemp, Log, TEXT("Rad : %f"), HeadingRadian);
+			//UE_LOG(LogTemp, Log, TEXT("Speed : %f"), CurrentSpeedXY);
 		}
 	}
 	

@@ -3,7 +3,7 @@
 
 UWearableComponent::UWearableComponent()
 {
-	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bCanEverTick = false;
 }
 
 void UWearableComponent::BeginPlay()
@@ -14,5 +14,11 @@ void UWearableComponent::BeginPlay()
 void UWearableComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+}
+
+USceneComponent* UWearableComponent::GetAttachComponent()
+{
+	AActor* OwningActor = GetOwner();
+	return OwningActor != nullptr ? OwningActor->GetRootComponent() : nullptr;
 }
 

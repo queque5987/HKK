@@ -4,9 +4,14 @@
 #include "Blueprint/UserWidget.h"
 #include "Components/WidgetSwitcher.h"
 #include "Components/Border.h"
+#include "Components/Image.h"
+#include "Components/TextBlock.h"
 #include "HKK_Delegates.h"
 #include "HKK_Structs.h"
 #include "Widget_ItemInteract.generated.h"
+
+class AActor;
+class IIWidgetController;
 
 UCLASS()
 class HKK_API UWidget_ItemInteract : public UUserWidget
@@ -16,6 +21,12 @@ class HKK_API UWidget_ItemInteract : public UUserWidget
 	UWidget_ItemInteract(const FObjectInitializer& ObjectInitializer);
 protected:
 	virtual void NativeConstruct() override;
+
+	UPROPERTY(meta = (BindWidget))
+	class UImage* ItemIcon;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* ItemName;
 
 	UPROPERTY(meta = (BindWidget))
 	class UWidgetSwitcher* WidgetSwitcher;
@@ -35,10 +46,13 @@ protected:
 	UPROPERTY()
 	TObjectPtr<class UMaterialInstanceDynamic> MID_Button_BackGround_Pressed;
 
+	TScriptInterface<IIWidgetController> OwningController;
+
 	bool bButtonOn = false;
 	float fPressedProgress = 0.f;
 	FOnGetItem* OnGetItem;
-	const FItemConfig* ItemConfig;
+
+	FItemConfig ItemConfig;
 public:
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
@@ -51,10 +65,7 @@ public:
 			if (!bButtonOn) fPressedProgress = 0.f;
 		}
 	}
-	void SetItemConfig(FOnGetItem* InOnGetItem, const FItemConfig& InItemConfig)
-	{
-		OnGetItem = InOnGetItem; ItemConfig = &InItemConfig;
-	}
+	void SetItemConfig(FOnGetItem* InOnGetItem, const FItemConfig& InItemConfig, AActor* InPlayerController);
 private:
 	void ProgressCompleted();
 };

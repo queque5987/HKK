@@ -11,7 +11,11 @@ enum class EPlayerStatType : uint8
 UENUM(BlueprintType)
 enum class EUserWidget : uint8
 {
-	EUW_ItemInteract
+	EUW_ItemInteract,
+	EUW_Inventory,
+	EUW_QuickSlot0,
+	EUW_QuickSlot1,
+	EUW_QuickSlot2
 };
 UENUM(BlueprintType)
 enum class ECustomStencilValue : uint8
@@ -30,7 +34,8 @@ enum class EPlayerAnimation : uint8
 	EPA_HitReact_L,
 	EPA_HitReact_R,
 	EPA_HitReact_F,
-	EPA_HitReact_B
+	EPA_HitReact_B,
+	EPA_BusterFireR
 };
 
 class HKK_API HKK_PCH

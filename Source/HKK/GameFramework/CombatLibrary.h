@@ -15,7 +15,9 @@ class HKK_API UCombatLibrary : public UBlueprintFunctionLibrary
 public:
 	static void SendDamage(TScriptInterface<IICharacterCombat> CausedPlayer, TScriptInterface<IICharacterCombat> DamagedPlayer, FHitDamageConfig HitDamageConfig);
 	static bool Bind_HUD(UObject* PlayerHUDObject, UObject* PlayerStateObject);
-
+	static bool Bind_Inventory(UObject* PlayerInventoryObject, UObject* PlayerStateObject);
+	static bool EquipItem(UObject* OwningPlayerState, AActor* EquipItem);
+	static bool GetItem(UObject* ItemOwnerPlayerState, const FItemConfig& ItemConfig);
 private:
 	template<typename...Args>
 	static void LogWarning(float DisplayTime, const FString& LogText)

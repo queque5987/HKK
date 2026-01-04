@@ -1,6 +1,7 @@
 #include "Widget/Widget_ItemInteract.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Materials/MaterialInstance.h"
+#include "Interface/Controller/IWidgetController.h"
 #include "Components/Border.h"
 
 UWidget_ItemInteract::UWidget_ItemInteract(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
@@ -33,13 +34,29 @@ void UWidget_ItemInteract::NativeTick(const FGeometry& MyGeometry, float InDelta
 	}
 }
 
+void UWidget_ItemInteract::SetItemConfig(FOnGetItem* InOnGetItem, const FItemConfig& InItemConfig, AActor* InPlayerController)
+{
+	OnGetItem = InOnGetItem;
+	ItemConfig = InItemConfig;
+	OwningController = InPlayerController;
+	if (ItemConfig.SpawnedItemActor == nullptr) return;
+	if (ItemConfig.ItemIcon != nullptr && ItemIcon != nullptr) ItemIcon->SetBrushFromTexture(ItemConfig.ItemIcon);
+	if (ItemName != nullptr) ItemName->SetText(ItemConfig.ItemName);
+}
+
 void UWidget_ItemInteract::ProgressCompleted()
 {
 	if (OnGetItem != nullptr)
 	{
-		OnGetItem->Broadcast(*ItemConfig, GetOwningPlayer<AActor>());
+		if (OwningController != nullptr)
+		{
+			OwningController->GetPlayerStateObject();
+		}
+		OnGetItem->Broadcast(ItemConfig, OwningController != nullptr ? OwningController->GetPlayerStateObject() : nullptr);
 		OnGetItem = nullptr;
-		ItemConfig = nullptr;
+		ItemConfig.ItemIcon = nullptr;
+		ItemConfig.ItemName = FText();
+		ItemConfig.SpawnedItemActor = nullptr;
 	}
 	SwitchWidget(false);
 }

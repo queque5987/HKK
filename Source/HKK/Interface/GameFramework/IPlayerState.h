@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
 #include "HKK_Delegates.h"
+#include "HKK_Structs.h"
 #include "IPlayerState.generated.h"
 
 UINTERFACE(MinimalAPI)
@@ -36,4 +37,9 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	bool BindDelegate_HUDWidget(class UObject* BindWidget);
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	bool BindDelegate_InventoryWidget(class UObject* BindWidget);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void GetItem(const FItemConfig& ItemConfig);
 };

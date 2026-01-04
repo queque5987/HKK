@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
 #include "HKK_PCH.h"
+#include "HKK_Structs.h"
 #include "IUpdatableWidget.generated.h"
 
 UINTERFACE(MinimalAPI)
@@ -18,5 +19,7 @@ class HKK_API IIUpdatableWidget
 public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void OnUpdatePlayerStatFloat(const EPlayerStatType PlayerStatType, float CurrStat, float MaxStat);
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void AddItem(bool bPutIn, EUserWidget AddWidgetType, const FItemConfig& ItemConfig);
 	
 };

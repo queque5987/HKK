@@ -22,4 +22,5 @@ public:
 	virtual FOnGetItem& GetOnGetItem() = 0;
 	virtual FVector GetPlayerLocation() = 0;
 	virtual class UObject* GetPlayerStateObject() = 0;
+	virtual void SetCurorVisibility(bool e) = 0;
 };

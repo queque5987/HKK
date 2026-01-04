@@ -5,6 +5,7 @@
 #include "Interface/GameFramework/IPlayerState.h"
 #include "HKK_Delegates.h"
 #include "HKK_PCH.h"
+#include "HKK_Structs.h"
 #include "HKK_PlayerState.generated.h"
 
 UCLASS()
@@ -21,8 +22,11 @@ private:
 	float CurrStamina;
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	float MaxStamina;
+	UPROPERTY(ReplicatedUsing = OnRep_PossesingItem, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	TArray<FItemConfig> PossesingItem;
 
 	FOnUpdateStatFloat OnUpdateStatFloat;
+	FOnSetItemInteractWidget OnUpdateItemToInventory;
 public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
@@ -31,18 +35,26 @@ public:
 	virtual float GetMaxHP_Implementation() override { return MaxHP; };
 	virtual float GetMaxStamina_Implementation() override { return MaxStamina; };
 
-	virtual void SetCurrHP_Implementation(float e) override {
-		CurrHP = e; 
-		if (HasAuthority())OnRep_CurrHP();
-	};
-	virtual void SetCurrStamina_Implementation(float e) override { CurrStamina = e; };
-	virtual void SetMaxHP_Implementation(float e) override {
-		MaxHP = e; 
-		if (HasAuthority()) OnRep_MaxHP(); 
-	};
-	virtual void SetMaxStamina_Implementation(float e) override { MaxStamina = e; };
+	virtual void SetCurrHP_Implementation(float e) override { Server_SetCurrHP(e); };
+	virtual void SetCurrStamina_Implementation(float e) override { Server_SetCurrStamina(e); };
+	virtual void SetMaxHP_Implementation(float e) override { Server_SetMaxHP(e); };
+	virtual void SetMaxStamina_Implementation(float e) override { Server_SetMaxStamina(e); };
 
 	virtual bool BindDelegate_HUDWidget_Implementation(class UObject* BindWidget) override;
+	virtual bool BindDelegate_InventoryWidget_Implementation(class UObject* BindWidget) override;
+	virtual void GetItem_Implementation(const FItemConfig& ItemConfig) override;
+	UFUNCTION(Server, Reliable)
+	void Server_GetItem(const FItemConfig& ItemConfig);
+	UFUNCTION(Server, Reliable)
+	void Server_SetCurrHP(float e);
+	UFUNCTION(Server, Reliable)
+	void Server_SetCurrStamina(float e);
+	UFUNCTION(Server, Reliable)
+	void Server_SetMaxHP(float e);
+	UFUNCTION(Server, Reliable)
+	void Server_SetMaxStamina(float e);
+
+	//virtual bool GetItem()
 
 	UFUNCTION()
 	void OnRep_CurrStamina();
@@ -52,4 +64,6 @@ public:
 	void OnRep_MaxStamina();
 	UFUNCTION()
 	void OnRep_MaxHP();
+	UFUNCTION()
+	void OnRep_PossesingItem();
 };

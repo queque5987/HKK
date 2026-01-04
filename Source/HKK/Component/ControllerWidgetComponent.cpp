@@ -4,7 +4,10 @@
 #include "Kismet/GameplayStatics.h"
 #include "Widget/Widget_ItemInteract.h"
 #include "Widget/Widget_HUD.h"
+#include "Widget/Widget_Inventory.h"
 #include "GameFramework/CombatLibrary.h"
+
+class IIPlayerState;
 
 UControllerWidgetComponent::UControllerWidgetComponent()
 {
@@ -40,6 +43,7 @@ void UControllerWidgetComponent::TickComponent(float DeltaTime, ELevelTick TickT
 		}
 		Widget_ItemInteract->SetPositionInViewport(ProjectLocation);
 	}
+	if (InventoryInterval > 0.f) InventoryInterval -= DeltaTime;
 }
 
 bool UControllerWidgetComponent::SetController(TScriptInterface<IIWidgetController> InWidgetController)
@@ -56,7 +60,7 @@ bool UControllerWidgetComponent::SetController(TScriptInterface<IIWidgetControll
 	if (OnGetItem == nullptr)
 	{
 		OnGetItem = &WidgetController->GetOnGetItem();
-		OnGetItem->AddLambda([this](const FItemConfig& ItemConfig, AActor* OwningActor)
+		OnGetItem->AddLambda([this](const FItemConfig& ItemConfig, UObject* OwningPlayerState)
 			{
 				SetItemInteractPickupWidget(false, EUserWidget::EUW_ItemInteract, ItemConfig);
 			}
@@ -64,20 +68,29 @@ bool UControllerWidgetComponent::SetController(TScriptInterface<IIWidgetControll
 	}
 	if (Widget_ItemInteract == nullptr) return false;
 	if (Widget_HUD == nullptr) return false;
+	if (Widget_Inventory == nullptr) return false;
 
 	Widget_ItemInteract->AddToViewport();
 	Widget_ItemInteract->SetVisibility(ESlateVisibility::Collapsed);
 	Widget_HUD->AddToViewport();
 	Widget_HUD->SetVisibility(ESlateVisibility::HitTestInvisible);
+	Widget_Inventory->AddToViewport();
+	Widget_Inventory->SetVisibility(ESlateVisibility::Collapsed);
 	return true;
 }
 
 bool UControllerWidgetComponent::Bind_HUD(TScriptInterface<IIWidgetController> InWidgetController)
 {
 	if (InWidgetController == nullptr) return false;
-	if (InWidgetController->GetPlayerStateObject() == nullptr) return false;
+	UObject* PlayerStateObject = InWidgetController->GetPlayerStateObject();
+	if (PlayerStateObject == nullptr) return false;
 	if (Widget_HUD == nullptr) return false;
-	return UCombatLibrary::Bind_HUD(Widget_HUD, InWidgetController->GetPlayerStateObject());
+	if (Widget_Inventory == nullptr) return false;
+	UCombatLibrary::Bind_Inventory(Widget_Inventory, PlayerStateObject);
+	return (
+		UCombatLibrary::Bind_HUD(Widget_HUD,PlayerStateObject) &&
+		UCombatLibrary::Bind_HUD(Widget_Inventory,PlayerStateObject)
+		);
 }
 
 void UControllerWidgetComponent::SetItemInteractPickupWidget(bool ToSet, EUserWidget WidgetType, const FItemConfig& ItemConfig)
@@ -94,14 +107,14 @@ void UControllerWidgetComponent::SetItemInteractPickupWidget(bool ToSet, EUserWi
 	int32 ScreensizeX;
 	int32 ScreensizeY;
 	PC->GetViewportSize(ScreensizeX, ScreensizeY);
+
 	if (ToSet) WidgetFloating |= 1 << (uint8)EUserWidget::EUW_ItemInteract;
 	else WidgetFloating &= ~1 << (uint8)EUserWidget::EUW_ItemInteract;
 
-	UE_LOG(LogTemp, Log, TEXT("UControllerWidgetComponent::SetItemInteractPickupWidget Location : %s"), *ProjectLocation.ToString());
 	ProjectLocation.X += ScreensizeX / 12.f;
 	Widget_ItemInteract->SetPositionInViewport(ProjectLocation);
 	Widget_ItemInteract->SetVisibility(ToSet ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
-	Widget_ItemInteract->SetItemConfig(OnGetItem, ItemConfig);
+	if (ToSet) Widget_ItemInteract->SetItemConfig(OnGetItem, ItemConfig, GetOwner());
 }
 
 void UControllerWidgetComponent::Callback_OnKeyTriggered(FKey Key)
@@ -109,6 +122,17 @@ void UControllerWidgetComponent::Callback_OnKeyTriggered(FKey Key)
 	if (Key.GetFName() == FName("E") && Widget_ItemInteract != nullptr)
 	{
 		Widget_ItemInteract->SwitchWidget(true);
+	}
+	else if (Key.GetFName() == FName("I") && Widget_ItemInteract != nullptr && InventoryInterval <= 0.f)
+	{
+		bool WasOn = Widget_Inventory->GetVisibility() == ESlateVisibility::Visible;
+
+		if (!WasOn) WidgetFloating |= 1 << (uint8)EUserWidget::EUW_Inventory;
+		else WidgetFloating &= ~1 << (uint8)EUserWidget::EUW_Inventory;
+
+		WidgetController->SetCurorVisibility(!WasOn);
+		Widget_Inventory->SetVisibility(WasOn ? ESlateVisibility::Collapsed : ESlateVisibility::Visible);
+		InventoryInterval = 1.f;
 	}
 }
 
@@ -118,5 +142,11 @@ void UControllerWidgetComponent::Callback_OnKeyReleased(FKey Key)
 	{
 		Widget_ItemInteract->SwitchWidget(false);
 	}
+}
+
+bool UControllerWidgetComponent::IsControllable()
+{
+	if (WidgetFloating & 1 << (uint8)EUserWidget::EUW_Inventory) return false;
+	return true;
 }
 

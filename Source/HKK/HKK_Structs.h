@@ -12,7 +12,7 @@ struct FItemConfig
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FName ItemName;
+	FText ItemName;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<UTexture2D> ItemIcon;
@@ -55,6 +55,9 @@ struct FCharacterMovementState
 
 	UPROPERTY(BlueprintReadWrite)
 	float FacingYaw;
+
+	UPROPERTY(BlueprintReadWrite)
+	float HeadingRadian;
 };
 
 class HKK_API HKK_Structs

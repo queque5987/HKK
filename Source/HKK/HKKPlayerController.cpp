@@ -12,12 +12,16 @@
 #include "Component/ControllerWidgetComponent.h"
 #include "Engine/LocalPlayer.h"
 #include "DrawDebugHelpers.h"
+#include "GameFramework/CombatLibrary.h"
+#include "Interface/GameFramework/IPlayerState.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
+class IICharacterCombat;
+
 AHKKPlayerController::AHKKPlayerController()
 {
-	bShowMouseCursor = true;
+	bShowMouseCursor = false;
 	DefaultMouseCursor = EMouseCursor::Default;
 	CachedDestination = FVector::ZeroVector;
 	FollowTime = 0.f;
@@ -30,10 +34,10 @@ void AHKKPlayerController::BeginPlay()
 	Super::BeginPlay();
 	
 	//Test
-	OnGetItem.AddLambda([this](const FItemConfig& ItemConfig, AActor* OwningActor) 
-	{
-		UE_LOG(LogTemp, Log, TEXT("OnGetItem Delegate Callback Lambda Triggered."));
-	});
+	//OnGetItem.AddLambda([this](const FItemConfig& ItemConfig, AActor* OwningActor) 
+	//{
+	//	UE_LOG(LogTemp, Log, TEXT("OnGetItem Delegate Callback Lambda Triggered."));
+	//});
 
 	LoadingRace();
 }
@@ -60,6 +64,17 @@ void AHKKPlayerController::Tick(float DeltaSeconds)
 
 void AHKKPlayerController::LoadingRace()
 {
+	if (!DelegateBind)
+	{
+		OnGetItem.AddLambda([this](const FItemConfig& ItemConfig, UObject* OwningPlayerState)
+			{
+				//UCombatLibrary::EquipItem(OwningPlayerState, ItemConfig.SpawnedItemActor);
+				UCombatLibrary::GetItem(OwningPlayerState, ItemConfig);
+			}
+		);
+		DelegateBind = true;
+	}
+
 	if (!WidgetControllerSetup)
 	{
 		if (WidgetComponent != nullptr && IsLocalController()) WidgetControllerSetup = WidgetComponent->SetController(this);
@@ -71,7 +86,7 @@ void AHKKPlayerController::LoadingRace()
 			WidgetHUDBind = WidgetHUDBind = WidgetComponent->Bind_HUD(this);
 		}
 	}
-	if (WidgetControllerSetup && WidgetHUDBind) return;
+	if (DelegateBind && WidgetControllerSetup && WidgetHUDBind) return;
 	GetWorld()->GetTimerManager().SetTimerForNextTick(this, &AHKKPlayerController::LoadingRace);
 }
 
@@ -118,8 +133,13 @@ void AHKKPlayerController::SetupInputComponent()
 		EnhancedInputComponent->BindAction(SetDestinationTouchAction, ETriggerEvent::Completed, this, &AHKKPlayerController::OnTouchReleased);
 		EnhancedInputComponent->BindAction(SetDestinationTouchAction, ETriggerEvent::Canceled, this, &AHKKPlayerController::OnTouchReleased);
 
+		EnhancedInputComponent->BindAction(UISwitchAction, ETriggerEvent::Triggered, this, &AHKKPlayerController::UISwitchTriggered);
+
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AHKKPlayerController::Move);
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Completed, this, &AHKKPlayerController::MoveReleased);
+
+		EnhancedInputComponent->BindAction(ShiftAction, ETriggerEvent::Triggered, this, &AHKKPlayerController::ShiftTriggered);
+		EnhancedInputComponent->BindAction(ShiftAction, ETriggerEvent::Completed, this, &AHKKPlayerController::ShiftReleased);
 
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &AHKKPlayerController::Jump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &AHKKPlayerController::JumpReleased);
@@ -206,10 +226,12 @@ void AHKKPlayerController::OnClicked()
 
 void AHKKPlayerController::Move(const FInputActionValue& Value)
 {
+	if (!WidgetComponent->IsControllable()) return;
+
 	FVector2D InputVector = Value.Get<FVector2D>();
+	if (InputVector.X >= 0.f && bShiftPressed) InputVector.Y = 0.f;
 	FVector InputDirection{ InputVector.X, InputVector.Y, 0.f };
 	float CurrentInputSec = GetWorld() ? GetWorld()->GetTimeSeconds() : -1.f;
-
 	APawn* ControlledPawn = GetPawn();
 
 	if (FMath::IsNearlyZero(CachedDirection.Size()))
@@ -225,7 +247,24 @@ void AHKKPlayerController::Move(const FInputActionValue& Value)
 
 	if (ControlledPawn != nullptr)
 	{
-		ControlledPawn->AddMovementInput(CachedDirection, 1.0, false);
+		const FRotator YawRotation(0, GetControlRotation().Yaw, 0);
+		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+		float XScaleValue = CachedDirection.X;
+		float YScaleValue = CachedDirection.Y;
+		if (CachedDirection.X < 0.f)
+		{
+			XScaleValue *= 0.75f;
+			YScaleValue *= 0.75f;
+			if (bShiftPressed)
+			{
+				XScaleValue *= 3.f / 5.f;
+				YScaleValue *= 3.f / 5.f;
+			}
+		}
+
+		ControlledPawn->AddMovementInput(ForwardDirection, XScaleValue);
+		ControlledPawn->AddMovementInput(RightDirection, YScaleValue);
 	}
 	if (CachedInput != InputDirection)
 	{
@@ -240,8 +279,22 @@ void AHKKPlayerController::MoveReleased()
 	CachedDirection *= 0.f;
 }
 
+void AHKKPlayerController::ShiftTriggered()
+{
+	if (!WidgetComponent->IsControllable()) return;
+	bShiftPressed = true;
+	OnKeyTriggered.Broadcast(FKey("Shift"));
+}
+
+void AHKKPlayerController::ShiftReleased()
+{
+	bShiftPressed = false;
+	OnKeyReleased.Broadcast(FKey("Shift"));
+}
+
 void AHKKPlayerController::Jump()
 {
+	if (!WidgetComponent->IsControllable()) return;
 	ACharacter* ControlledPawn = GetCharacter();
 
 	if (ControlledPawn == nullptr) return;
@@ -258,11 +311,19 @@ void AHKKPlayerController::JumpReleased()
 
 void AHKKPlayerController::MouseMoved(const FInputActionValue& Value)
 {
+	if (!WidgetComponent->IsControllable()) return;
 	FVector2D InputVector = Value.Get<FVector2D>();
+	AddYawInput(InputVector.X);
+	AddPitchInput(InputVector.Y);
+
+	FRotator LookRotation = { 0.f, GetControlRotation().Yaw, 0.f };
+	APawn* ControlledPawn = GetPawn();
+	ControlledPawn->SetActorRotation(LookRotation);
 }
 
 void AHKKPlayerController::Attack0_RFistTriggered(const FInputActionValue& Value)
 {
+	if (!WidgetComponent->IsControllable()) return;
 	OnAttack.Broadcast(EPlayerAnimation::EPA_Attack_RFist);
 }
 
@@ -274,4 +335,18 @@ void AHKKPlayerController::InteractTriggered()
 void AHKKPlayerController::InteractReleased()
 {
 	OnKeyReleased.Broadcast(FKey("E"));
+}
+
+void AHKKPlayerController::UISwitchTriggered(const FInputActionValue& Value)
+{
+	float UIIndex = Value.Get<float>();
+	uint8 UIIdx = FMath::Floor(UIIndex);
+	switch (UIIdx)
+	{
+	case((uint8)EUserWidget::EUW_Inventory):
+		OnKeyTriggered.Broadcast(FKey("I"));
+		break;
+	default:
+		break;
+	}
 }

@@ -26,7 +26,9 @@ APlayerCharacter::APlayerCharacter()
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
 
-	GetCharacterMovement()->bOrientRotationToMovement = true; // Rotate character to moving direction
+	// =================== TopDown Settings (Backup) ===================
+	/*
+	GetCharacterMovement()->bOrientRotationToMovement = false; // Rotate character to moving direction
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 640.f, 0.f);
 	GetCharacterMovement()->bConstrainToPlane = true;
 	GetCharacterMovement()->bSnapToPlaneAtStart = true;
@@ -34,14 +36,37 @@ APlayerCharacter::APlayerCharacter()
 
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
-	CameraBoom->SetUsingAbsoluteRotation(true); // Don't want arm to rotate when character does
-	CameraBoom->TargetArmLength = 800.f;
-	CameraBoom->SetRelativeRotation(FRotator(-60.f, 0.f, 0.f));
-	CameraBoom->bDoCollisionTest = false; // Don't want to pull camera in when it collides with level
+	CameraBoom->SetUsingAbsoluteRotation(false); // Don't want arm to rotate when character does
+	//CameraBoom->TargetArmLength = 800.f;
+	//CameraBoom->SetRelativeRotation(FRotator(-60.f, 0.f, 0.f));
+	CameraBoom->bDoCollisionTest = true; // Don't want to pull camera in when it collides with level
 
 	TopDownCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("TopDownCamera"));
 	TopDownCameraComponent->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
-	TopDownCameraComponent->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
+	TopDownCameraComponent->bUsePawnControlRotation = true; // Camera does not rotate relative to arm
+	*/
+	// =================================================================
+
+
+	// =================== Third-Person Settings ===================
+	GetCharacterMovement()->bOrientRotationToMovement = false; // Character moves in the direction of input...	
+	GetCharacterMovement()->RotationRate = FRotator(0.0f, 500.0f, 0.0f); // ...at this rotation rate
+	GetCharacterMovement()->bConstrainToPlane = false;
+	GetCharacterMovement()->bSnapToPlaneAtStart = false;
+	GetCharacterMovement()->MaxWalkSpeed = 300.f;
+
+	// Create a camera boom (pulls in towards the player if there is a collision)
+	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
+	CameraBoom->SetupAttachment(RootComponent);
+	CameraBoom->TargetArmLength = 400.0f; // The camera follows at this distance behind the character	
+	CameraBoom->bUsePawnControlRotation = true; // Rotate the arm based on the controller
+	CameraBoom->bDoCollisionTest = true; 
+
+	// Create a follow camera
+	TopDownCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("TopDownCamera"));
+	TopDownCameraComponent->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
+	TopDownCameraComponent->bUsePawnControlRotation = true; // Camera does not rotate relative to arm
+	// =============================================================
 
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
@@ -70,6 +95,9 @@ void APlayerCharacter::BeginPlay()
 	//OnAttack = tempController->GetOnAttack();
 	tempController->GetOnAttack().AddUFunction(this, TEXT("Callback_OnAttack"));
 	OnSetItemInteractPickupWidget = &tempController->GetOnSetItemInteractPickupWidget();
+	tempController->GetOnKeyTriggered().AddUFunction(this, TEXT("Callback_OnKeyTriggered"));
+	tempController->GetOnKeyReleased().AddUFunction(this, TEXT("Callback_OnKeyReleased"));
+	//tempController->GetOnGetItem().AddUFunction(this, TEXT("Callback_OnGetItem"));
 	IAnimInstace = Cast<IICharacterAnimInstance>(GetMesh()->GetAnimInstance());
 
 	CombatComponent->Server_SetOwnerMeshComp(GetMesh());
@@ -121,6 +149,24 @@ void APlayerCharacter::Callback_OnAttack(const EPlayerAnimation AttackType)
 {
 	if (AnimationComponent == nullptr) return;
 	Server_PlayAnimation(AnimationComponent->GetAnimationSequence(AttackType));
+}
+
+void APlayerCharacter::Callback_OnKeyTriggered(const FKey Key)
+{
+	//UE_LOG(LogTemp, Log, TEXT("Key Triggered : %s"), *Key.GetFName().ToString());
+	if (Key.GetFName() == FName("Shift"))
+	{
+		GetCharacterMovement()->MaxWalkSpeed = 500.f;
+	}
+}
+
+void APlayerCharacter::Callback_OnKeyReleased(const FKey Key)
+{
+	//UE_LOG(LogTemp, Log, TEXT("Key Released : %s"), *Key.GetFName().ToString());
+	if (Key.GetFName() == FName("Shift"))
+	{
+		GetCharacterMovement()->MaxWalkSpeed = 300.f;
+	}
 }
 
 bool APlayerCharacter::HitTraceStart(FHitTraceConfig* HitTraceConfig, float MaxTraceTime)
@@ -205,11 +251,15 @@ void APlayerCharacter::Multicast_HitDamage_Implementation(const FHitDamageConfig
 
 void APlayerCharacter::Server_RefreshVelocity_Implementation()
 {
-	CharacterMovementState.Velocity = GetVelocity();
+	FVector V = GetVelocity();
+	CharacterMovementState.Velocity = V;
+	FRotator R = { 0.f, GetControlRotation().Yaw, 0.f};
+	FVector LocalVelocity = R.UnrotateVector(V.GetSafeNormal2D());
+	float Rad = FMath::Atan2(LocalVelocity.Y, LocalVelocity.X);
+	CharacterMovementState.HeadingRadian = Rad;
 }
 
 void APlayerCharacter::Server_OnAiming_Implementation(float Yaw)
 {
 	CharacterMovementState.FacingYaw = Yaw;
 }
-
