@@ -6,6 +6,7 @@
 #include "Widget/Widget_HUD.h"
 #include "Widget/Widget_Inventory.h"
 #include "GameFramework/CombatLibrary.h"
+#include "Widget/Object/ItemDataObject.h"
 
 class IIPlayerState;
 
@@ -13,13 +14,12 @@ UControllerWidgetComponent::UControllerWidgetComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
 	WidgetFloating = 0;
+	QuickslotObjects.Reserve(3);
 }
 
 void UControllerWidgetComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
-	
 }
 
 void UControllerWidgetComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -69,13 +69,33 @@ bool UControllerWidgetComponent::SetController(TScriptInterface<IIWidgetControll
 	if (Widget_ItemInteract == nullptr) return false;
 	if (Widget_HUD == nullptr) return false;
 	if (Widget_Inventory == nullptr) return false;
+	APlayerController* OwningController = Cast<APlayerController>(InWidgetController->_getUObject());
 
 	Widget_ItemInteract->AddToViewport();
+	Widget_ItemInteract->SetOwningPlayer(OwningController);
 	Widget_ItemInteract->SetVisibility(ESlateVisibility::Collapsed);
 	Widget_HUD->AddToViewport();
 	Widget_HUD->SetVisibility(ESlateVisibility::HitTestInvisible);
+	Widget_HUD->SetOwningPlayer(OwningController);
 	Widget_Inventory->AddToViewport();
 	Widget_Inventory->SetVisibility(ESlateVisibility::Collapsed);
+	Widget_Inventory->SetOwningPlayer(OwningController);
+
+	if (QuickslotObjects.Num() < 3)
+	{
+		for (int8 i = 1; i < 4; i++)
+		{
+			UItemDataObject* DataObject = NewObject<UItemDataObject>(this);
+			DataObject->OwningPlayer = OwningController;
+			DataObject->ItemConfig.ItemIcon;
+			DataObject->ItemConfig.ItemName;
+			DataObject->ItemConfig.ItemCount = 0;
+			DataObject->ItemConfig.QuickSlotKey = FKey(*FString::FromInt(i));
+			Widget_HUD->QuickSlot_AddItemAsObject(DataObject);
+			Widget_Inventory->QuickSlot_AddItemAsObject(DataObject);
+		}
+	}
+
 	return true;
 }
 
@@ -149,4 +169,3 @@ bool UControllerWidgetComponent::IsControllable()
 	if (WidgetFloating & 1 << (uint8)EUserWidget::EUW_Inventory) return false;
 	return true;
 }
-

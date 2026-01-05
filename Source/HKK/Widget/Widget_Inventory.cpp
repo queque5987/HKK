@@ -2,6 +2,11 @@
 #include "Widget/Object/ItemDataObject.h"
 #include "HKK_PCH.h"
 
+void UWidget_Inventory::NativeConstruct()
+{
+	Super::NativeConstruct();
+}
+
 void UWidget_Inventory::OnUpdatePlayerStatFloat_Implementation(const EPlayerStatType PlayerStatType, float CurrStat, float MaxStat)
 {
 	if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, FString::Printf(TEXT("UI Function Called! HP: %f / %f"), CurrStat, MaxStat));
@@ -23,8 +28,33 @@ void UWidget_Inventory::OnUpdatePlayerStatFloat_Implementation(const EPlayerStat
 
 void UWidget_Inventory::AddItem_Implementation(bool bPutIn, EUserWidget AddWidgetType, const FItemConfig& ItemConfig)
 {
+	if (ItemConfig.Stackable)
+	{
+		for (auto& ListItem : InventoryTree->GetListItems())
+		{
+			UItemDataObject* ItemDataObject = Cast<UItemDataObject>(ListItem);
+			if (ItemDataObject == nullptr) continue;
+			if (ItemConfig.ItemType == ItemDataObject->ItemConfig.ItemType)
+			{
+				ItemDataObject->ItemConfig.ItemCount++;
+				ItemDataObject->OnItemSlotUpdated.Broadcast(ListItem);
+				return;
+			}
+		}
+	}
+
 	UItemDataObject* DataObject = NewObject<UItemDataObject>(this);
 	if (DataObject == nullptr) return;
+	if (GetOwningPlayer() == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("UWidget_Inventory :: Owning Player Nullptr"));
+	}
+	DataObject->OwningPlayer = GetOwningPlayer();
 	DataObject->ItemConfig = ItemConfig;
 	InventoryTree->AddItem(DataObject);
+}
+
+void UWidget_Inventory::QuickSlot_AddItemAsObject(UObject* InItem)
+{
+	if (InItem != nullptr) QuickSlotTile->AddItem(InItem);
 }

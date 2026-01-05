@@ -3,6 +3,12 @@
 #include "CoreMinimal.h"
 
 UENUM(BlueprintType)
+enum class EItemType : uint8
+{
+	EIT_EnergyCell,
+	EIT_EnergyBuster
+};
+UENUM(BlueprintType)
 enum class EPlayerStatType : uint8
 {
 	EPST_HP,

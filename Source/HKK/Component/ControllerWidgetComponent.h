@@ -12,6 +12,7 @@ class IIWidgetController;
 class UWidget_ItemInteract;
 class UWidget_HUD;
 class UWidget_Inventory;
+class UItemDataObject;
 class AActor;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -34,11 +35,14 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UWidget_Inventory> Widget_Inventory;
 	float InventoryInterval = 0.f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	TArray<TObjectPtr<UItemDataObject>> QuickslotObjects;
 
 	UINT16 WidgetFloating;
 
 	TObjectPtr<AActor> InteractingPickableItem;
 	FOnGetItem* OnGetItem;
+
 public:	
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
@@ -52,4 +56,5 @@ public:
 	void Callback_OnKeyReleased(const FKey Key);
 
 	bool IsControllable();
+
 };

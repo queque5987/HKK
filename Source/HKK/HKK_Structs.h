@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "RenderResource.h"
+#include "HKK_PCH.h"
 #include "HKK_Structs.generated.h"
 
 class AActor;
@@ -17,7 +18,18 @@ struct FItemConfig
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<UTexture2D> ItemIcon;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 ItemCount = 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	EItemType ItemType;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool Stackable = true;
+
+
 	TObjectPtr<AActor> SpawnedItemActor;
+	FKey QuickSlotKey;
 };
 USTRUCT(BlueprintType)
 struct FHitDamageConfig

@@ -1,6 +1,7 @@
 #include "GameFramework/CombatLibrary.h"
 #include "Interface/Character/ICharacterCombat.h"
 #include "Interface/GameFramework/IPlayerState.h"
+#include "Interface/Controller/IWidgetController.h"
 
 void UCombatLibrary::SendDamage(TScriptInterface<IICharacterCombat> CausedPlayer, TScriptInterface<IICharacterCombat> DamagedPlayer, FHitDamageConfig HitDamageConfig)
 {
@@ -67,3 +68,19 @@ bool UCombatLibrary::GetItem(UObject* ItemOwnerPlayerState, const FItemConfig& I
 	IIPlayerState::Execute_GetItem(ItemOwnerPlayerState, ItemConfig);
 	return false;
 }
+
+//bool UCombatLibrary::RefreshQuickSlot(UObject* OwningPlayerController, UObject* ChangedItemDataObject)
+//{
+//	if (OwningPlayerController == nullptr)
+//	{
+//		LogWarning(3.f, TEXT("OwningPlayerController Not Found"));
+//		return false;
+//	}
+//	if (ChangedItemDataObject == nullptr)
+//	{
+//		LogWarning(3.f, TEXT("ChangedItemDataObject Not Found"));
+//		return false;
+//	}
+//	IIWidgetController::Execute_RefreshQuickSlot(OwningPlayerController, ChangedItemDataObject);
+//	return false;
+//}

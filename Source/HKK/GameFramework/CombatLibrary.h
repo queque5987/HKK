@@ -18,6 +18,7 @@ public:
 	static bool Bind_Inventory(UObject* PlayerInventoryObject, UObject* PlayerStateObject);
 	static bool EquipItem(UObject* OwningPlayerState, AActor* EquipItem);
 	static bool GetItem(UObject* ItemOwnerPlayerState, const FItemConfig& ItemConfig);
+	//static bool RefreshQuickSlot(UObject* OwningPlayerController, UObject* ChangedItemDataObject);
 private:
 	template<typename...Args>
 	static void LogWarning(float DisplayTime, const FString& LogText)

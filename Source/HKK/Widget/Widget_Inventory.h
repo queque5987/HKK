@@ -19,7 +19,7 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	class UTreeView* InventoryTree;
 
-	UPROPERTY(meta = (BindWidget))
+	UPROPERTY(meta = (BindWidget), BlueprintReadWrite)
 	class UTileView* QuickSlotTile;
 
 	UPROPERTY(meta = (BindWidget))
@@ -40,8 +40,11 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	class UImage* Image_WeaponPreview;
 
-public:
+protected:
+	virtual void NativeConstruct() override;
 
+public:
 	virtual void OnUpdatePlayerStatFloat_Implementation(const EPlayerStatType PlayerStatType, float CurrStat, float MaxStat) override;
 	virtual void AddItem_Implementation(bool bPutIn, EUserWidget AddWidgetType, const FItemConfig& ItemConfig) override;
+	void QuickSlot_AddItemAsObject(UObject* InItem);
 };

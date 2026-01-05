@@ -18,3 +18,8 @@ void UWidget_HUD::OnUpdatePlayerStatFloat_Implementation(const EPlayerStatType P
 	}
 
 }
+
+void UWidget_HUD::QuickSlot_AddItemAsObject(UObject* InItem)
+{
+	if (InItem != nullptr) QuickSlotTile->AddItem(InItem);
+}

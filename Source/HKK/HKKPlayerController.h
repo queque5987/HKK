@@ -87,6 +87,7 @@ public:
 	virtual FVector GetPlayerLocation() override { return GetCharacter() != nullptr ? GetCharacter()->GetActorLocation() : FVector::ZeroVector; };
 	virtual UObject* GetPlayerStateObject() override { return (UObject*)PlayerState; };
 	virtual void SetCurorVisibility(bool e) override { bShowMouseCursor = e; };
+
 	/*
 -----IIWidgetController End
 	*/

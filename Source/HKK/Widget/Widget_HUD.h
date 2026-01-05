@@ -5,6 +5,7 @@
 #include "Components/Image.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
+#include "Components/TileView.h"
 #include "Interface/Widget/IUpdatableWidget.h"
 #include "HKK_PCH.h"
 #include "Widget_HUD.generated.h"
@@ -17,6 +18,9 @@ class HKK_API UWidget_HUD : public UUserWidget, public IIUpdatableWidget
 protected:
 	UPROPERTY(meta = (BindWidget))
 	class UImage* Image_WeaponPreview;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTileView* QuickSlotTile;
 
 	UPROPERTY(meta = (BindWidget))
 	class UProgressBar* HPBar;
@@ -33,6 +37,7 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* Text_WeaponName;
 public:
-	
 	virtual void OnUpdatePlayerStatFloat_Implementation(const EPlayerStatType PlayerStatType, float CurrStat, float MaxStat) override;
+
+	void QuickSlot_AddItemAsObject(UObject* InItem);
 };
