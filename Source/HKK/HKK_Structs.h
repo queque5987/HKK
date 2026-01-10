@@ -29,7 +29,7 @@ struct FItemConfig
 
 
 	TObjectPtr<AActor> SpawnedItemActor;
-	FKey QuickSlotKey;
+	FKey QuickSlotKey = FKey("None");
 };
 USTRUCT(BlueprintType)
 struct FHitDamageConfig

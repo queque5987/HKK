@@ -90,6 +90,12 @@ void AHKKPlayerController::LoadingRace()
 	GetWorld()->GetTimerManager().SetTimerForNextTick(this, &AHKKPlayerController::LoadingRace);
 }
 
+void AHKKPlayerController::ChangeQuickSlot_Implementation(UObject* ChangedItemObject, FKey ChangedKey)
+{
+	//if (WidgetComponent != nullptr) WidgetComponent->ChangedQuickSlot(ChangedItemObject, ChangedKey);
+	OnQuickSlotUpdated.Broadcast(ChangedItemObject, ChangedKey);
+}
+
 void AHKKPlayerController::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
@@ -149,6 +155,8 @@ void AHKKPlayerController::SetupInputComponent()
 
 		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Triggered, this, &AHKKPlayerController::InteractTriggered);
 		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Completed, this, &AHKKPlayerController::InteractReleased);
+
+		EnhancedInputComponent->BindAction(QuickSlotAction, ETriggerEvent::Triggered, this, &AHKKPlayerController::QuickSlotTriggered);
 	}
 	else
 	{
@@ -349,4 +357,11 @@ void AHKKPlayerController::UISwitchTriggered(const FInputActionValue& Value)
 	default:
 		break;
 	}
+}
+
+void AHKKPlayerController::QuickSlotTriggered(const FInputActionValue& Value)
+{
+	float QuickslotIndex = Value.Get<float>();
+	uint8 QIdx = FMath::Floor(QuickslotIndex);
+	UE_LOG(LogTemp, Log, TEXT("QuickSlot Usage : %d"), QIdx);
 }

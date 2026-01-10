@@ -20,7 +20,10 @@ public:
 	virtual FOnKeyInputEvent& GetOnKeyTriggered() = 0;
 	virtual FOnKeyInputEvent& GetOnKeyReleased() = 0;
 	virtual FOnGetItem& GetOnGetItem() = 0;
+	virtual FOnQuickSlotUpdated& GetOnQuickSlotUpdated() = 0;
 	virtual FVector GetPlayerLocation() = 0;
 	virtual class UObject* GetPlayerStateObject() = 0;
 	virtual void SetCurorVisibility(bool e) = 0;
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void ChangeQuickSlot(UObject* ChangedItemObject, FKey ChangedKey);
 };

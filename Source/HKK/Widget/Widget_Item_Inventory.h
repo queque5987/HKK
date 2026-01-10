@@ -26,8 +26,8 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* ItemName;
 
-	UPROPERTY(meta = (BindWidget))
-	class UTextBlock* QuickSlotIdx;
+	//UPROPERTY(meta = (BindWidget))
+	//class UTextBlock* QuickSlotIdx;
 
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* ItemCount;
@@ -54,5 +54,4 @@ public:
 	virtual void NativeOnDragLeave(const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
 	virtual void NativeOnDragCancelled(const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
 	//~ End UUserWidget Drag and Drop
-	
 };

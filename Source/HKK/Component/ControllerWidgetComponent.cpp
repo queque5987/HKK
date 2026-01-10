@@ -15,6 +15,7 @@ UControllerWidgetComponent::UControllerWidgetComponent()
 	PrimaryComponentTick.bCanEverTick = true;
 	WidgetFloating = 0;
 	QuickslotObjects.Reserve(3);
+	QuickslotKeySetting.Reserve(3);
 }
 
 void UControllerWidgetComponent::BeginPlay()
@@ -56,6 +57,12 @@ bool UControllerWidgetComponent::SetController(TScriptInterface<IIWidgetControll
 		WidgetController->GetOnSetItemInteractPickupWidget().AddUFunction(this, TEXT("SetItemInteractPickupWidget"));
 		WidgetController->GetOnKeyTriggered().AddUFunction(this, TEXT("Callback_OnKeyTriggered"));
 		WidgetController->GetOnKeyReleased().AddUFunction(this, TEXT("Callback_OnKeyReleased"));
+		//WidgetController->GetOnQuickSlotUpdated().AddUFunction(Widget_HUD, TEXT("OnUpdateQuickSlot"));
+		//WidgetController->GetOnQuickSlotUpdated().AddUFunction(Widget_Inventory, TEXT("OnUpdateQuickSlot"));
+		WidgetController->GetOnQuickSlotUpdated().AddUFunction(this, TEXT("Callback_ChangedQuickSlot"));
+
+		Widget_Inventory->SetQuickSlotEmptyObjects(&QuickslotObjects, &QuickslotKeySetting);
+		Widget_HUD->SetQuickSlotEmptyObjects(&QuickslotObjects, &QuickslotKeySetting);
 	}
 	if (OnGetItem == nullptr)
 	{
@@ -86,13 +93,17 @@ bool UControllerWidgetComponent::SetController(TScriptInterface<IIWidgetControll
 		for (int8 i = 1; i < 4; i++)
 		{
 			UItemDataObject* DataObject = NewObject<UItemDataObject>(this);
+			FKey QKey = FKey(*FString::FromInt(i));
 			DataObject->OwningPlayer = OwningController;
 			DataObject->ItemConfig.ItemIcon;
 			DataObject->ItemConfig.ItemName;
 			DataObject->ItemConfig.ItemCount = 0;
-			DataObject->ItemConfig.QuickSlotKey = FKey(*FString::FromInt(i));
+			DataObject->ItemConfig.QuickSlotKey = QKey;
+			DataObject->SetIsQuickSlotInitializer(QKey);
 			Widget_HUD->QuickSlot_AddItemAsObject(DataObject);
 			Widget_Inventory->QuickSlot_AddItemAsObject(DataObject);
+			QuickslotKeySetting.Add(QKey);
+			QuickslotObjects.Add(DataObject);
 		}
 	}
 
@@ -162,6 +173,41 @@ void UControllerWidgetComponent::Callback_OnKeyReleased(FKey Key)
 	{
 		Widget_ItemInteract->SwitchWidget(false);
 	}
+}
+
+void UControllerWidgetComponent::Callback_ChangedQuickSlot(UObject* ChangedItemObject, FKey ChangedKey)
+{
+	int8 idx = 0;
+	TArray<UObject*> NewArray;
+	if (Widget_Inventory == nullptr) return;
+	for (UObject* Item : Widget_Inventory->GetQuickSlotObjectArr())
+	{
+		UItemDataObject* ItemDataObject = Cast<UItemDataObject>(Item);
+		FKey QuickSlotSettingKey = QuickslotKeySetting[idx];
+		if (ItemDataObject != nullptr)
+		{
+			if (Item == ChangedItemObject && QuickSlotSettingKey != ChangedKey)
+			{
+				NewArray.Add(Cast<UObject>(QuickslotObjects[idx]));
+			}
+			else if (QuickSlotSettingKey == ChangedKey)
+			{
+				NewArray.Add(ChangedItemObject);
+			}
+			else NewArray.Add(Item);
+		}
+		else
+		{
+			NewArray.Add(Cast<UObject>(QuickslotObjects[idx]));
+		}
+		idx++;
+	}
+	if (Widget_HUD) Widget_HUD->UpdateQuickSlotObjectArr(NewArray);
+	if (Widget_Inventory) Widget_Inventory->UpdateQuickSlotObjectArr(NewArray);
+
+	UItemDataObject* UpdatedItemDataObject = Cast<UItemDataObject>(ChangedItemObject);
+	if (UpdatedItemDataObject != nullptr) UpdatedItemDataObject->OnItemSlotUpdated.Broadcast(ChangedItemObject);
+
 }
 
 bool UControllerWidgetComponent::IsControllable()

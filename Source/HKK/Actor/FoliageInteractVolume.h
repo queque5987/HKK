@@ -28,6 +28,8 @@ protected:
 	TObjectPtr<UMaterialInstanceDynamic> MID_FoliageInteractRenderTargetGenerator;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UTextureRenderTarget2D> RT_FoliageInteractImpact;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	TArray<TObjectPtr<UStaticMesh>> AffectFoliages;
 
 	TQueue<TScriptInterface<IICharacterMovement>> InteractingSourceComponentQueue;
 	TSet<TScriptInterface<IICharacterMovement>> InteractingSourceComponentSet;

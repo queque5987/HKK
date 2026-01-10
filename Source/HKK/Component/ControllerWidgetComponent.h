@@ -37,6 +37,8 @@ protected:
 	float InventoryInterval = 0.f;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TArray<TObjectPtr<UItemDataObject>> QuickslotObjects;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	TArray<FKey> QuickslotKeySetting;
 
 	UINT16 WidgetFloating;
 
@@ -54,6 +56,8 @@ public:
 	void Callback_OnKeyTriggered(const FKey Key);
 	UFUNCTION()
 	void Callback_OnKeyReleased(const FKey Key);
+	UFUNCTION()
+	void Callback_ChangedQuickSlot(UObject* ChangedItemObject, FKey ChangedKey);
 
 	bool IsControllable();
 

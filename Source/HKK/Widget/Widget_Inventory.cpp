@@ -54,6 +54,54 @@ void UWidget_Inventory::AddItem_Implementation(bool bPutIn, EUserWidget AddWidge
 	InventoryTree->AddItem(DataObject);
 }
 
+void UWidget_Inventory::AddNewItemObject_Implementation(UObject* AddItemObject)
+{
+	UItemDataObject* ItemDataObject = Cast<UItemDataObject>(AddItemObject);
+	ItemDataObject->OwningPlayer = GetOwningPlayer();
+	InventoryTree->AddItem(ItemDataObject);
+}
+
+void UWidget_Inventory::OnUpdateQuickSlot_Implementation(UObject* UpdatedItem, FKey Key)
+{
+	//int8 idx = 0;
+	//TArray<UObject*> NewArray;
+	//for (UObject* Item : QuickSlotTile->GetListItems())
+	//{
+	//	UItemDataObject* ItemDataObject = Cast<UItemDataObject>(Item);
+	//	FKey QuickSlotSettingKey = (*QuickSlotKeySetting)[idx];
+	//	if (ItemDataObject != nullptr)
+	//	{
+	//		if (Item == UpdatedItem && QuickSlotSettingKey != Key)
+	//		{
+	//			NewArray.Add(Cast<UObject>((*QuickSlotEmptyObjects)[idx]));
+	//		}
+	//		else if (QuickSlotSettingKey == Key)
+	//		{
+	//			NewArray.Add(UpdatedItem);
+	//		}
+	//		else NewArray.Add(Item);
+	//	}
+	//	else
+	//	{
+	//		NewArray.Add(Cast<UObject>((*QuickSlotEmptyObjects)[idx]));
+	//	}
+	//	idx++;
+	//}
+	//QuickSlotTile->SetListItems(NewArray);
+	//UItemDataObject* UpdatedItemDataObject = Cast<UItemDataObject>(UpdatedItem);
+	//if (UpdatedItemDataObject != nullptr) UpdatedItemDataObject->OnItemSlotUpdated.Broadcast(UpdatedItem);
+}
+
+void UWidget_Inventory::UpdateQuickSlotObjectArr(TArray<UObject*>& InQuickSlotObjectArr)
+{
+	if (QuickSlotTile) QuickSlotTile->SetListItems(InQuickSlotObjectArr);
+}
+
+const TArray<UObject*>& UWidget_Inventory::GetQuickSlotObjectArr()
+{
+	return QuickSlotTile->GetListItems();
+}
+
 void UWidget_Inventory::QuickSlot_AddItemAsObject(UObject* InItem)
 {
 	if (InItem != nullptr) QuickSlotTile->AddItem(InItem);

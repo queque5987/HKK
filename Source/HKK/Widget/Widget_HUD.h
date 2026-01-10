@@ -10,6 +10,8 @@
 #include "HKK_PCH.h"
 #include "Widget_HUD.generated.h"
 
+class UItemDataObject;
+
 UCLASS()
 class HKK_API UWidget_HUD : public UUserWidget, public IIUpdatableWidget
 {
@@ -36,8 +38,19 @@ protected:
 
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* Text_WeaponName;
+
+	TArray<TObjectPtr<UItemDataObject>>* QuickSlotEmptyObjects;
+	TArray<FKey>* QuickSlotKeySetting;
 public:
 	virtual void OnUpdatePlayerStatFloat_Implementation(const EPlayerStatType PlayerStatType, float CurrStat, float MaxStat) override;
+	UFUNCTION()
+	virtual void OnUpdateQuickSlot_Implementation(UObject* UpdatedItem, FKey Key) override;
+	void UpdateQuickSlotObjectArr(TArray<UObject*>& InQuickSlotObjectArr);
 
 	void QuickSlot_AddItemAsObject(UObject* InItem);
+	void SetQuickSlotEmptyObjects(TArray<TObjectPtr<UItemDataObject>>* InQuickSlotEmptyObjects, TArray<FKey>* InQuickSlotKeySetting)
+	{
+		QuickSlotEmptyObjects = InQuickSlotEmptyObjects;
+		QuickSlotKeySetting = InQuickSlotKeySetting;
+	};
 };

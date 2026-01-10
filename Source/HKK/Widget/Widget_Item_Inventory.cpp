@@ -9,7 +9,6 @@
 void UWidget_Item_Inventory::NativeOnListItemObjectSet(UObject* InListItemObject)
 {
 	ListItemObject = InListItemObject;
-
 	UItemDataObject* DataObject = Cast<UItemDataObject>(ListItemObject);
 	if (DataObject == nullptr) return;
 
@@ -21,14 +20,6 @@ void UWidget_Item_Inventory::NativeOnListItemObjectSet(UObject* InListItemObject
 	if (ItemName)
 	{
 		ItemName->SetText(ItemConfig.ItemName);
-	}
-	if (QuickSlotIdx)
-	{
-		QuickSlotIdx->SetText(
-			ItemConfig.QuickSlotKey.GetFName() != "None" ?
-			FText::FromString(ItemConfig.QuickSlotKey.GetFName().ToString()) :
-			FText::FromString(FString(""))
-		);
 	}
 	if (ItemCount)
 	{
@@ -49,7 +40,6 @@ void UWidget_Item_Inventory::NativeOnListItemObjectSet(UObject* InListItemObject
 	{
 		SetOwningPlayer(DataObject->OwningPlayer);
 	}
-
 	if (OnItemSlotUpdated_DelegatePtr != nullptr && OnItemSlotUpdatedDelegateHandle.IsValid())
 	{
 		OnItemSlotUpdated_DelegatePtr->Remove(OnItemSlotUpdatedDelegateHandle);
@@ -130,24 +120,24 @@ bool UWidget_Item_Inventory::NativeOnDragOver(const FGeometry& InGeometry, const
 
 bool UWidget_Item_Inventory::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)
 {
-	Super::NativeOnDrop(InGeometry, InDragDropEvent, InOperation);
-	if (InOperation == nullptr) return false;
-	UItemDataObject* DraggedItemData = Cast<UItemDataObject>(InOperation->Payload);
-	if (DraggedItemData == nullptr) return false;
+	return Super::NativeOnDrop(InGeometry, InDragDropEvent, InOperation);
+	//if (InOperation == nullptr) return false;
+	//UItemDataObject* DraggedItemData = Cast<UItemDataObject>(InOperation->Payload);
+	//if (DraggedItemData == nullptr) return false;
 
-	UItemDataObject* CurrentItemData = Cast<UItemDataObject>(ListItemObject);
-	if (CurrentItemData == nullptr) return false;
+	//UItemDataObject* CurrentItemData = Cast<UItemDataObject>(ListItemObject);
+	//if (CurrentItemData == nullptr) return false;
 
-	FKey tempKey = CurrentItemData->ItemConfig.QuickSlotKey;
-	//CurrentItemData->ItemConfig = DraggedItemData->ItemConfig;
-	//CurrentItemData->ItemConfig.QuickSlotKey = tempKey;
-	DraggedItemData->ItemConfig.QuickSlotKey = tempKey;
-	CurrentItemData->OnItemSlotUpdated.Broadcast(InOperation->Payload);
-	//NativeOnListItemObjectSet(CurrentItemData);
+	////FKey tempKey = CurrentItemData->ItemConfig.QuickSlotKey;
+	//FKey tempKey = FKey(FName(QuickSlotIdx->GetText().ToString()));
+	//DraggedItemData->ItemConfig.QuickSlotKey = tempKey;
+	//CurrentItemData->OnItemSlotUpdated.Broadcast(InOperation->Payload);
+	//DraggedItemData->OnItemSlotUpdated.Broadcast(InOperation->Payload);
+	////NativeOnListItemObjectSet(CurrentItemData);
 
-	//UObject* OwningPlayerControllerObject = GetOwningPlayer();
-	//UCombatLibrary::RefreshQuickSlot(OwningPlayerControllerObject);
-	return true;
+	////UObject* OwningPlayerControllerObject = GetOwningPlayer();
+	////UCombatLibrary::RefreshQuickSlot(OwningPlayerControllerObject);
+	//return true;
 }
 
 void UWidget_Item_Inventory::NativeOnDragEnter(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)

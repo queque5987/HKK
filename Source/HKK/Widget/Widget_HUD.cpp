@@ -1,4 +1,5 @@
 #include "Widget/Widget_HUD.h"
+#include "Widget/Object/ItemDataObject.h"
 
 void UWidget_HUD::OnUpdatePlayerStatFloat_Implementation(const EPlayerStatType PlayerStatType, float CurrStat, float MaxStat)
 {
@@ -17,6 +18,15 @@ void UWidget_HUD::OnUpdatePlayerStatFloat_Implementation(const EPlayerStatType P
 		break;
 	}
 
+}
+
+void UWidget_HUD::OnUpdateQuickSlot_Implementation(UObject* UpdatedItem, FKey Key)
+{
+}
+
+void UWidget_HUD::UpdateQuickSlotObjectArr(TArray<UObject*>& InQuickSlotObjectArr)
+{
+	if (QuickSlotTile) QuickSlotTile->SetListItems(InQuickSlotObjectArr);
 }
 
 void UWidget_HUD::QuickSlot_AddItemAsObject(UObject* InItem)

@@ -21,5 +21,8 @@ public:
 	void OnUpdatePlayerStatFloat(const EPlayerStatType PlayerStatType, float CurrStat, float MaxStat);
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void AddItem(bool bPutIn, EUserWidget AddWidgetType, const FItemConfig& ItemConfig);
-	
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void AddNewItemObject(UObject* AddItemObject);
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void OnUpdateQuickSlot(UObject* UpdatedItem, FKey Key);
 };

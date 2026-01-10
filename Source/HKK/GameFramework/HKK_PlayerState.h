@@ -8,11 +8,13 @@
 #include "HKK_Structs.h"
 #include "HKK_PlayerState.generated.h"
 
+class UItemDataObject;
+
 UCLASS()
 class HKK_API AHKK_PlayerState : public APlayerState, public IIPlayerState
 {
 	GENERATED_BODY()
-
+	AHKK_PlayerState();
 private:
 	UPROPERTY(ReplicatedUsing = OnRep_CurrHP, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	float CurrHP = 100.f;
@@ -22,11 +24,16 @@ private:
 	float CurrStamina;
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	float MaxStamina;
-	UPROPERTY(ReplicatedUsing = OnRep_PossesingItem, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	TArray<FItemConfig> PossesingItem;
+	//UPROPERTY(ReplicatedUsing = OnRep_PossesingItem, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	//TArray<FItemConfig> PossesingItem;
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	TArray<TObjectPtr<UItemDataObject>> PossingItemData;
+
+	TArray<TWeakObjectPtr<UItemDataObject>> QuickSlotItemData;
 
 	FOnUpdateStatFloat OnUpdateStatFloat;
 	FOnSetItemInteractWidget OnUpdateItemToInventory;
+	FOnAddItemDataObject OnAddItemDataObject;
 public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
@@ -54,8 +61,6 @@ public:
 	UFUNCTION(Server, Reliable)
 	void Server_SetMaxStamina(float e);
 
-	//virtual bool GetItem()
-
 	UFUNCTION()
 	void OnRep_CurrStamina();
 	UFUNCTION()
@@ -64,6 +69,7 @@ public:
 	void OnRep_MaxStamina();
 	UFUNCTION()
 	void OnRep_MaxHP();
+
 	UFUNCTION()
-	void OnRep_PossesingItem();
+	void OnItemDataUpdated(UObject* UpdatedItem);
 };

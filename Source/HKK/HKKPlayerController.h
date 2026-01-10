@@ -69,6 +69,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
 	UInputAction* InteractAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
+	UInputAction* QuickSlotAction;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UControllerWidgetComponent> WidgetComponent;
 
@@ -84,9 +87,13 @@ public:
 	FORCEINLINE virtual FOnKeyInputEvent& GetOnKeyTriggered() override { return OnKeyTriggered; }
 	FORCEINLINE virtual FOnKeyInputEvent& GetOnKeyReleased() override { return OnKeyReleased; }
 	FORCEINLINE virtual FOnGetItem& GetOnGetItem() override { return OnGetItem; }
+	FORCEINLINE virtual FOnQuickSlotUpdated& GetOnQuickSlotUpdated() override { return OnQuickSlotUpdated; }
 	virtual FVector GetPlayerLocation() override { return GetCharacter() != nullptr ? GetCharacter()->GetActorLocation() : FVector::ZeroVector; };
 	virtual UObject* GetPlayerStateObject() override { return (UObject*)PlayerState; };
 	virtual void SetCurorVisibility(bool e) override { bShowMouseCursor = e; };
+
+	UFUNCTION()
+	virtual void ChangeQuickSlot_Implementation(UObject* ChangedItemObject, FKey ChangedKey) override;
 
 	/*
 -----IIWidgetController End
@@ -119,6 +126,7 @@ protected:
 	FOnKeyInputEvent OnKeyReleased;
 	FOnGetItem OnGetItem;
 	FOnSetWalkSpeed OnSetWalkSpeed;
+	FOnQuickSlotUpdated OnQuickSlotUpdated;
 	/*
 		Delegates End
 	*/
@@ -156,6 +164,7 @@ protected:
 	void InteractTriggered();
 	void InteractReleased();
 	void UISwitchTriggered(const FInputActionValue& Value);
+	void QuickSlotTriggered(const FInputActionValue& Value);
 private:
 	FVector CachedDestination;
 	FVector CachedDirection;
