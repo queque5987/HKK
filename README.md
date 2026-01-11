@@ -79,3 +79,68 @@ void AHKKPlayerController::LoadingRace()
 오히려 그 과정에서 덕분에 코드를 돌아보며 아키텍쳐를 개선하여 가독성을 높일 수 있었고,
 
 의존성을 최소화하여 전체적인 구조를 객체지향적으로 리팩토링 할 수 있었습니다.
+
+
+
+-----
+# 환경(Foliage) 피드백 시스템 구현
+-----
+
+## 아이디어
+
+0. 수풀 사이를 비집고 들어갈 때 수풀의 반응을 구현하고자함.
+1. Wind Directional Source를 override하여 특정 액터와 충돌 중인 부분에 Vector를 더하는 방식으로 구현하면 될 것 같음
+2. Perlin Noise를 활용하여 구현하고자 하였으나, 3차원 공간에서 성능 저하 이슈가 있다는 점을 발견
+3. RenderTarget을 사용하여 충돌 중인 좌표를 gpu를 사용하여 계산, 적용하기로 결정
+
+## 구현
+
+![FoliageTest_Trial1](https://github.com/user-attachments/assets/8c8bc5a6-3fd9-4ca1-aac3-f0e1f03958ed)
+
+![FoliageTest_Material1](https://github.com/user-attachments/assets/6bdd571f-adb7-413c-b87a-5872256f1486)
+
+기존 마켓플레이스 Foliage의 머티리얼에 WPO를 더하여 구현
+
+RenderTarget을 4등분하여 각각 XY, XZ, YZ 세 좌표면을 저장하여 3차원 좌표 내의 3차원 벡터를 저장하였습니다.
+
+RenderTarget 중 R 값에는 중심으로부터 임의의 위치까지 향하는 방향 벡터에서 Theta를 산출하여 저장하였습니다.
+
+Center Position을 파라미터로 받아 Texture Coordinate에 뺀 후, Normalize하여 산출하였고, Atan2를 사용하여 Theta 값으로 치환하여 저장하였습니다. 
+
+G 값에는 중점으로부터의 거리를 저장하였습니다.
+
+파라미터로 입력 받은 Center Position과 Radius를 활용하여 Radial Gradient Exponential으로 특정 좌표로부터 원형 그라데이션을 그렸습니다.
+
+```c++
+```
+
+Foliage의 충돌을 연산 할 Volume과 해당 Volume 안에서 연산을 수행할 컴포넌트를 구현하였습니다.
+
+//TODO 자세히 쓰기
+
+## 1차 개선점
+
+1. Direction 관련 버그 발견
+
+RenderTarget의 포맷은 16비트로 //TODO 자세한 범위 설정하였으나 Material을 RenderTarget으로 변환하는 과정에서 음수가 소실되는 현상을 발견.
+
+Normalize시 -1 ~ 1 사이의 범위를 0 ~ 1 범위로 이동시켜 저장하여 해결.
+
+2. 확장성을 고려하여 분산
+
+Theta로 변환하여 저장할 경우 RGBA 중 하나의 채널만을 사용하여 경제적이나, 여러개의 충돌한 액터의 벡터를 합산하는 데 불필요한 연산이 요구됨
+
+따라서 XY 좌표면의 경우 방향벡터의 X, Y 값을 각각 저장하는 방식으로 변경하여, 여러개의 RenderTarget을 병합하기 용이하도록 하였음.
+
+![FoliageTest_Trial2](https://github.com/user-attachments/assets/1c8d6ffc-026e-4ed8-a99f-3f459b64c92b)
+
+## 2차 개선점
+
+1. Trail 남기기
+
+2. 여러개의 Impulse 병합
+
+
+## 차후 개선점
+
+1. 성능에 따른 병렬 처리 개수 제한 설정 가능
