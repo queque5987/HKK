@@ -64,6 +64,9 @@ public:
 	UInputAction* MouseMoveAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
+	UInputAction* MouseScrollAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
 	UInputAction* MouseAttackAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
@@ -88,12 +91,16 @@ public:
 	FORCEINLINE virtual FOnKeyInputEvent& GetOnKeyReleased() override { return OnKeyReleased; }
 	FORCEINLINE virtual FOnGetItem& GetOnGetItem() override { return OnGetItem; }
 	FORCEINLINE virtual FOnQuickSlotUpdated& GetOnQuickSlotUpdated() override { return OnQuickSlotUpdated; }
+	FORCEINLINE virtual FOnItemEquiped& GetOnItemEquiped() override { return OnItemEquiped; }
 	virtual FVector GetPlayerLocation() override { return GetCharacter() != nullptr ? GetCharacter()->GetActorLocation() : FVector::ZeroVector; };
 	virtual UObject* GetPlayerStateObject() override { return (UObject*)PlayerState; };
 	virtual void SetCurorVisibility(bool e) override { bShowMouseCursor = e; };
 
 	UFUNCTION()
 	virtual void ChangeQuickSlot_Implementation(UObject* ChangedItemObject, FKey ChangedKey) override;
+	virtual void ChangeEquipSlot_Implementation(UObject* ChangedItemObject, EEquipmentSlotType EquipmentSlotType) override;
+	virtual void EquipmentItemDragDetected_Implementation(bool e) override;
+	virtual EEquipmentSlotType GetLeftEquipmentSlotIndex_Implementation() override;
 
 	/*
 -----IIWidgetController End
@@ -127,6 +134,8 @@ protected:
 	FOnGetItem OnGetItem;
 	FOnSetWalkSpeed OnSetWalkSpeed;
 	FOnQuickSlotUpdated OnQuickSlotUpdated;
+	FOnItemEquiped OnItemEquiped;
+
 	/*
 		Delegates End
 	*/
@@ -160,6 +169,7 @@ protected:
 	void Jump();
 	void JumpReleased();
 	void MouseMoved(const FInputActionValue& Value);
+	void MouseScrolled(const FInputActionValue& Value);
 	void Attack0_RFistTriggered(const FInputActionValue& Value);
 	void InteractTriggered();
 	void InteractReleased();

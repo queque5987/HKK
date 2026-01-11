@@ -1,6 +1,12 @@
 #include "Widget/Widget_HUD.h"
 #include "Widget/Object/ItemDataObject.h"
 
+void UWidget_HUD::SetVisibility(ESlateVisibility InVisibility)
+{
+	Super::SetVisibility(InVisibility);
+	Execute_OnSetVisibility(this, InVisibility == ESlateVisibility::Collapsed || InVisibility == ESlateVisibility::Hidden ? false : true);
+}
+
 void UWidget_HUD::OnUpdatePlayerStatFloat_Implementation(const EPlayerStatType PlayerStatType, float CurrStat, float MaxStat)
 {
 	if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, FString::Printf(TEXT("UI Function Called! HP: %f / %f"), CurrStat, MaxStat));
@@ -22,6 +28,11 @@ void UWidget_HUD::OnUpdatePlayerStatFloat_Implementation(const EPlayerStatType P
 
 void UWidget_HUD::OnUpdateQuickSlot_Implementation(UObject* UpdatedItem, FKey Key)
 {
+}
+
+void UWidget_HUD::OnKeyTriggered_Implementation(FKey Key)
+{
+
 }
 
 void UWidget_HUD::UpdateQuickSlotObjectArr(TArray<UObject*>& InQuickSlotObjectArr)

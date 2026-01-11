@@ -7,6 +7,12 @@ void UWidget_Inventory::NativeConstruct()
 	Super::NativeConstruct();
 }
 
+void UWidget_Inventory::SetVisibility(ESlateVisibility InVisibility)
+{
+	Super::SetVisibility(InVisibility);
+	Execute_OnSetVisibility(this, InVisibility == ESlateVisibility::Collapsed || InVisibility == ESlateVisibility::Hidden ? false : true);
+}
+
 void UWidget_Inventory::OnUpdatePlayerStatFloat_Implementation(const EPlayerStatType PlayerStatType, float CurrStat, float MaxStat)
 {
 	if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, FString::Printf(TEXT("UI Function Called! HP: %f / %f"), CurrStat, MaxStat));
@@ -97,12 +103,27 @@ void UWidget_Inventory::UpdateQuickSlotObjectArr(TArray<UObject*>& InQuickSlotOb
 	if (QuickSlotTile) QuickSlotTile->SetListItems(InQuickSlotObjectArr);
 }
 
+void UWidget_Inventory::UpdateEquipmentSlotObjectArr(TArray<UObject*>& InEquipmentSlotObjectArr)
+{
+	if (EquipmentSlotTile) EquipmentSlotTile->SetListItems(InEquipmentSlotObjectArr);
+}
+
 const TArray<UObject*>& UWidget_Inventory::GetQuickSlotObjectArr()
 {
 	return QuickSlotTile->GetListItems();
 }
 
+const TArray<UObject*>& UWidget_Inventory::GetEquipmentSlotObjectArr()
+{
+	return EquipmentSlotTile->GetListItems();
+}
+
 void UWidget_Inventory::QuickSlot_AddItemAsObject(UObject* InItem)
 {
 	if (InItem != nullptr) QuickSlotTile->AddItem(InItem);
+}
+
+void UWidget_Inventory::EquipmentSlot_AddItemAsObject(UObject* InItem)
+{
+	if (InItem != nullptr) EquipmentSlotTile->AddItem(InItem);
 }

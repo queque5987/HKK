@@ -16,7 +16,9 @@ public:
 	static void SendDamage(TScriptInterface<IICharacterCombat> CausedPlayer, TScriptInterface<IICharacterCombat> DamagedPlayer, FHitDamageConfig HitDamageConfig);
 	static bool Bind_HUD(UObject* PlayerHUDObject, UObject* PlayerStateObject);
 	static bool Bind_Inventory(UObject* PlayerInventoryObject, UObject* PlayerStateObject);
-	static bool EquipItem(UObject* OwningPlayerState, AActor* EquipItem);
+	static bool Bind_Equipment(UObject* PlayerCharacterObject, UObject* PlayerStateObject);
+
+	static bool EquipItem(UObject* OwningPlayerController, UObject* EquipItemDataObject, FItemConfig EquipItemConfig);
 	static bool GetItem(UObject* ItemOwnerPlayerState, const FItemConfig& ItemConfig);
 	//static bool RefreshQuickSlot(UObject* OwningPlayerController, UObject* ChangedItemDataObject);
 private:

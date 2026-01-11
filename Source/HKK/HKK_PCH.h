@@ -3,6 +3,14 @@
 #include "CoreMinimal.h"
 
 UENUM(BlueprintType)
+enum class EEquipmentSlotType : uint8
+{
+	EEST_EquipSlot_Default,
+	EEST_EquipSlot0,
+	EEST_EquipSlot1,
+	EEST_EquipSlot2
+};
+UENUM(BlueprintType)
 enum class EItemType : uint8
 {
 	EIT_EnergyCell,

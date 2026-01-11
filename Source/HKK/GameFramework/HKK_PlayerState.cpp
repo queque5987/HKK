@@ -6,6 +6,8 @@
 AHKK_PlayerState::AHKK_PlayerState() : Super()
 {
 	QuickSlotItemData.SetNum(3);
+	EquipmentSlotItemData.SetNum(4);
+	CurrentEquipSlotIndex = 0;
 }
 
 void AHKK_PlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -17,6 +19,7 @@ void AHKK_PlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME(AHKK_PlayerState, MaxStamina);
 	//DOREPLIFETIME(AHKK_PlayerState, PossesingItem);
 	DOREPLIFETIME(AHKK_PlayerState, PossingItemData);
+	DOREPLIFETIME(AHKK_PlayerState, CurrentEquipSlotIndex);
 }
 
 bool AHKK_PlayerState::BindDelegate_HUDWidget_Implementation(UObject* BindWidget)
@@ -105,6 +108,45 @@ void AHKK_PlayerState::Server_GetItem_Implementation(const FItemConfig& ItemConf
 	//if (HasAuthority()) OnRep_PossesingItem();
 }
 
+void AHKK_PlayerState::Server_EquipmentSlotChanged_Implementation(UObject* ChangedItemObject, EEquipmentSlotType EquipmentSlotType)
+{
+	uint8 QuickslotIndex = StaticCast<uint8>(EquipmentSlotType);
+	UItemDataObject* ChangedDataObject = Cast<UItemDataObject>(ChangedItemObject);
+	EquipmentSlotItemData[QuickslotIndex] = ChangedDataObject;
+
+	uint8 idx = 0;
+	for (TWeakObjectPtr<UItemDataObject>& SlotItemData : EquipmentSlotItemData)
+	{
+		idx++;
+		if (!SlotItemData.IsValid()) continue;
+		EEquipmentSlotType CurrEquipSlotType = StaticCast<EEquipmentSlotType>(idx - 1);
+		UItemDataObject* DataObject = SlotItemData.Get();
+
+		if (DataObject == ChangedDataObject && DataObject->ItemConfig.EquipmentSlotType != CurrEquipSlotType)
+		{
+			SlotItemData = nullptr;
+		}
+
+	}
+}
+
+void AHKK_PlayerState::Server_QuickSlotChanged_Implementation(UObject* ChangedItemObject, FKey ChangedKey)
+{
+	UItemDataObject* ChangedDataObject = Cast<UItemDataObject>(ChangedItemObject);
+	for (int8 i = 1; i < 4; i++)
+	{
+		FKey CurrentQuickSlotKey = FKey(*FString::FromInt(i));
+		if (CurrentQuickSlotKey == ChangedKey)
+		{
+			QuickSlotItemData[i - 1] = ChangedDataObject;
+		}
+		else if (QuickSlotItemData[i - 1].Get() == ChangedDataObject)
+		{
+			QuickSlotItemData[i - 1] = nullptr;
+		}
+	}
+}
+
 void AHKK_PlayerState::OnRep_CurrStamina()
 {
 	OnUpdateStatFloat.Broadcast(EPlayerStatType::EPST_Stamina, CurrStamina, MaxStamina);
@@ -124,6 +166,11 @@ void AHKK_PlayerState::OnRep_MaxStamina()
 void AHKK_PlayerState::OnRep_MaxHP()
 {
 	OnUpdateStatFloat.Broadcast(EPlayerStatType::EPST_HP, CurrHP, MaxHP);
+}
+
+void AHKK_PlayerState::OnRep_CurrentEquipSlotIndex()
+{
+
 }
 
 void AHKK_PlayerState::OnItemDataUpdated(UObject* UpdatedItem)
@@ -170,5 +217,36 @@ void AHKK_PlayerState::OnItemDataUpdated(UObject* UpdatedItem)
 			UE_LOG(LogTemp, Log, TEXT("QuickSlot %d %s"), idx, *WeakDataObject.Get()->ItemConfig.ItemName.ToString());
 		}
 		idx++;
+	}
+}
+
+void AHKK_PlayerState::Callback_OnEquipmentItemSlotChanged(UObject* ChangedItemObject, EEquipmentSlotType EquipmentSlotType)
+{
+	Server_EquipmentSlotChanged(ChangedItemObject, EquipmentSlotType);
+}
+
+void AHKK_PlayerState::Callback_ChangedQuickSlot(UObject* ChangedItemObject, FKey ChangedKey)
+{
+	Server_QuickSlotChanged(ChangedItemObject, ChangedKey);
+}
+
+void AHKK_PlayerState::Callback_KeyTriggered(FKey Key)
+{
+	if (Key == FKey("MouseScrollUp") || Key == FKey("MouseScrollDown"))
+	{
+		bool Flag = false;
+		int8 SearchIdx = CurrentEquipSlotIndex;
+		for (int8 i = 0; i < 4; (Key == FKey("MouseScrollUp") ? i-- : i++))
+		{
+			SearchIdx++;
+			SearchIdx %= 4;
+			if (EquipmentSlotItemData[SearchIdx].IsValid() || SearchIdx == 0)
+			{
+				Flag = true;
+				break;
+			}
+		}
+		if (Flag) CurrentEquipSlotIndex = SearchIdx;
+		else CurrentEquipSlotIndex = 0;
 	}
 }

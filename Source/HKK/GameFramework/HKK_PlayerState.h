@@ -20,16 +20,19 @@ private:
 	float CurrHP = 100.f;
 	UPROPERTY(ReplicatedUsing = OnRep_MaxHP, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	float MaxHP = 100.f;
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(ReplicatedUsing = OnRep_CurrStamina, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	float CurrStamina;
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(ReplicatedUsing = OnRep_MaxStamina, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	float MaxStamina;
 	//UPROPERTY(ReplicatedUsing = OnRep_PossesingItem, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	//TArray<FItemConfig> PossesingItem;
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TArray<TObjectPtr<UItemDataObject>> PossingItemData;
+	UPROPERTY(ReplicatedUsing = OnRep_CurrentEquipSlotIndex, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	int32 CurrentEquipSlotIndex;
 
 	TArray<TWeakObjectPtr<UItemDataObject>> QuickSlotItemData;
+	TArray<TWeakObjectPtr<UItemDataObject>> EquipmentSlotItemData;
 
 	FOnUpdateStatFloat OnUpdateStatFloat;
 	FOnSetItemInteractWidget OnUpdateItemToInventory;
@@ -50,6 +53,7 @@ public:
 	virtual bool BindDelegate_HUDWidget_Implementation(class UObject* BindWidget) override;
 	virtual bool BindDelegate_InventoryWidget_Implementation(class UObject* BindWidget) override;
 	virtual void GetItem_Implementation(const FItemConfig& ItemConfig) override;
+
 	UFUNCTION(Server, Reliable)
 	void Server_GetItem(const FItemConfig& ItemConfig);
 	UFUNCTION(Server, Reliable)
@@ -60,6 +64,10 @@ public:
 	void Server_SetMaxHP(float e);
 	UFUNCTION(Server, Reliable)
 	void Server_SetMaxStamina(float e);
+	UFUNCTION(Server, Reliable)
+	void Server_EquipmentSlotChanged(UObject* ChangedItemObject, EEquipmentSlotType EquipmentSlotType);
+	UFUNCTION(Server, Reliable)
+	void Server_QuickSlotChanged(UObject* ChangedItemObject, FKey ChangedKey);
 
 	UFUNCTION()
 	void OnRep_CurrStamina();
@@ -69,7 +77,17 @@ public:
 	void OnRep_MaxStamina();
 	UFUNCTION()
 	void OnRep_MaxHP();
+	UFUNCTION()
+	void OnRep_CurrentEquipSlotIndex();
 
 	UFUNCTION()
 	void OnItemDataUpdated(UObject* UpdatedItem);
+
+	// Delegate Callbacks
+	UFUNCTION()
+	void Callback_OnEquipmentItemSlotChanged(UObject* ChangedItemObject, EEquipmentSlotType EquipmentSlotType);
+	UFUNCTION()
+	void Callback_ChangedQuickSlot(UObject* ChangedItemObject, FKey ChangedKey);
+	UFUNCTION()
+	void Callback_KeyTriggered(FKey Key);
 };

@@ -25,4 +25,10 @@ public:
 	void AddNewItemObject(UObject* AddItemObject);
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void OnUpdateQuickSlot(UObject* UpdatedItem, FKey Key);
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void OnKeyTriggered(FKey Key);
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	void OnSetVisibility(bool e);
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	void OnEquipmentItemDragDetected(bool IsOn);
 };

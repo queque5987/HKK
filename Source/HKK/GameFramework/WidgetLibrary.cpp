@@ -8,3 +8,18 @@ void UWidgetLibrary::QuickSlotChanged(UObject* ChangedPlayerController, UObject*
 
 	IIWidgetController::Execute_ChangeQuickSlot(ChangedPlayerController, ChangedItemObject, ChangedKey);
 }
+
+void UWidgetLibrary::EquipmentSlotChanged(UObject* ChangedPlayerController, UObject* ChangedItemObject, EEquipmentSlotType EquipmentSlotType)
+{
+	IIWidgetController::Execute_ChangeEquipSlot(ChangedPlayerController, ChangedItemObject, EquipmentSlotType);
+}
+
+void UWidgetLibrary::EquipmentItemDragDetected(UObject* OwningPlayerController, bool e)
+{
+	IIWidgetController::Execute_EquipmentItemDragDetected(OwningPlayerController, e);
+}
+
+EEquipmentSlotType UWidgetLibrary::GetLeftEquipmentSlotIndex(UObject* OwningPlayerController)
+{
+	return IIWidgetController::Execute_GetLeftEquipmentSlotIndex(OwningPlayerController);
+}

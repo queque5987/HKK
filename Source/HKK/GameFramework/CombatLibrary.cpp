@@ -56,10 +56,27 @@ bool UCombatLibrary::Bind_Inventory(UObject* PlayerInventoryObject, UObject* Pla
 	return IIPlayerState::Execute_BindDelegate_InventoryWidget(PlayerStateObject, PlayerInventoryObject);
 }
 
-bool UCombatLibrary::EquipItem(UObject* OwningPlayerState, AActor* EquipItem)
+bool UCombatLibrary::Bind_Equipment(UObject* PlayerCharacterObject, UObject* PlayerStateObject)
 {
-	if (EquipItem == nullptr || OwningPlayerState == nullptr) return false;
-	UE_LOG(LogTemp, Log, TEXT("Attaching Item %s To %s"), *EquipItem->GetFName().ToString(), *OwningPlayerState->GetFName().ToString());
+	if (PlayerCharacterObject == nullptr)
+	{
+		LogWarning(3.f, TEXT("PlayerCharacterObject Not Found"));
+		return false;
+	}
+	if (PlayerStateObject == nullptr)
+	{
+		LogWarning(3.f, TEXT("PlayerStateObject Not Found"));
+		return false;
+	}
+	return false;
+}
+
+bool UCombatLibrary::EquipItem(UObject* OwningPlayerController, UObject* EquipItemDataObject, FItemConfig EquipItemConfig)
+{
+	if (EquipItem == nullptr || OwningPlayerController == nullptr) return false;
+
+	IIWidgetController::Execute_ChangeEquipSlot(OwningPlayerController, EquipItemDataObject, EquipItemConfig.EquipmentSlotType);
+	//UE_LOG(LogTemp, Log, TEXT("Attaching Item %s To %s"), *EquipItem->GetFName().ToString(), *OwningPlayerController->GetFName().ToString());
 	return true;
 }
 

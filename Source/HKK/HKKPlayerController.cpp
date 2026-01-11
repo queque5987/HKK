@@ -72,6 +72,8 @@ void AHKKPlayerController::LoadingRace()
 				UCombatLibrary::GetItem(OwningPlayerState, ItemConfig);
 			}
 		);
+		GetOnKeyTriggered().AddUFunction(GetPlayerStateObject(), TEXT("Callback_KeyTriggered"));
+
 		DelegateBind = true;
 	}
 
@@ -94,6 +96,21 @@ void AHKKPlayerController::ChangeQuickSlot_Implementation(UObject* ChangedItemOb
 {
 	//if (WidgetComponent != nullptr) WidgetComponent->ChangedQuickSlot(ChangedItemObject, ChangedKey);
 	OnQuickSlotUpdated.Broadcast(ChangedItemObject, ChangedKey);
+}
+
+void AHKKPlayerController::ChangeEquipSlot_Implementation(UObject* ChangedItemObject, EEquipmentSlotType EquipmentSlotType)
+{
+	OnItemEquiped.Broadcast(ChangedItemObject, EquipmentSlotType);
+}
+
+void AHKKPlayerController::EquipmentItemDragDetected_Implementation(bool e)
+{
+	if (WidgetComponent) WidgetComponent->OnEquipmentItemDragDetected(e);
+}
+
+EEquipmentSlotType AHKKPlayerController::GetLeftEquipmentSlotIndex_Implementation()
+{
+	return WidgetComponent ? WidgetComponent->GetLeftEquipmentSlotIndex() : EEquipmentSlotType::EEST_EquipSlot_Default;
 }
 
 void AHKKPlayerController::OnRep_PlayerState()
@@ -151,6 +168,7 @@ void AHKKPlayerController::SetupInputComponent()
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &AHKKPlayerController::JumpReleased);
 
 		EnhancedInputComponent->BindAction(MouseMoveAction, ETriggerEvent::Triggered, this, &AHKKPlayerController::MouseMoved);
+		EnhancedInputComponent->BindAction(MouseScrollAction, ETriggerEvent::Triggered, this, &AHKKPlayerController::MouseScrolled);
 		EnhancedInputComponent->BindAction(MouseAttackAction, ETriggerEvent::Triggered, this, &AHKKPlayerController::Attack0_RFistTriggered);
 
 		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Triggered, this, &AHKKPlayerController::InteractTriggered);
@@ -329,6 +347,12 @@ void AHKKPlayerController::MouseMoved(const FInputActionValue& Value)
 	ControlledPawn->SetActorRotation(LookRotation);
 }
 
+void AHKKPlayerController::MouseScrolled(const FInputActionValue& Value)
+{
+	float ScrollValue = Value.Get<float>();
+	OnKeyTriggered.Broadcast(ScrollValue >= 0 ? FKey("MouseScrollUp") : FKey("MouseScrollDown"));
+}
+
 void AHKKPlayerController::Attack0_RFistTriggered(const FInputActionValue& Value)
 {
 	if (!WidgetComponent->IsControllable()) return;
@@ -363,5 +387,4 @@ void AHKKPlayerController::QuickSlotTriggered(const FInputActionValue& Value)
 {
 	float QuickslotIndex = Value.Get<float>();
 	uint8 QIdx = FMath::Floor(QuickslotIndex);
-	UE_LOG(LogTemp, Log, TEXT("QuickSlot Usage : %d"), QIdx);
 }

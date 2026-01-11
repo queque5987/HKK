@@ -27,8 +27,16 @@ struct FItemConfig
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool Stackable = true;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UClass* WearableSpawnClass = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UMaterialInstance> HUDMaterialInstance;
 
 	TObjectPtr<AActor> SpawnedItemActor;
+	// Equipment Assignable Only
+	EEquipmentSlotType EquipmentSlotType;
+	// Quickslot Assignable Only
 	FKey QuickSlotKey = FKey("None");
 };
 USTRUCT(BlueprintType)

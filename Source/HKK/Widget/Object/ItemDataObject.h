@@ -15,6 +15,7 @@ class HKK_API UItemDataObject : public UObject
 
 protected:
 	bool IsQuickSlotInitializer = false;
+	bool EmptySlot = false;
 	FKey QuickSlotKey;
 
 public:
@@ -29,5 +30,10 @@ public:
 		IsQuickSlotInitializer = (Key != FKey("None") ? true : false);
 		QuickSlotKey = Key;
 	};
+	void UseAsEmptySlot()
+	{
+		EmptySlot = true;
+	};
 	FKey GetQuickSlotKey() { return QuickSlotKey; };
+	bool IsEmptySlot() { return EmptySlot; };
 };

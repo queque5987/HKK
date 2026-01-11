@@ -38,6 +38,8 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TArray<TObjectPtr<UItemDataObject>> QuickslotObjects;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	TArray<TObjectPtr<UItemDataObject>> EquipmentslotObjects;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TArray<FKey> QuickslotKeySetting;
 
 	UINT16 WidgetFloating;
@@ -50,6 +52,7 @@ public:
 
 	bool SetController(TScriptInterface<IIWidgetController> InWidgetController);
 	bool Bind_HUD(TScriptInterface<IIWidgetController> InWidgetController);
+	bool Bind_EquipmentSlot(TScriptInterface<IIWidgetController> InWidgetController);
 	UFUNCTION()
 	void SetItemInteractPickupWidget(bool ToSet, EUserWidget WidgetType, const FItemConfig& ItemConfig);
 	UFUNCTION()
@@ -58,7 +61,11 @@ public:
 	void Callback_OnKeyReleased(const FKey Key);
 	UFUNCTION()
 	void Callback_ChangedQuickSlot(UObject* ChangedItemObject, FKey ChangedKey);
+	UFUNCTION()
+	void Callback_ChangedEquipment(UObject* ChangedItemObject, EEquipmentSlotType EquipmentSlotType);
 
 	bool IsControllable();
+	void OnEquipmentItemDragDetected(bool IsOn);
 
+	EEquipmentSlotType GetLeftEquipmentSlotIndex();
 };

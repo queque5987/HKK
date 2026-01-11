@@ -4,6 +4,7 @@
 #include "Components/TextBlock.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "Blueprint/DragDropOperation.h"
+#include "GameFramework/WidgetLibrary.h"
 #include "GameFramework/CombatLibrary.h"
 
 void UWidget_Item_Inventory::NativeOnListItemObjectSet(UObject* InListItemObject)
@@ -64,11 +65,18 @@ FReply UWidget_Item_Inventory::NativeOnMouseButtonDown(const FGeometry& InGeomet
 {
 	Super::NativeOnMouseButtonDown(InGeometry, InMouseEvent);
 
-	// Check for left mouse button press to initiate drag
-	if (InMouseEvent.IsMouseButtonDown(EKeys::LeftMouseButton))
+	//if (InMouseEvent.IsMouseButtonDown(EKeys::LeftMouseButton))
+	//{
+	//	// DetectDragIfPressed returns a reply that will start OnDragDetected if the mouse moves far enough.
+	//	return UWidgetBlueprintLibrary::DetectDragIfPressed(InMouseEvent, this, EKeys::LeftMouseButton).NativeReply;
+	//}
+	if (InMouseEvent.IsMouseButtonDown(EKeys::RightMouseButton))
 	{
-		// DetectDragIfPressed returns a reply that will start OnDragDetected if the mouse moves far enough.
-		return UWidgetBlueprintLibrary::DetectDragIfPressed(InMouseEvent, this, EKeys::LeftMouseButton).NativeReply;
+		UItemDataObject* ItemDataObject = Cast<UItemDataObject>(ListItemObject);
+		if (ItemDataObject == nullptr || ItemDataObject->IsEmptySlot()) return FReply::Unhandled();
+		ItemDataObject->ItemConfig.EquipmentSlotType = UWidgetLibrary::GetLeftEquipmentSlotIndex(ItemDataObject->OwningPlayer);
+		UCombatLibrary::EquipItem(ItemDataObject->OwningPlayer, ListItemObject, ItemDataObject->ItemConfig);
+		return FReply::Handled();
 	}
 
 	return FReply::Unhandled();
@@ -84,6 +92,8 @@ void UWidget_Item_Inventory::NativeOnDragDetected(const FGeometry& InGeometry, c
 		return;
 	}
 
+	UItemDataObject* tempItemDataObject = Cast<UItemDataObject>(ListItemObject);
+	if (tempItemDataObject->IsEmptySlot()) return;
 	// Create the drag visual widget
 	UWidget_Item_Inventory* DragVisual = CreateWidget<UWidget_Item_Inventory>(GetOwningPlayer(), DragVisualClass);
 
@@ -107,6 +117,13 @@ void UWidget_Item_Inventory::NativeOnDragDetected(const FGeometry& InGeometry, c
 
 			// OutOperation is an output parameter that the engine will use.
 			OutOperation = DragOperation;
+			if (tempItemDataObject != nullptr)
+			{
+				if (tempItemDataObject->ItemConfig.ItemType == EItemType::EIT_EnergyBuster)
+				{
+					UWidgetLibrary::EquipmentItemDragDetected(GetOwningPlayer(), true);
+				}
+			}
 		}
 	}
 }
@@ -120,6 +137,7 @@ bool UWidget_Item_Inventory::NativeOnDragOver(const FGeometry& InGeometry, const
 
 bool UWidget_Item_Inventory::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)
 {
+	UWidgetLibrary::EquipmentItemDragDetected(GetOwningPlayer(), false);
 	return Super::NativeOnDrop(InGeometry, InDragDropEvent, InOperation);
 	//if (InOperation == nullptr) return false;
 	//UItemDataObject* DraggedItemData = Cast<UItemDataObject>(InOperation->Payload);
@@ -154,6 +172,14 @@ void UWidget_Item_Inventory::NativeOnDragLeave(const FDragDropEvent& InDragDropE
 
 void UWidget_Item_Inventory::NativeOnDragCancelled(const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)
 {
+	UItemDataObject* tempItemDataObject = Cast<UItemDataObject>(ListItemObject);
+	if (tempItemDataObject != nullptr)
+	{
+		if (tempItemDataObject->ItemConfig.ItemType == EItemType::EIT_EnergyBuster)
+		{
+			UWidgetLibrary::EquipmentItemDragDetected(GetOwningPlayer(), false);
+		}
+	}
 	// Called if the drag is cancelled (e.g., by pressing Esc).
 	Super::NativeOnDragCancelled(InDragDropEvent, InOperation);
 }

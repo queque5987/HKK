@@ -42,12 +42,16 @@ protected:
 	TArray<TObjectPtr<UItemDataObject>>* QuickSlotEmptyObjects;
 	TArray<FKey>* QuickSlotKeySetting;
 public:
+	virtual void SetVisibility(ESlateVisibility InVisibility) override;
 	virtual void OnUpdatePlayerStatFloat_Implementation(const EPlayerStatType PlayerStatType, float CurrStat, float MaxStat) override;
 	UFUNCTION()
 	virtual void OnUpdateQuickSlot_Implementation(UObject* UpdatedItem, FKey Key) override;
+	virtual void OnKeyTriggered_Implementation(FKey Key) override;
+
 	void UpdateQuickSlotObjectArr(TArray<UObject*>& InQuickSlotObjectArr);
 
 	void QuickSlot_AddItemAsObject(UObject* InItem);
+
 	void SetQuickSlotEmptyObjects(TArray<TObjectPtr<UItemDataObject>>* InQuickSlotEmptyObjects, TArray<FKey>* InQuickSlotKeySetting)
 	{
 		QuickSlotEmptyObjects = InQuickSlotEmptyObjects;

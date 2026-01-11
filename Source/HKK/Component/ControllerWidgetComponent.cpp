@@ -16,6 +16,7 @@ UControllerWidgetComponent::UControllerWidgetComponent()
 	WidgetFloating = 0;
 	QuickslotObjects.Reserve(3);
 	QuickslotKeySetting.Reserve(3);
+	EquipmentslotObjects.Reserve(3);
 }
 
 void UControllerWidgetComponent::BeginPlay()
@@ -57,9 +58,10 @@ bool UControllerWidgetComponent::SetController(TScriptInterface<IIWidgetControll
 		WidgetController->GetOnSetItemInteractPickupWidget().AddUFunction(this, TEXT("SetItemInteractPickupWidget"));
 		WidgetController->GetOnKeyTriggered().AddUFunction(this, TEXT("Callback_OnKeyTriggered"));
 		WidgetController->GetOnKeyReleased().AddUFunction(this, TEXT("Callback_OnKeyReleased"));
-		//WidgetController->GetOnQuickSlotUpdated().AddUFunction(Widget_HUD, TEXT("OnUpdateQuickSlot"));
-		//WidgetController->GetOnQuickSlotUpdated().AddUFunction(Widget_Inventory, TEXT("OnUpdateQuickSlot"));
 		WidgetController->GetOnQuickSlotUpdated().AddUFunction(this, TEXT("Callback_ChangedQuickSlot"));
+		WidgetController->GetOnQuickSlotUpdated().AddUFunction(WidgetController->GetPlayerStateObject(), TEXT("Callback_ChangedQuickSlot"));
+		WidgetController->GetOnItemEquiped().AddUFunction(this, TEXT("Callback_ChangedEquipment"));
+		WidgetController->GetOnItemEquiped().AddUFunction(WidgetController->GetPlayerStateObject(), TEXT("Callback_OnEquipmentItemSlotChanged"));
 
 		Widget_Inventory->SetQuickSlotEmptyObjects(&QuickslotObjects, &QuickslotKeySetting);
 		Widget_HUD->SetQuickSlotEmptyObjects(&QuickslotObjects, &QuickslotKeySetting);
@@ -100,10 +102,24 @@ bool UControllerWidgetComponent::SetController(TScriptInterface<IIWidgetControll
 			DataObject->ItemConfig.ItemCount = 0;
 			DataObject->ItemConfig.QuickSlotKey = QKey;
 			DataObject->SetIsQuickSlotInitializer(QKey);
+			DataObject->UseAsEmptySlot();
 			Widget_HUD->QuickSlot_AddItemAsObject(DataObject);
 			Widget_Inventory->QuickSlot_AddItemAsObject(DataObject);
 			QuickslotKeySetting.Add(QKey);
 			QuickslotObjects.Add(DataObject);
+		}
+	}
+	if (EquipmentslotObjects.Num() < 3)
+	{
+		for (uint8 i = 1; i < 4; i++)
+		{
+			UItemDataObject* DataObject = NewObject<UItemDataObject>(this);
+			DataObject->OwningPlayer = OwningController;
+			DataObject->ItemConfig.ItemCount = 0;
+			DataObject->ItemConfig.EquipmentSlotType = StaticCast<EEquipmentSlotType>(i);
+			DataObject->UseAsEmptySlot();
+			Widget_Inventory->EquipmentSlot_AddItemAsObject(DataObject);
+			EquipmentslotObjects.Add(DataObject);
 		}
 	}
 
@@ -122,6 +138,16 @@ bool UControllerWidgetComponent::Bind_HUD(TScriptInterface<IIWidgetController> I
 		UCombatLibrary::Bind_HUD(Widget_HUD,PlayerStateObject) &&
 		UCombatLibrary::Bind_HUD(Widget_Inventory,PlayerStateObject)
 		);
+}
+
+bool UControllerWidgetComponent::Bind_EquipmentSlot(TScriptInterface<IIWidgetController> InWidgetController)
+{
+	if (InWidgetController == nullptr) return false;
+	UObject* PlayerStateObject = InWidgetController->GetPlayerStateObject();
+	if (PlayerStateObject == nullptr) return false;
+	if (Widget_HUD == nullptr) return false;
+	if (Widget_Inventory == nullptr) return false;
+	return false;
 }
 
 void UControllerWidgetComponent::SetItemInteractPickupWidget(bool ToSet, EUserWidget WidgetType, const FItemConfig& ItemConfig)
@@ -154,7 +180,7 @@ void UControllerWidgetComponent::Callback_OnKeyTriggered(FKey Key)
 	{
 		Widget_ItemInteract->SwitchWidget(true);
 	}
-	else if (Key.GetFName() == FName("I") && Widget_ItemInteract != nullptr && InventoryInterval <= 0.f)
+	else if (Key.GetFName() == FName("I") && Widget_Inventory != nullptr && WidgetController != nullptr && InventoryInterval <= 0.f)
 	{
 		bool WasOn = Widget_Inventory->GetVisibility() == ESlateVisibility::Visible;
 
@@ -164,6 +190,10 @@ void UControllerWidgetComponent::Callback_OnKeyTriggered(FKey Key)
 		WidgetController->SetCurorVisibility(!WasOn);
 		Widget_Inventory->SetVisibility(WasOn ? ESlateVisibility::Collapsed : ESlateVisibility::Visible);
 		InventoryInterval = 1.f;
+	}
+	if (Widget_HUD != nullptr)
+	{
+		Widget_HUD->Execute_OnKeyTriggered(Widget_HUD, Key);
 	}
 }
 
@@ -210,8 +240,59 @@ void UControllerWidgetComponent::Callback_ChangedQuickSlot(UObject* ChangedItemO
 
 }
 
+void UControllerWidgetComponent::Callback_ChangedEquipment(UObject* ChangedItemObject, EEquipmentSlotType EquipmentSlotType)
+{
+	uint8 idx = 0;
+	TArray<UObject*> NewArray;
+	for (UObject* Item : Widget_Inventory->GetEquipmentSlotObjectArr())
+	{
+		UItemDataObject* ItemDataObject = Cast<UItemDataObject>(Item);
+		EEquipmentSlotType CurrEquipmentSlotType = StaticCast<EEquipmentSlotType>(idx + 1);
+		if (ItemDataObject != nullptr)
+		{
+			if (Item == ChangedItemObject && CurrEquipmentSlotType != EquipmentSlotType)
+			{
+				NewArray.Add(Cast<UObject>(EquipmentslotObjects[idx]));
+			}
+			else if (CurrEquipmentSlotType == EquipmentSlotType)
+			{
+				NewArray.Add(ChangedItemObject);
+			}
+			else
+			{
+				NewArray.Add(Item);
+			}
+		}
+		else NewArray.Add(Item);
+		idx++;
+	}
+	if (Widget_Inventory) Widget_Inventory->UpdateEquipmentSlotObjectArr(NewArray);
+
+	UItemDataObject* UpdatedItemDataObject = Cast<UItemDataObject>(ChangedItemObject);
+	if (UpdatedItemDataObject != nullptr) UpdatedItemDataObject->OnItemSlotUpdated.Broadcast(ChangedItemObject);
+}
+
 bool UControllerWidgetComponent::IsControllable()
 {
 	if (WidgetFloating & 1 << (uint8)EUserWidget::EUW_Inventory) return false;
 	return true;
+}
+
+void UControllerWidgetComponent::OnEquipmentItemDragDetected(bool IsOn)
+{
+	Widget_HUD->Execute_OnEquipmentItemDragDetected(Widget_HUD, IsOn);
+	Widget_Inventory->Execute_OnEquipmentItemDragDetected(Widget_Inventory, IsOn);
+}
+
+EEquipmentSlotType UControllerWidgetComponent::GetLeftEquipmentSlotIndex()
+{
+	for (UObject* Item : Widget_Inventory->GetEquipmentSlotObjectArr())
+	{
+		UItemDataObject* ItemData = Cast<UItemDataObject>(Item);
+		if (ItemData != nullptr && ItemData->IsEmptySlot())
+		{
+			return ItemData->ItemConfig.EquipmentSlotType;
+		}
+	}
+	return EEquipmentSlotType::EEST_EquipSlot_Default;
 }
