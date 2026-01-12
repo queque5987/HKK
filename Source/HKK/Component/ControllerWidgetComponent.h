@@ -54,7 +54,7 @@ public:
 	bool Bind_HUD(TScriptInterface<IIWidgetController> InWidgetController);
 	bool Bind_EquipmentSlot(TScriptInterface<IIWidgetController> InWidgetController);
 	UFUNCTION()
-	void SetItemInteractPickupWidget(bool ToSet, EUserWidget WidgetType, const FItemConfig& ItemConfig);
+	void SetItemInteractPickupWidget(bool ToSet, EUserWidget WidgetType, const FItemConfig& ItemConfig, UObject* PickableItemObject = nullptr);
 	UFUNCTION()
 	void Callback_OnKeyTriggered(const FKey Key);
 	UFUNCTION()

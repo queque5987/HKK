@@ -24,9 +24,11 @@ private:
 	float CurrStamina;
 	UPROPERTY(ReplicatedUsing = OnRep_MaxStamina, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	float MaxStamina;
-	//UPROPERTY(ReplicatedUsing = OnRep_PossesingItem, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(ReplicatedUsing = OnRep_RecentlyAddedItemConfig)
+	FItemConfig RecentlyAddedItemConfig;
 	//TArray<FItemConfig> PossesingItem;
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	TArray<FItemConfig> PosseingItemConfig;
 	TArray<TObjectPtr<UItemDataObject>> PossingItemData;
 	UPROPERTY(ReplicatedUsing = OnRep_CurrentEquipSlotIndex, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	int32 CurrentEquipSlotIndex;
@@ -79,6 +81,9 @@ public:
 	void OnRep_MaxHP();
 	UFUNCTION()
 	void OnRep_CurrentEquipSlotIndex();
+
+	UFUNCTION()
+	void OnRep_RecentlyAddedItemConfig();
 
 	UFUNCTION()
 	void OnItemDataUpdated(UObject* UpdatedItem);

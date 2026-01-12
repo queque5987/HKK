@@ -41,7 +41,7 @@ void AItem::BeginPlay()
 	{
 		PickableComponent->SetBeginOverlapEvent(this);
 	}
-	ItemConfig.SpawnedItemActor = this;
+	//ItemConfig.SpawnedItemActor = this;
 }
 
 void AItem::Tick(float DeltaTime)

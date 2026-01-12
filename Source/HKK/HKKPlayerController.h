@@ -101,6 +101,7 @@ public:
 	virtual void ChangeEquipSlot_Implementation(UObject* ChangedItemObject, EEquipmentSlotType EquipmentSlotType) override;
 	virtual void EquipmentItemDragDetected_Implementation(bool e) override;
 	virtual EEquipmentSlotType GetLeftEquipmentSlotIndex_Implementation() override;
+	virtual void ItemInteractPickUpWidget_Implementation(bool IsOn, UObject* PickableItemObject, const FItemConfig& ItemConfig) override;
 
 	/*
 -----IIWidgetController End

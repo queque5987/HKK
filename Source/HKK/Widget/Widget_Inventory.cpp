@@ -63,8 +63,11 @@ void UWidget_Inventory::AddItem_Implementation(bool bPutIn, EUserWidget AddWidge
 void UWidget_Inventory::AddNewItemObject_Implementation(UObject* AddItemObject)
 {
 	UItemDataObject* ItemDataObject = Cast<UItemDataObject>(AddItemObject);
-	ItemDataObject->OwningPlayer = GetOwningPlayer();
-	InventoryTree->AddItem(ItemDataObject);
+	if (ItemDataObject != nullptr)
+	{
+		ItemDataObject->OwningPlayer = GetOwningPlayer();
+		InventoryTree->AddItem(ItemDataObject);
+	}
 }
 
 void UWidget_Inventory::OnUpdateQuickSlot_Implementation(UObject* UpdatedItem, FKey Key)

@@ -18,6 +18,8 @@ class HKK_API IIWidgetController
 
 public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void ItemInteractPickUpWidget(bool IsOn, UObject* PickableItemObject, const FItemConfig& ItemConfig);
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void ChangeQuickSlot(UObject* ChangedItemObject, FKey ChangedKey);
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void ChangeEquipSlot(UObject* ChangedItemObject, EEquipmentSlotType EquipmentSlotType);

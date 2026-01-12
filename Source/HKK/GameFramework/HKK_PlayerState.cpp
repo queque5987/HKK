@@ -18,7 +18,9 @@ void AHKK_PlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME(AHKK_PlayerState, CurrStamina);
 	DOREPLIFETIME(AHKK_PlayerState, MaxStamina);
 	//DOREPLIFETIME(AHKK_PlayerState, PossesingItem);
-	DOREPLIFETIME(AHKK_PlayerState, PossingItemData);
+	//DOREPLIFETIME(AHKK_PlayerState, PossingItemData);
+	DOREPLIFETIME(AHKK_PlayerState, PosseingItemConfig);
+	DOREPLIFETIME(AHKK_PlayerState, RecentlyAddedItemConfig);
 	DOREPLIFETIME(AHKK_PlayerState, CurrentEquipSlotIndex);
 }
 
@@ -34,18 +36,17 @@ bool AHKK_PlayerState::BindDelegate_HUDWidget_Implementation(UObject* BindWidget
 bool AHKK_PlayerState::BindDelegate_InventoryWidget_Implementation(UObject* BindWidget)
 {
 	if (BindWidget == nullptr) return false;
-	OnUpdateItemToInventory.AddUFunction(BindWidget, "AddItem"); // Deprecated
+	//OnUpdateItemToInventory.AddUFunction(BindWidget, "AddItem"); // Deprecated
 	OnAddItemDataObject.AddUFunction(BindWidget, "AddNewItemObject");
-	return OnUpdateItemToInventory.IsBoundToObject(BindWidget);
+	UE_LOG(LogTemp, Warning, TEXT("[Client %d] Delegate Bound on Widget"),
+		GetPlayerId());
+	return OnAddItemDataObject.IsBoundToObject(BindWidget);
 }
 
 void AHKK_PlayerState::GetItem_Implementation(const FItemConfig& ItemConfig)
 {
-	if (ItemConfig.SpawnedItemActor != nullptr)
-	{
-		UE_LOG(LogTemp, Log, TEXT("Get Item : %s"), *ItemConfig.SpawnedItemActor->GetFName().ToString());
-		Server_GetItem(ItemConfig);
-	}
+	UE_LOG(LogTemp, Log, TEXT("Get Item : %s"), *ItemConfig.ItemName.ToString());
+	Server_GetItem(ItemConfig);
 	return;
 }
 
@@ -82,26 +83,22 @@ void AHKK_PlayerState::Server_GetItem_Implementation(const FItemConfig& ItemConf
 
 	if (IsStackable)
 	{
-		for (UItemDataObject* ItemDataObject : PossingItemData)
+		for (FItemConfig& IterConfig : PosseingItemConfig)
 		{
-			if (ItemDataObject == nullptr) continue;
-			if (ItemConfig.ItemType == ItemDataObject->ItemConfig.ItemType)
+			if (ItemConfig.ItemType == IterConfig.ItemType)
 			{
-				ItemDataObject->ItemConfig.ItemCount++;
-				ItemDataObject->OnItemSlotUpdated.Broadcast(Cast<UObject>(ItemDataObject));
+				IterConfig.ItemCount += ItemConfig.ItemCount;
 				IsAdded = true;
+				RecentlyAddedItemConfig = IterConfig;
 				break;
 			}
 		}
 	}
 	if (!IsAdded)
 	{
-		UItemDataObject* DataObject = NewObject<UItemDataObject>(this);
-		DataObject->OwningPlayer;
-		DataObject->ItemConfig = ItemConfig;
-		DataObject->OnItemSlotUpdated.AddUFunction(this, TEXT("OnItemDataUpdated"));
-		PossingItemData.Add(DataObject);
-		OnAddItemDataObject.Broadcast(Cast<UObject>(DataObject));
+		PosseingItemConfig.Add(ItemConfig);
+		RecentlyAddedItemConfig = ItemConfig;
+		if (HasAuthority()) OnRep_RecentlyAddedItemConfig();
 	}
 
 	//PossesingItem.Add(ItemConfig);
@@ -145,6 +142,38 @@ void AHKK_PlayerState::Server_QuickSlotChanged_Implementation(UObject* ChangedIt
 			QuickSlotItemData[i - 1] = nullptr;
 		}
 	}
+}
+
+void AHKK_PlayerState::OnRep_RecentlyAddedItemConfig()
+{
+	if (RecentlyAddedItemConfig.Stackable)
+	{
+		for (UItemDataObject* ItemDataObject : PossingItemData)
+		{
+			if (ItemDataObject == nullptr) continue;
+			if (RecentlyAddedItemConfig.ItemType == ItemDataObject->ItemConfig.ItemType)
+			{
+				ItemDataObject->ItemConfig.ItemCount = RecentlyAddedItemConfig.ItemCount;
+				ItemDataObject->OnItemSlotUpdated.Broadcast(Cast<UObject>(ItemDataObject));
+				return;
+			}
+		}
+	}
+	
+	UItemDataObject* DataObject = NewObject<UItemDataObject>(this);
+	DataObject->OwningPlayer = GetPlayerController();
+	DataObject->ItemConfig = RecentlyAddedItemConfig;
+	DataObject->OnItemSlotUpdated.AddUFunction(this, TEXT("OnItemDataUpdated"));
+	PossingItemData.Add(DataObject);
+	OnAddItemDataObject.Broadcast(DataObject);
+	UE_LOG(LogTemp, Warning, TEXT("[Client %d] Delegate Fired on Widget"), GetPlayerId());
+	
+
+	//if (RecentlyAddedItemObject != nullptr)
+	//{
+	//	OnAddItemDataObject.Broadcast(RecentlyAddedItemObject);
+	//	RecentlyAddedItemObject = nullptr;
+	//}
 }
 
 void AHKK_PlayerState::OnRep_CurrStamina()

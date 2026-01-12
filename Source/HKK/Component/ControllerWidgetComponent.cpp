@@ -44,6 +44,7 @@ void UControllerWidgetComponent::TickComponent(float DeltaTime, ELevelTick TickT
 			//ProjectLocation.X += ScreensizeX / 12.f; TODO; X + Get Actor Size?
 		}
 		Widget_ItemInteract->SetPositionInViewport(ProjectLocation);
+		UE_LOG(LogTemp, Log, TEXT("Projection Location : %s"), *ProjectLocation.ToString());
 	}
 	if (InventoryInterval > 0.f) InventoryInterval -= DeltaTime;
 }
@@ -55,7 +56,7 @@ bool UControllerWidgetComponent::SetController(TScriptInterface<IIWidgetControll
 	if (WidgetController == nullptr) return false;
 	if (!WidgetController->GetOnSetItemInteractPickupWidget().IsBoundToObject(WidgetController->_getUObject()))
 	{
-		WidgetController->GetOnSetItemInteractPickupWidget().AddUFunction(this, TEXT("SetItemInteractPickupWidget"));
+		//WidgetController->GetOnSetItemInteractPickupWidget().AddUFunction(this, TEXT("SetItemInteractPickupWidget"));
 		WidgetController->GetOnKeyTriggered().AddUFunction(this, TEXT("Callback_OnKeyTriggered"));
 		WidgetController->GetOnKeyReleased().AddUFunction(this, TEXT("Callback_OnKeyReleased"));
 		WidgetController->GetOnQuickSlotUpdated().AddUFunction(this, TEXT("Callback_ChangedQuickSlot"));
@@ -150,10 +151,10 @@ bool UControllerWidgetComponent::Bind_EquipmentSlot(TScriptInterface<IIWidgetCon
 	return false;
 }
 
-void UControllerWidgetComponent::SetItemInteractPickupWidget(bool ToSet, EUserWidget WidgetType, const FItemConfig& ItemConfig)
+void UControllerWidgetComponent::SetItemInteractPickupWidget(bool ToSet, EUserWidget WidgetType, const FItemConfig& ItemConfig, UObject* PickableItemObject)
 {
 	FVector2D ProjectLocation;
-	InteractingPickableItem = ItemConfig.SpawnedItemActor;
+	InteractingPickableItem = Cast<AActor>(PickableItemObject);
 	if (WidgetController == nullptr || WidgetController == nullptr)
 	{
 		Widget_ItemInteract->SetVisibility(ESlateVisibility::Collapsed);

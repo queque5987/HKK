@@ -39,7 +39,7 @@ void UWidget_ItemInteract::SetItemConfig(FOnGetItem* InOnGetItem, const FItemCon
 	OnGetItem = InOnGetItem;
 	ItemConfig = InItemConfig;
 	OwningController = InPlayerController;
-	if (ItemConfig.SpawnedItemActor == nullptr) return;
+	//if (ItemConfig.SpawnedItemActor == nullptr) return;
 	if (ItemConfig.ItemIcon != nullptr && ItemIcon != nullptr) ItemIcon->SetBrushFromTexture(ItemConfig.ItemIcon);
 	if (ItemName != nullptr) ItemName->SetText(ItemConfig.ItemName);
 }
@@ -56,7 +56,7 @@ void UWidget_ItemInteract::ProgressCompleted()
 		OnGetItem = nullptr;
 		ItemConfig.ItemIcon = nullptr;
 		ItemConfig.ItemName = FText();
-		ItemConfig.SpawnedItemActor = nullptr;
+		//ItemConfig.SpawnedItemActor = nullptr;
 	}
 	SwitchWidget(false);
 }

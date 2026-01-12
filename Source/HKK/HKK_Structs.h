@@ -33,10 +33,11 @@ struct FItemConfig
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<UMaterialInstance> HUDMaterialInstance;
 
-	TObjectPtr<AActor> SpawnedItemActor;
 	// Equipment Assignable Only
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EEquipmentSlotType EquipmentSlotType;
 	// Quickslot Assignable Only
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FKey QuickSlotKey = FKey("None");
 };
 USTRUCT(BlueprintType)

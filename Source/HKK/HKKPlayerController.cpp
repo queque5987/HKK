@@ -64,11 +64,15 @@ void AHKKPlayerController::Tick(float DeltaSeconds)
 
 void AHKKPlayerController::LoadingRace()
 {
+	if (GetPlayerStateObject() == nullptr || WidgetComponent == nullptr)
+	{
+		GetWorld()->GetTimerManager().SetTimerForNextTick(this, &AHKKPlayerController::LoadingRace);
+		return;
+	}
 	if (!DelegateBind)
 	{
 		OnGetItem.AddLambda([this](const FItemConfig& ItemConfig, UObject* OwningPlayerState)
 			{
-				//UCombatLibrary::EquipItem(OwningPlayerState, ItemConfig.SpawnedItemActor);
 				UCombatLibrary::GetItem(OwningPlayerState, ItemConfig);
 			}
 		);
@@ -111,6 +115,11 @@ void AHKKPlayerController::EquipmentItemDragDetected_Implementation(bool e)
 EEquipmentSlotType AHKKPlayerController::GetLeftEquipmentSlotIndex_Implementation()
 {
 	return WidgetComponent ? WidgetComponent->GetLeftEquipmentSlotIndex() : EEquipmentSlotType::EEST_EquipSlot_Default;
+}
+
+void AHKKPlayerController::ItemInteractPickUpWidget_Implementation(bool IsOn, UObject* PickableItemObject, const FItemConfig& ItemConfig)
+{
+	if (WidgetComponent) WidgetComponent->SetItemInteractPickupWidget(IsOn, EUserWidget::EUW_ItemInteract, ItemConfig, PickableItemObject);
 }
 
 void AHKKPlayerController::OnRep_PlayerState()
