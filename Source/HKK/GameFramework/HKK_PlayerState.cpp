@@ -43,6 +43,12 @@ bool AHKK_PlayerState::BindDelegate_InventoryWidget_Implementation(UObject* Bind
 	return OnAddItemDataObject.IsBoundToObject(BindWidget);
 }
 
+bool AHKK_PlayerState::BindDelegate_Equipment_Implementation(UObject* BindCharacter)
+{
+	OnEquipmentSlotSwitched.AddUFunction(BindCharacter, "OnEquipmentSlotSwitched");
+	return OnEquipmentSlotSwitched.IsBoundToObject(BindCharacter);
+}
+
 void AHKK_PlayerState::GetItem_Implementation(const FItemConfig& ItemConfig)
 {
 	UE_LOG(LogTemp, Log, TEXT("Get Item : %s"), *ItemConfig.ItemName.ToString());
@@ -176,6 +182,12 @@ void AHKK_PlayerState::OnRep_RecentlyAddedItemConfig()
 	//}
 }
 
+void AHKK_PlayerState::Server_SetCuurentEquipSlotIndex_Implementation(int32 NewSlotIndex)
+{
+	CurrentEquipSlotIndex = NewSlotIndex;
+	if (HasAuthority()) OnRep_CurrentEquipSlotIndex();
+}
+
 void AHKK_PlayerState::OnRep_CurrStamina()
 {
 	OnUpdateStatFloat.Broadcast(EPlayerStatType::EPST_Stamina, CurrStamina, MaxStamina);
@@ -199,7 +211,15 @@ void AHKK_PlayerState::OnRep_MaxHP()
 
 void AHKK_PlayerState::OnRep_CurrentEquipSlotIndex()
 {
-
+	if (CurrentEquipSlotIndex == 0)
+	{
+		// BareHand
+		OnEquipmentSlotSwitched.Broadcast(FItemConfig(), EquipmentSlotItemData[CurrentEquipSlotIndex]);
+	}
+	else if (EquipmentSlotItemData.IsValidIndex(CurrentEquipSlotIndex) && EquipmentSlotItemData[CurrentEquipSlotIndex].Get() != nullptr)
+	{
+		OnEquipmentSlotSwitched.Broadcast(EquipmentSlotItemData[CurrentEquipSlotIndex].Get()->ItemConfig, EquipmentSlotItemData[CurrentEquipSlotIndex]);
+	}
 }
 
 void AHKK_PlayerState::OnItemDataUpdated(UObject* UpdatedItem)
@@ -275,7 +295,6 @@ void AHKK_PlayerState::Callback_KeyTriggered(FKey Key)
 				break;
 			}
 		}
-		if (Flag) CurrentEquipSlotIndex = SearchIdx;
-		else CurrentEquipSlotIndex = 0;
+		Server_SetCuurentEquipSlotIndex(Flag ? SearchIdx : 0);
 	}
 }

@@ -68,7 +68,7 @@ bool UCombatLibrary::Bind_Equipment(UObject* PlayerCharacterObject, UObject* Pla
 		LogWarning(3.f, TEXT("PlayerStateObject Not Found"));
 		return false;
 	}
-	return false;
+	return IIPlayerState::Execute_BindDelegate_Equipment(PlayerStateObject, PlayerCharacterObject);
 }
 
 bool UCombatLibrary::EquipItem(UObject* OwningPlayerController, UObject* EquipItemDataObject, FItemConfig EquipItemConfig)
@@ -80,10 +80,15 @@ bool UCombatLibrary::EquipItem(UObject* OwningPlayerController, UObject* EquipIt
 	return true;
 }
 
+bool UCombatLibrary::AttachItem(UObject* OwningPlayerCharacter, AActor* AttachItemActor, FName AttachSocketName)
+{
+	return IICharacterCombat::Execute_AttachItem(OwningPlayerCharacter, AttachItemActor, AttachSocketName);
+}
+
 bool UCombatLibrary::GetItem(UObject* ItemOwnerPlayerState, const FItemConfig& ItemConfig)
 {
 	IIPlayerState::Execute_GetItem(ItemOwnerPlayerState, ItemConfig);
-	return false;
+	return true;
 }
 
 //bool UCombatLibrary::RefreshQuickSlot(UObject* OwningPlayerController, UObject* ChangedItemDataObject)

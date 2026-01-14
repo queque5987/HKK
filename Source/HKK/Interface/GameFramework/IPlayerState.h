@@ -12,6 +12,8 @@ class UIPlayerState : public UInterface
 	GENERATED_BODY()
 };
 
+class UObject;
+
 class HKK_API IIPlayerState
 {
 	GENERATED_BODY()
@@ -36,9 +38,11 @@ public:
 	void SetMaxStamina(float e);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	bool BindDelegate_HUDWidget(class UObject* BindWidget);
+	bool BindDelegate_HUDWidget(UObject* BindWidget);
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	bool BindDelegate_InventoryWidget(class UObject* BindWidget);
+	bool BindDelegate_InventoryWidget(UObject* BindWidget);
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	bool BindDelegate_Equipment(UObject* BindCharacter);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void GetItem(const FItemConfig& ItemConfig);

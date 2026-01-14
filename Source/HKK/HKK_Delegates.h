@@ -7,15 +7,21 @@
 #include "InputCoreTypes.h"
 #include "Animation/AnimSequence.h"
 
+class UItemDataObject;
+
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnAiming, float);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnAttack, const EPlayerAnimation);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnPlayAnimation, UAnimSequence*);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnChangeStencilValue, ECustomStencilValue);
+
 DECLARE_MULTICAST_DELEGATE_ThreeParams(FOnSetItemInteractWidget, bool, EUserWidget, const FItemConfig&);
+
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnAddItemDataObject, UObject*);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnKeyInputEvent, const FKey);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnSetWalkSpeed, float);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnItemSlotUpdated, UObject*);
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnEquipmentSlotSwitched, const FItemConfig&, TWeakObjectPtr<UItemDataObject>);
+
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnQuickSlotUpdated, UObject*, FKey);
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnItemEquiped, UObject*, EEquipmentSlotType);
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnGetItem, const FItemConfig&, UObject*);

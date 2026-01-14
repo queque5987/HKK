@@ -6,6 +6,7 @@
 #include "CombatLibrary.generated.h"
 
 class IICharacterCombat;
+class AActor;
 
 UCLASS()
 class HKK_API UCombatLibrary : public UBlueprintFunctionLibrary
@@ -18,7 +19,9 @@ public:
 	static bool Bind_Inventory(UObject* PlayerInventoryObject, UObject* PlayerStateObject);
 	static bool Bind_Equipment(UObject* PlayerCharacterObject, UObject* PlayerStateObject);
 
+	/* Widget Only */
 	static bool EquipItem(UObject* OwningPlayerController, UObject* EquipItemDataObject, FItemConfig EquipItemConfig);
+	static bool AttachItem(UObject* OwningPlayerCharacter, AActor* AttachItemActor, FName AttachSocketName);
 	static bool GetItem(UObject* ItemOwnerPlayerState, const FItemConfig& ItemConfig);
 	//static bool RefreshQuickSlot(UObject* OwningPlayerController, UObject* ChangedItemDataObject);
 private:

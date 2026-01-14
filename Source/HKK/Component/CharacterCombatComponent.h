@@ -21,8 +21,8 @@ protected:
 	FHitTraceConfig HitTraceConfig;
 	UPROPERTY(Replicated)
 	bool bTrace;
-	//UPROPERTY(Replicated)
-	//FCollisionQueryParams CollisionQueryParams;
+	UPROPERTY(ReplicatedUsing = OnRep_ItemEquip)
+	TObjectPtr<AActor> EquipActor;
 
 	FVector CachedTraceStartLocation;
 	FVector CachedTraceEndLocation;
@@ -45,4 +45,10 @@ public:
 	void Server_SetOwnerMeshComp(USkeletalMeshComponent* MeshComp);
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_HitTraceEnd();
+
+	UFUNCTION(Server, Reliable)
+	void Server_SpawnAndAttachWeapon(const FItemConfig& AttachItemConfig);
+
+	UFUNCTION()
+	void OnRep_ItemEquip();
 };

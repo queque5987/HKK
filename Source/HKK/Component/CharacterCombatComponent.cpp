@@ -21,6 +21,7 @@ void UCharacterCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimePrope
 
 	DOREPLIFETIME(UCharacterCombatComponent, bTrace);
 	DOREPLIFETIME(UCharacterCombatComponent, HitTraceConfig);
+	DOREPLIFETIME(UCharacterCombatComponent, EquipActor);
 	//DOREPLIFETIME(UCharacterCombatComponent, CollisionQueryParams);
 }
 
@@ -63,6 +64,26 @@ void UCharacterCombatComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 			CachedTraceStartLocation = TraceStart;
 			CachedTraceEndLocation = TraceEnd;
 		}
+	}
+}
+
+void UCharacterCombatComponent::Server_SpawnAndAttachWeapon_Implementation(const FItemConfig& AttachItemConfig)
+{
+	if (!GetOwner()->HasAuthority()) return;
+	if (AttachItemConfig.WearableSpawnClass != nullptr)
+	{
+		UE_LOG(LogTemp, Log, TEXT("TODO UnAttaching Item"));
+		UE_LOG(LogTemp, Log, TEXT("Attaching Item %s"), *AttachItemConfig.ItemName.ToString());
+		if (AttachItemConfig.WearableSpawnClass != nullptr)
+		{
+			UE_LOG(LogTemp, Log, TEXT("Attaching Item class %s"), *AttachItemConfig.WearableSpawnClass->GetName());
+		}
+		EquipActor = GetWorld()->SpawnActor<AActor>(AttachItemConfig.WearableSpawnClass);
+		OnRep_ItemEquip();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Log, TEXT("TODO UnAttaching Item // Do Bare Hands"));
 	}
 }
 
@@ -112,4 +133,12 @@ void UCharacterCombatComponent::Multicast_HitTraceEnd_Implementation()
 		GetWorld()->GetTimerManager().ClearTimer(HitTraceTimerHandle);
 	}
 	bTrace = false;
+}
+
+void UCharacterCombatComponent::OnRep_ItemEquip()
+{
+	if (EquipActor != nullptr)
+	{
+		UCombatLibrary::AttachItem(GetOwner(), EquipActor, FName("Buster_FixedSocket"));
+	}
 }

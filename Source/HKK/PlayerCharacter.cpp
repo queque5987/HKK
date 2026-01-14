@@ -14,6 +14,7 @@
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/PlayerState.h"
 #include "Component/FoliageInteractSourceComponent.h"
+#include "GameFramework/CombatLibrary.h"
 #include "Interface/GameFramework/IPlayerState.h"
 
 
@@ -91,17 +92,16 @@ void APlayerCharacter::BeginPlay()
 		Server_OnAiming(Yaw);
 		}
 	);
-	//OnPlayAnimation = tempController->GetOnPlayAnimation();
-	//OnAttack = tempController->GetOnAttack();
 	tempController->GetOnAttack().AddUFunction(this, TEXT("Callback_OnAttack"));
 	OnSetItemInteractPickupWidget = &tempController->GetOnSetItemInteractPickupWidget();
 	tempController->GetOnKeyTriggered().AddUFunction(this, TEXT("Callback_OnKeyTriggered"));
 	tempController->GetOnKeyReleased().AddUFunction(this, TEXT("Callback_OnKeyReleased"));
-	//tempController->GetOnGetItem().AddUFunction(this, TEXT("Callback_OnGetItem"));
 	IAnimInstace = Cast<IICharacterAnimInstance>(GetMesh()->GetAnimInstance());
 
 	CombatComponent->Server_SetOwnerMeshComp(GetMesh());
 	FoliageInteractSourceComponent->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("eye_Parent"));
+
+	LoadingRace();
 }
 
 void APlayerCharacter::Tick(float DeltaTime)
@@ -169,6 +169,14 @@ void APlayerCharacter::Callback_OnKeyReleased(const FKey Key)
 	}
 }
 
+void APlayerCharacter::LoadingRace()
+{
+	EquipmentBind = UCombatLibrary::Bind_Equipment(this, GetPlayerState());
+
+	if (EquipmentBind) return;
+	GetWorld()->GetTimerManager().SetTimerForNextTick(this, &APlayerCharacter::LoadingRace);
+}
+
 bool APlayerCharacter::HitTraceStart(FHitTraceConfig* HitTraceConfig, float MaxTraceTime)
 {
 	if (CombatComponent != nullptr) CombatComponent->Server_HitTraceStart(*HitTraceConfig, MaxTraceTime);
@@ -185,6 +193,16 @@ bool APlayerCharacter::HitTraceEnd()
 bool APlayerCharacter::HitTrace(FHitTraceConfig* HitTraceConfig)
 {
 	UE_LOG(LogTemp, Warning, TEXT("[%s] HitTrace Called."), *UEnum::GetValueAsString(GetLocalRole()));
+	return false;
+}
+
+bool APlayerCharacter::AttachItem_Implementation(AActor* AttachItemActor, FName AttachSocketName)
+{
+	if (AttachItemActor != nullptr)
+	{
+		AttachItemActor->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, AttachSocketName);
+		return true;
+	}
 	return false;
 }
 
@@ -218,6 +236,11 @@ void APlayerCharacter::Multicast_KnockBack_Implementation(FVector Direction)
 void APlayerCharacter::SetItemInteractWidget(bool ToSet, TScriptInterface<class IIPickableItem> PickableItem, const FItemConfig& ItemConfig)
 {
 	OnSetItemInteractPickupWidget->Broadcast(ToSet, EUserWidget::EUW_ItemInteract, ItemConfig);
+}
+
+void APlayerCharacter::OnEquipmentSlotSwitched(const FItemConfig& EquipItemConfig, TWeakObjectPtr<UItemDataObject> EquipItemDataObject)
+{
+	if (CombatComponent) CombatComponent->Server_SpawnAndAttachWeapon(EquipItemConfig);
 }
 
 void APlayerCharacter::Multicast_HitDamage_Implementation(const FHitDamageConfig& HitTraceConfig)

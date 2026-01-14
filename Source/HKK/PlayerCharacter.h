@@ -13,6 +13,7 @@
 
 class APlayerState;
 class UFoliageInteractSourceComponent;
+class UItemDataObject;
 
 UCLASS()
 class HKK_API APlayerCharacter : public ACharacter, public IICharacterMovement, public IICharacterCombat, public IICharacterWidget
@@ -85,7 +86,10 @@ public:
 protected:
 	UPROPERTY(Replicated)
 	FCharacterMovementState CharacterMovementState;
+	
+	bool EquipmentBind = false;
 
+	void LoadingRace();
 public:
 	virtual FVector _GetVelocity() override { return GetVelocity(); };
 	virtual FCharacterMovementState* GetCharacterMovementState() override { return &CharacterMovementState; };
@@ -106,6 +110,7 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	virtual void Multicast_KnockBack(FVector Direction) override;
 	virtual UObject* GetPlayerStateObject() override { return (UObject*)GetPlayerState(); };
+	virtual bool AttachItem_Implementation(AActor* AttachItemActor, FName AttachSocketName) override;
 	/*
 ----- ICharacter Combat End
 	*/
@@ -117,6 +122,7 @@ public:
 	/*
 ----- ICharacter Widget End
 	*/
-
+	UFUNCTION()
+	void OnEquipmentSlotSwitched(const FItemConfig& EquipItemConfig, TWeakObjectPtr<UItemDataObject> EquipItemDataObject);
 
 };

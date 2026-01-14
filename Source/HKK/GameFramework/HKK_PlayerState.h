@@ -39,6 +39,7 @@ private:
 	FOnUpdateStatFloat OnUpdateStatFloat;
 	FOnSetItemInteractWidget OnUpdateItemToInventory;
 	FOnAddItemDataObject OnAddItemDataObject;
+	FOnEquipmentSlotSwitched OnEquipmentSlotSwitched;
 public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
@@ -52,8 +53,10 @@ public:
 	virtual void SetMaxHP_Implementation(float e) override { Server_SetMaxHP(e); };
 	virtual void SetMaxStamina_Implementation(float e) override { Server_SetMaxStamina(e); };
 
-	virtual bool BindDelegate_HUDWidget_Implementation(class UObject* BindWidget) override;
-	virtual bool BindDelegate_InventoryWidget_Implementation(class UObject* BindWidget) override;
+	virtual bool BindDelegate_HUDWidget_Implementation(UObject* BindWidget) override;
+	virtual bool BindDelegate_InventoryWidget_Implementation(UObject* BindWidget) override;
+	virtual bool BindDelegate_Equipment_Implementation(UObject* BindCharacter) override;
+
 	virtual void GetItem_Implementation(const FItemConfig& ItemConfig) override;
 
 	UFUNCTION(Server, Reliable)
@@ -70,6 +73,9 @@ public:
 	void Server_EquipmentSlotChanged(UObject* ChangedItemObject, EEquipmentSlotType EquipmentSlotType);
 	UFUNCTION(Server, Reliable)
 	void Server_QuickSlotChanged(UObject* ChangedItemObject, FKey ChangedKey);
+
+	UFUNCTION(Server, Reliable)
+	void Server_SetCuurentEquipSlotIndex(int32 NewSlotIndex);
 
 	UFUNCTION()
 	void OnRep_CurrStamina();
