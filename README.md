@@ -124,7 +124,7 @@ Foliage의 충돌을 연산 할 Volume과 해당 Volume 안에서 연산을 수�
 
 RenderTarget의 포맷은 16비트로 //TODO 자세한 범위 설정하였으나 Material을 RenderTarget으로 변환하는 과정에서 음수가 소실되는 현상을 발견.
 
-Normalize시 -1 ~ 1 사이의 범위를 0 ~ 1 범위로 이동시켜 저장하여 해결.
+Normalize시 -1 ~ 1 사이의 범위를 0 ~ 1 범위로 이동시켜 저장하여 해결. ( +1 , /2 )
 
 2. 확장성을 고려하여 분산
 
@@ -136,11 +136,64 @@ Theta로 변환하여 저장할 경우 RGBA 중 하나의 채널만을 사용하
 
 ## 2차 개선점
 
-1. Trail 남기기
+1. 여러개의 Impulse 병합
 
-2. 여러개의 Impulse 병합
+여러개의 Impulse가 들어왔을 경우도 구현하였습니다. 각 Impulse가 Volume에 들어오거나 나갈 때마다
 
+Materail Instance Dynamic을 생성 / 소멸시킨다면 오버헤드가 클 것이라 판단하였습니다.
+
+따라서 Material에 충돌이 일어나고 있는 부분을 여러개의 (현재 기준 4개) 파라미터로 대입할 수 있게하였고,
+
+각각의 충돌을 합쳐 ( R, G에 저장한 방향벡터의 경우 단순 Add 노드로 구현 가능, B의 경우 최대값으로 구현) 병렬로 처리할 수 있도록 하였습니다.
+
+```C++
+TQueue<TScriptInterface<IICharacterMovement>> tempQueue;
+for (int8 i = 0; i < 4; i++)
+{
+	//if (InteractingSourceComponentQueue.IsEmpty()) continue;
+	TScriptInterface<IICharacterMovement> SourceComponent;
+	InteractingSourceComponentQueue.Dequeue(SourceComponent);
+	//if (SourceComponent.GetObject() == nullptr || !IsInside(SourceComponent->_GetLocation())) continue;  <<  SetImpulse 내부에서 널포인터일 경우 i번째 파라미터를 초기화하기 때문에 널포인터 체크 하지 않음
+	SetImpulse(SourceComponent, i);
+	if (SourceComponent.GetObject() == nullptr) continue;
+	if (IsInside(SourceComponent->_GetLocation()))
+	{
+		tempQueue.Enqueue(SourceComponent); // Inside Volume : Push Again
+	}
+	else
+	{
+		InteractingSourceComponentSet.Remove(SourceComponent);	// Outside Volume : Remove From Set
+	}
+}
+for (int8 i = 0; i < 4; i++)
+{
+	if (tempQueue.IsEmpty()) break;
+	TScriptInterface<IICharacterMovement> SourceComponent;
+	tempQueue.Dequeue(SourceComponent);
+	if (SourceComponent.GetObject() == nullptr) continue;
+	InteractingSourceComponentQueue.Enqueue(SourceComponent);
+}
+if (RT_FoliageInteractImpact != nullptr && MID_FoliageInteractRenderTargetGenerator != nullptr)
+{
+	UKismetRenderingLibrary::DrawMaterialToRenderTarget(this, RT_FoliageInteractImpact, MID_FoliageInteractRenderTargetGenerator);
+}
+```
+
+// TODO 다른 인터페이스로 바꾸기
+기존의 충돌한 액터 (IICharacterMovement를 상속하는 액터 == UFoliageInteractSourceComponent가 Attach되어 있는 액터)의 Tick에서 RenderTarget을 업데이트 하는 방식에서
+
+지정한 만큼의(위 코드 기준 4개) 액터를 한 Tick에서 처리하는 FIFO 방식으로 구현하였습니다.
+
+3. Trail 남기기
+
+이전의 RenderTarget을 초기화하는 부분을 제거하고, 현재 Tick에서 계산한 RenderTarget과 병합하는 노드를 추가하였습니다.
+
+매 연산마다 이전 RenderTarget의 B(Impulse 벡터의 크기에 해당)를 일정 수준 감소시키고, 현재의 RenderTarget과 병합하여 구현하였습니다.
+
+R, G에 각각 벡터의 (X, Y), (X, Z), (Y, Z) 축에 해당하는 값을 저장해두었기 때문에 R, G 값은 더한 뒤, Normalize하였고, B의 경우 최대 값을 갖도록 구현하였습니다.
 
 ## 차후 개선점
 
 1. 성능에 따른 병렬 처리 개수 제한 설정 가능
+
+2. 캐릭터의 Bone마다 UFoliageInteractSourceComponent를 부착하여 디테일한 상호작용 가능 및 거리에 따라 Component의 개수를 조절하여 최적화 또한 가능
