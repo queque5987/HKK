@@ -24,6 +24,8 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void AddNewItemObject(UObject* AddItemObject);
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void EquipItem(const FItemConfig& EquipItemConfig);
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void OnUpdateQuickSlot(UObject* UpdatedItem, FKey Key);
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void OnKeyTriggered(FKey Key);
@@ -31,4 +33,6 @@ public:
 	void OnSetVisibility(bool e);
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 	void OnEquipmentItemDragDetected(bool IsOn);
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	void OnEquipmentScrolled(bool IsUpward);
 };

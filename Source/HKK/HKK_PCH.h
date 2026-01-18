@@ -49,7 +49,8 @@ enum class EPlayerAnimation : uint8
 	EPA_HitReact_R,
 	EPA_HitReact_F,
 	EPA_HitReact_B,
-	EPA_BusterFireR
+	EPA_BusterFireR,
+	EPA_EquipWeapon_R
 };
 
 class HKK_API HKK_PCH

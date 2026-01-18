@@ -14,6 +14,7 @@
 #include "DrawDebugHelpers.h"
 #include "GameFramework/CombatLibrary.h"
 #include "Interface/GameFramework/IPlayerState.h"
+#include "Net/UnrealNetwork.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -94,6 +95,12 @@ void AHKKPlayerController::LoadingRace()
 	}
 	if (DelegateBind && WidgetControllerSetup && WidgetHUDBind) return;
 	GetWorld()->GetTimerManager().SetTimerForNextTick(this, &AHKKPlayerController::LoadingRace);
+}
+
+void AHKKPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AHKKPlayerController, bShiftPressed);
 }
 
 void AHKKPlayerController::ChangeQuickSlot_Implementation(UObject* ChangedItemObject, FKey ChangedKey)
@@ -280,11 +287,18 @@ void AHKKPlayerController::Move(const FInputActionValue& Value)
 		CachedDirection = FMath::Lerp(CachedDirection, InputDirection, FMath::Min(HoldingSec, 2.f) / 2.f);
 	}
 
+	bool debugMoveBasedOnCamera = false;
 	if (ControlledPawn != nullptr)
 	{
 		const FRotator YawRotation(0, GetControlRotation().Yaw, 0);
-		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+		const FVector ForwardDirection = (
+			debugMoveBasedOnCamera ? 
+			FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X) : ControlledPawn->GetActorForwardVector()
+			);
+		const FVector RightDirection = (
+			debugMoveBasedOnCamera ? 
+			FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y) : ControlledPawn->GetActorRightVector()
+			);
 		float XScaleValue = CachedDirection.X;
 		float YScaleValue = CachedDirection.Y;
 		if (CachedDirection.X < 0.f)
@@ -317,13 +331,13 @@ void AHKKPlayerController::MoveReleased()
 void AHKKPlayerController::ShiftTriggered()
 {
 	if (!WidgetComponent->IsControllable()) return;
-	bShiftPressed = true;
+	Server_SetShiftPressed(true);
 	OnKeyTriggered.Broadcast(FKey("Shift"));
 }
 
 void AHKKPlayerController::ShiftReleased()
 {
-	bShiftPressed = false;
+	Server_SetShiftPressed(false);
 	OnKeyReleased.Broadcast(FKey("Shift"));
 }
 
@@ -353,7 +367,15 @@ void AHKKPlayerController::MouseMoved(const FInputActionValue& Value)
 
 	FRotator LookRotation = { 0.f, GetControlRotation().Yaw, 0.f };
 	APawn* ControlledPawn = GetPawn();
-	ControlledPawn->SetActorRotation(LookRotation);
+	if (ControlledPawn == nullptr) return;
+	ControlledPawn->GetActorForwardVector();
+	LookRotation.Vector();
+	
+	float theta = FVector::DotProduct(ControlledPawn->GetActorForwardVector(), LookRotation.Vector());
+	if (theta <= (ControlledPawn->GetVelocity().Size2D() > 50.f || bShiftPressed ? 0.95f : -0.5f))
+	{
+		UCombatLibrary::RotatePawnBasedOnControlRotation(ControlledPawn);
+	}
 }
 
 void AHKKPlayerController::MouseScrolled(const FInputActionValue& Value)
@@ -396,4 +418,9 @@ void AHKKPlayerController::QuickSlotTriggered(const FInputActionValue& Value)
 {
 	float QuickslotIndex = Value.Get<float>();
 	uint8 QIdx = FMath::Floor(QuickslotIndex);
+}
+
+void AHKKPlayerController::Server_SetShiftPressed_Implementation(bool e)
+{
+	bShiftPressed = e;
 }

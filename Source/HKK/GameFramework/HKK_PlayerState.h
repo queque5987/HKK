@@ -34,7 +34,10 @@ private:
 	int32 CurrentEquipSlotIndex;
 
 	TArray<TWeakObjectPtr<UItemDataObject>> QuickSlotItemData;
-	TArray<TWeakObjectPtr<UItemDataObject>> EquipmentSlotItemData;
+	// Deprecated
+	//TArray<TWeakObjectPtr<UItemDataObject>> EquipmentSlotItemData;
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	TArray<FItemConfig> EquipmentSlotItemConfig;
 
 	FOnUpdateStatFloat OnUpdateStatFloat;
 	FOnSetItemInteractWidget OnUpdateItemToInventory;
@@ -69,8 +72,11 @@ public:
 	void Server_SetMaxHP(float e);
 	UFUNCTION(Server, Reliable)
 	void Server_SetMaxStamina(float e);
+	// Deprecated
+	//UFUNCTION(Server, Reliable)
+	//void Server_EquipmentSlotChanged(UObject* ChangedItemObject, EEquipmentSlotType EquipmentSlotType);
 	UFUNCTION(Server, Reliable)
-	void Server_EquipmentSlotChanged(UObject* ChangedItemObject, EEquipmentSlotType EquipmentSlotType);
+	void Server_EquipmentSlotChanged(FItemConfig ChangedItemConfig, EEquipmentSlotType EquipmentSlotType);
 	UFUNCTION(Server, Reliable)
 	void Server_QuickSlotChanged(UObject* ChangedItemObject, FKey ChangedKey);
 

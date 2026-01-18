@@ -6,7 +6,7 @@
 AHKK_PlayerState::AHKK_PlayerState() : Super()
 {
 	QuickSlotItemData.SetNum(3);
-	EquipmentSlotItemData.SetNum(4);
+	EquipmentSlotItemConfig.SetNum(4);
 	CurrentEquipSlotIndex = 0;
 }
 
@@ -22,12 +22,14 @@ void AHKK_PlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME(AHKK_PlayerState, PosseingItemConfig);
 	DOREPLIFETIME(AHKK_PlayerState, RecentlyAddedItemConfig);
 	DOREPLIFETIME(AHKK_PlayerState, CurrentEquipSlotIndex);
+	DOREPLIFETIME(AHKK_PlayerState, EquipmentSlotItemConfig);
 }
 
 bool AHKK_PlayerState::BindDelegate_HUDWidget_Implementation(UObject* BindWidget)
 {
 	if (BindWidget == nullptr) return false;
 	OnUpdateStatFloat.AddUFunction(BindWidget, "OnUpdatePlayerStatFloat");
+	OnEquipmentSlotSwitched.AddUFunction(BindWidget, "EquipItem");
 	IIUpdatableWidget::Execute_OnUpdatePlayerStatFloat(BindWidget, EPlayerStatType::EPST_HP, 1.f, 1.f);
 	IIUpdatableWidget::Execute_OnUpdatePlayerStatFloat(BindWidget, EPlayerStatType::EPST_Stamina, 1.f, 1.f);
 	return OnUpdateStatFloat.IsBoundToObject(BindWidget);
@@ -38,6 +40,7 @@ bool AHKK_PlayerState::BindDelegate_InventoryWidget_Implementation(UObject* Bind
 	if (BindWidget == nullptr) return false;
 	//OnUpdateItemToInventory.AddUFunction(BindWidget, "AddItem"); // Deprecated
 	OnAddItemDataObject.AddUFunction(BindWidget, "AddNewItemObject");
+	OnEquipmentSlotSwitched.AddUFunction(BindWidget, "EquipItem");
 	UE_LOG(LogTemp, Warning, TEXT("[Client %d] Delegate Bound on Widget"),
 		GetPlayerId());
 	return OnAddItemDataObject.IsBoundToObject(BindWidget);
@@ -111,26 +114,36 @@ void AHKK_PlayerState::Server_GetItem_Implementation(const FItemConfig& ItemConf
 	//if (HasAuthority()) OnRep_PossesingItem();
 }
 
-void AHKK_PlayerState::Server_EquipmentSlotChanged_Implementation(UObject* ChangedItemObject, EEquipmentSlotType EquipmentSlotType)
+//void AHKK_PlayerState::Server_EquipmentSlotChanged_Implementation(UObject* ChangedItemObject, EEquipmentSlotType EquipmentSlotType)
+void AHKK_PlayerState::Server_EquipmentSlotChanged_Implementation(FItemConfig ChangedItemConfig, EEquipmentSlotType EquipmentSlotType)
 {
 	uint8 QuickslotIndex = StaticCast<uint8>(EquipmentSlotType);
-	UItemDataObject* ChangedDataObject = Cast<UItemDataObject>(ChangedItemObject);
-	EquipmentSlotItemData[QuickslotIndex] = ChangedDataObject;
-
+	//UItemDataObject* ChangedDataObject = Cast<UItemDataObject>(ChangedItemObject);
+	//EquipmentSlotItemData[QuickslotIndex] = ChangedDataObject;
+	EquipmentSlotItemConfig[QuickslotIndex] = ChangedItemConfig;
 	uint8 idx = 0;
-	for (TWeakObjectPtr<UItemDataObject>& SlotItemData : EquipmentSlotItemData)
+	for (FItemConfig& SlotItemConfig : EquipmentSlotItemConfig)
 	{
 		idx++;
-		if (!SlotItemData.IsValid()) continue;
 		EEquipmentSlotType CurrEquipSlotType = StaticCast<EEquipmentSlotType>(idx - 1);
-		UItemDataObject* DataObject = SlotItemData.Get();
-
-		if (DataObject == ChangedDataObject && DataObject->ItemConfig.EquipmentSlotType != CurrEquipSlotType)
+		if (SlotItemConfig.EquipmentSlotType != CurrEquipSlotType)
 		{
-			SlotItemData = nullptr;
+			SlotItemConfig = FItemConfig();
 		}
-
 	}
+	//for (TWeakObjectPtr<UItemDataObject>& SlotItemData : EquipmentSlotItemData)
+	//{
+	//	idx++;
+	//	if (!SlotItemData.IsValid()) continue;
+	//	EEquipmentSlotType CurrEquipSlotType = StaticCast<EEquipmentSlotType>(idx - 1);
+	//	UItemDataObject* DataObject = SlotItemData.Get();
+
+	//	if (DataObject == ChangedDataObject && DataObject->ItemConfig.EquipmentSlotType != CurrEquipSlotType)
+	//	{
+	//		SlotItemData = nullptr;
+	//	}
+
+	//}
 }
 
 void AHKK_PlayerState::Server_QuickSlotChanged_Implementation(UObject* ChangedItemObject, FKey ChangedKey)
@@ -214,11 +227,11 @@ void AHKK_PlayerState::OnRep_CurrentEquipSlotIndex()
 	if (CurrentEquipSlotIndex == 0)
 	{
 		// BareHand
-		OnEquipmentSlotSwitched.Broadcast(FItemConfig(), EquipmentSlotItemData[CurrentEquipSlotIndex]);
+		OnEquipmentSlotSwitched.Broadcast(FItemConfig());
 	}
-	else if (EquipmentSlotItemData.IsValidIndex(CurrentEquipSlotIndex) && EquipmentSlotItemData[CurrentEquipSlotIndex].Get() != nullptr)
+	else if (EquipmentSlotItemConfig[CurrentEquipSlotIndex].WearableSpawnClass != nullptr)
 	{
-		OnEquipmentSlotSwitched.Broadcast(EquipmentSlotItemData[CurrentEquipSlotIndex].Get()->ItemConfig, EquipmentSlotItemData[CurrentEquipSlotIndex]);
+		OnEquipmentSlotSwitched.Broadcast(EquipmentSlotItemConfig[CurrentEquipSlotIndex]);
 	}
 }
 
@@ -271,7 +284,9 @@ void AHKK_PlayerState::OnItemDataUpdated(UObject* UpdatedItem)
 
 void AHKK_PlayerState::Callback_OnEquipmentItemSlotChanged(UObject* ChangedItemObject, EEquipmentSlotType EquipmentSlotType)
 {
-	Server_EquipmentSlotChanged(ChangedItemObject, EquipmentSlotType);
+	UItemDataObject* ItemDataObject = Cast<UItemDataObject>(ChangedItemObject);
+	if (ItemDataObject == nullptr) return;
+	Server_EquipmentSlotChanged(ItemDataObject->ItemConfig, EquipmentSlotType);
 }
 
 void AHKK_PlayerState::Callback_ChangedQuickSlot(UObject* ChangedItemObject, FKey ChangedKey)
@@ -289,7 +304,8 @@ void AHKK_PlayerState::Callback_KeyTriggered(FKey Key)
 		{
 			SearchIdx++;
 			SearchIdx %= 4;
-			if (EquipmentSlotItemData[SearchIdx].IsValid() || SearchIdx == 0)
+			//if (EquipmentSlotItemData[SearchIdx].IsValid() || SearchIdx == 0)
+			if (EquipmentSlotItemConfig[SearchIdx].WearableSpawnClass != nullptr || SearchIdx == 0)
 			{
 				Flag = true;
 				break;

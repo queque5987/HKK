@@ -55,6 +55,7 @@ APlayerCharacter::APlayerCharacter()
 	GetCharacterMovement()->bConstrainToPlane = false;
 	GetCharacterMovement()->bSnapToPlaneAtStart = false;
 	GetCharacterMovement()->MaxWalkSpeed = 300.f;
+	GetCharacterMovement()->bUseControllerDesiredRotation = false;
 
 	// Create a camera boom (pulls in towards the player if there is a collision)
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
@@ -66,7 +67,7 @@ APlayerCharacter::APlayerCharacter()
 	// Create a follow camera
 	TopDownCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("TopDownCamera"));
 	TopDownCameraComponent->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
-	TopDownCameraComponent->bUsePawnControlRotation = true; // Camera does not rotate relative to arm
+	TopDownCameraComponent->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 	// =============================================================
 
 	PrimaryActorTick.bCanEverTick = true;
@@ -94,8 +95,8 @@ void APlayerCharacter::BeginPlay()
 	);
 	tempController->GetOnAttack().AddUFunction(this, TEXT("Callback_OnAttack"));
 	OnSetItemInteractPickupWidget = &tempController->GetOnSetItemInteractPickupWidget();
-	tempController->GetOnKeyTriggered().AddUFunction(this, TEXT("Callback_OnKeyTriggered"));
-	tempController->GetOnKeyReleased().AddUFunction(this, TEXT("Callback_OnKeyReleased"));
+	tempController->GetOnKeyTriggered().AddUFunction(this, TEXT("Server_Callback_OnKeyTriggered"));
+	tempController->GetOnKeyReleased().AddUFunction(this, TEXT("Server_Callback_OnKeyReleased"));
 	IAnimInstace = Cast<IICharacterAnimInstance>(GetMesh()->GetAnimInstance());
 
 	CombatComponent->Server_SetOwnerMeshComp(GetMesh());
@@ -114,6 +115,25 @@ void APlayerCharacter::Tick(float DeltaTime)
 		FString Temp = FString::Printf(TEXT("HP : %f"), PS->Execute_GetCurrHP(GetPlayerState()));
 		DrawDebugString(GetWorld(), FVector(0.f, 0.f, 150.f), *Temp, this, FColor::Red, DeltaTime);
 	}
+
+	if (RotatePawnBasedOnControlRotation)
+	{
+		const FRotator ControlRot = GetControlRotation();
+		const FRotator TargetRot = FRotator(0.f, ControlRot.Yaw, 0.f);
+		const FRotator CurrentRot = GetActorRotation();
+
+		float InterpSpeed = 5.0f;
+		FRotator NewRot = FMath::RInterpTo(CurrentRot, TargetRot, DeltaTime, InterpSpeed);
+		SetActorRotation(NewRot);
+
+		if (CurrentRot.Equals(TargetRot, 1.0f))
+		{
+			if (HasAuthority())
+			{
+				RotatePawnBasedOnControlRotation = false;
+			}
+		}
+	}
 }
 
 void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -121,6 +141,7 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(APlayerCharacter, CharacterMovementState);
+	DOREPLIFETIME(APlayerCharacter, RotatePawnBasedOnControlRotation);
 }
 
 void APlayerCharacter::Multicast_PlayAnimation_Implementation(UAnimSequence* PlayAnimation)
@@ -145,13 +166,18 @@ void APlayerCharacter::Server_PlayAnimation_Implementation(UAnimSequence* PlayAn
 	Multicast_PlayAnimation(PlayAnimation);
 }
 
+void APlayerCharacter::Server_RotatePawnBasedOnConrolRotation_Implementation()
+{
+	RotatePawnBasedOnControlRotation = true;
+}
+
 void APlayerCharacter::Callback_OnAttack(const EPlayerAnimation AttackType)
 {
 	if (AnimationComponent == nullptr) return;
 	Server_PlayAnimation(AnimationComponent->GetAnimationSequence(AttackType));
 }
 
-void APlayerCharacter::Callback_OnKeyTriggered(const FKey Key)
+void APlayerCharacter::Server_Callback_OnKeyTriggered_Implementation(const FKey Key)
 {
 	//UE_LOG(LogTemp, Log, TEXT("Key Triggered : %s"), *Key.GetFName().ToString());
 	if (Key.GetFName() == FName("Shift"))
@@ -160,7 +186,7 @@ void APlayerCharacter::Callback_OnKeyTriggered(const FKey Key)
 	}
 }
 
-void APlayerCharacter::Callback_OnKeyReleased(const FKey Key)
+void APlayerCharacter::Server_Callback_OnKeyReleased_Implementation(const FKey Key)
 {
 	//UE_LOG(LogTemp, Log, TEXT("Key Released : %s"), *Key.GetFName().ToString());
 	if (Key.GetFName() == FName("Shift"))
@@ -200,10 +226,29 @@ bool APlayerCharacter::AttachItem_Implementation(AActor* AttachItemActor, FName 
 {
 	if (AttachItemActor != nullptr)
 	{
-		AttachItemActor->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, AttachSocketName);
+		if (AttachItemActor->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, AttachSocketName))
+		{
+			UAnimSequence* ToPlayReactAnim = AnimationComponent->GetAnimationSequence(EPlayerAnimation::EPA_EquipWeapon_R);
+			if (ToPlayReactAnim != nullptr) Server_PlayAnimation(ToPlayReactAnim);
+			return true;
+		}
+	}
+	return false;
+}
+
+bool APlayerCharacter::DetachItem_Implementation(AActor* AttachItemActor)
+{
+	if (AttachItemActor != nullptr)
+	{
+		AttachItemActor->DetachFromActor(FDetachmentTransformRules::KeepRelativeTransform);
 		return true;
 	}
 	return false;
+}
+
+void APlayerCharacter::RotatePawnBasedOnControlRotation_Implementation()
+{
+	Server_RotatePawnBasedOnConrolRotation();
 }
 
 void APlayerCharacter::Multicast_KnockBack_Implementation(FVector Direction)
@@ -238,7 +283,7 @@ void APlayerCharacter::SetItemInteractWidget(bool ToSet, TScriptInterface<class 
 	OnSetItemInteractPickupWidget->Broadcast(ToSet, EUserWidget::EUW_ItemInteract, ItemConfig);
 }
 
-void APlayerCharacter::OnEquipmentSlotSwitched(const FItemConfig& EquipItemConfig, TWeakObjectPtr<UItemDataObject> EquipItemDataObject)
+void APlayerCharacter::OnEquipmentSlotSwitched(const FItemConfig& EquipItemConfig)
 {
 	if (CombatComponent) CombatComponent->Server_SpawnAndAttachWeapon(EquipItemConfig);
 }

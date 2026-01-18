@@ -1,6 +1,7 @@
 #include "Widget/Widget_Inventory.h"
 #include "Widget/Object/ItemDataObject.h"
 #include "HKK_PCH.h"
+#include "Kismet/KismetMaterialLibrary.h"
 
 void UWidget_Inventory::NativeConstruct()
 {
@@ -10,7 +11,7 @@ void UWidget_Inventory::NativeConstruct()
 void UWidget_Inventory::SetVisibility(ESlateVisibility InVisibility)
 {
 	Super::SetVisibility(InVisibility);
-	Execute_OnSetVisibility(this, InVisibility == ESlateVisibility::Collapsed || InVisibility == ESlateVisibility::Hidden ? false : true);
+	//Execute_OnSetVisibility(this, InVisibility == ESlateVisibility::Collapsed || InVisibility == ESlateVisibility::Hidden ? false : true);
 }
 
 void UWidget_Inventory::OnUpdatePlayerStatFloat_Implementation(const EPlayerStatType PlayerStatType, float CurrStat, float MaxStat)
@@ -67,6 +68,22 @@ void UWidget_Inventory::AddNewItemObject_Implementation(UObject* AddItemObject)
 	{
 		ItemDataObject->OwningPlayer = GetOwningPlayer();
 		InventoryTree->AddItem(ItemDataObject);
+	}
+}
+
+void UWidget_Inventory::EquipItem_Implementation(const FItemConfig& EquipItemConfig)
+{
+	MID_WeaponPreview = UKismetMaterialLibrary::CreateDynamicMaterialInstance(GetWorld(), EquipItemConfig.HUDMaterialInstance);
+	if (Image_WeaponPreview)
+	{
+		Image_WeaponPreview->SetBrushFromMaterial(
+			MID_WeaponPreview != nullptr ? MID_WeaponPreview : MI_DefaultWeaponPreview
+		);
+	}
+	if (Text_WeaponName)
+	{
+		Text_WeaponName->SetText(
+			MID_WeaponPreview != nullptr ? EquipItemConfig.ItemName : FText::FromString(TEXT("맨손")));
 	}
 }
 

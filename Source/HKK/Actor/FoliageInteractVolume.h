@@ -19,7 +19,6 @@ public:
 	AFoliageInteractVolume();
 
 protected:
-	/*Box Should Be 1:1:1 Size For Now*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UBoxComponent> FoliageInteractionBound;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))

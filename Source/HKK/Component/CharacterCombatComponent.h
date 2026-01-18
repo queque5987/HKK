@@ -23,6 +23,8 @@ protected:
 	bool bTrace;
 	UPROPERTY(ReplicatedUsing = OnRep_ItemEquip)
 	TObjectPtr<AActor> EquipActor;
+	UPROPERTY(Replicated)
+	TObjectPtr<UClass> EquipActorClass;
 
 	FVector CachedTraceStartLocation;
 	FVector CachedTraceEndLocation;

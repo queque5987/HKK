@@ -45,6 +45,12 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	class UImage* Image_WeaponPreview;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UMaterialInstance> MI_DefaultWeaponPreview;
+
+	UPROPERTY()
+	TObjectPtr<UMaterialInstanceDynamic> MID_WeaponPreview;
+
 	TArray<TObjectPtr<UItemDataObject>>* QuickSlotEmptyObjects;
 	TArray<FKey>* QuickSlotKeySetting;
 
@@ -55,6 +61,8 @@ public:
 	virtual void OnUpdatePlayerStatFloat_Implementation(const EPlayerStatType PlayerStatType, float CurrStat, float MaxStat) override;
 	virtual void AddItem_Implementation(bool bPutIn, EUserWidget AddWidgetType, const FItemConfig& ItemConfig) override;
 	virtual void AddNewItemObject_Implementation(UObject* AddItemObject) override;
+	virtual void EquipItem_Implementation(const FItemConfig& EquipItemConfig) override;
+
 	UFUNCTION()
 	virtual void OnUpdateQuickSlot_Implementation(UObject* UpdatedItem, FKey Key) override;
 	void UpdateQuickSlotObjectArr(TArray<UObject*>& InQuickSlotObjectArr);

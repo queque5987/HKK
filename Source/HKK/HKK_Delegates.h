@@ -20,7 +20,7 @@ DECLARE_MULTICAST_DELEGATE_OneParam(FOnAddItemDataObject, UObject*);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnKeyInputEvent, const FKey);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnSetWalkSpeed, float);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnItemSlotUpdated, UObject*);
-DECLARE_MULTICAST_DELEGATE_TwoParams(FOnEquipmentSlotSwitched, const FItemConfig&, TWeakObjectPtr<UItemDataObject>);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnEquipmentSlotSwitched, const FItemConfig&);
 
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnQuickSlotUpdated, UObject*, FKey);
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnItemEquiped, UObject*, EEquipmentSlotType);

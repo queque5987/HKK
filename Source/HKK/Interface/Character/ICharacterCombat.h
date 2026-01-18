@@ -27,4 +27,8 @@ public:
 	virtual class UObject* GetPlayerStateObject() = 0;
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	bool AttachItem(AActor* AttachItemActor, FName AttachSocketName);
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	bool DetachItem(AActor* AttachItemActor);
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void RotatePawnBasedOnControlRotation();
 };

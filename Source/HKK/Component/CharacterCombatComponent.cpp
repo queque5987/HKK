@@ -69,7 +69,12 @@ void UCharacterCombatComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 
 void UCharacterCombatComponent::Server_SpawnAndAttachWeapon_Implementation(const FItemConfig& AttachItemConfig)
 {
-	if (!GetOwner()->HasAuthority()) return;
+	//if (!GetOwner()->HasAuthority()) return;
+	UCombatLibrary::DetachItem(GetOwner(), EquipActor);
+	UCombatLibrary::ReturnToPool(GetOwner(), EquipActorClass, EquipActor);
+	EquipActor = nullptr;
+	EquipActorClass = nullptr;
+
 	if (AttachItemConfig.WearableSpawnClass != nullptr)
 	{
 		UE_LOG(LogTemp, Log, TEXT("TODO UnAttaching Item"));
@@ -78,7 +83,9 @@ void UCharacterCombatComponent::Server_SpawnAndAttachWeapon_Implementation(const
 		{
 			UE_LOG(LogTemp, Log, TEXT("Attaching Item class %s"), *AttachItemConfig.WearableSpawnClass->GetName());
 		}
-		EquipActor = GetWorld()->SpawnActor<AActor>(AttachItemConfig.WearableSpawnClass);
+		//EquipActor = GetWorld()->SpawnActor<AActor>(AttachItemConfig.WearableSpawnClass);
+		EquipActor = UCombatLibrary::SpawnFromPool(GetOwner(), AttachItemConfig.WearableSpawnClass);
+		EquipActorClass = AttachItemConfig.WearableSpawnClass;
 		OnRep_ItemEquip();
 	}
 	else

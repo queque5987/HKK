@@ -22,6 +22,9 @@ protected:
 	class UImage* Image_WeaponPreview;
 
 	UPROPERTY(meta = (BindWidget))
+	class UImage* Image_PassedWeaponPreview;
+
+	UPROPERTY(meta = (BindWidget))
 	class UTileView* QuickSlotTile;
 
 	UPROPERTY(meta = (BindWidget))
@@ -39,11 +42,20 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* Text_WeaponName;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UMaterialInstance> MI_DefaultWeaponPreview;
+
+	UPROPERTY()
+	TObjectPtr<UMaterialInstanceDynamic> MID_WeaponPreview;
+
 	TArray<TObjectPtr<UItemDataObject>>* QuickSlotEmptyObjects;
 	TArray<FKey>* QuickSlotKeySetting;
+
+	bool IsLastTriggeredScrollUp;
 public:
 	virtual void SetVisibility(ESlateVisibility InVisibility) override;
 	virtual void OnUpdatePlayerStatFloat_Implementation(const EPlayerStatType PlayerStatType, float CurrStat, float MaxStat) override;
+	virtual void EquipItem_Implementation(const FItemConfig& EquipItemConfig) override;
 	UFUNCTION()
 	virtual void OnUpdateQuickSlot_Implementation(UObject* UpdatedItem, FKey Key) override;
 	virtual void OnKeyTriggered_Implementation(FKey Key) override;

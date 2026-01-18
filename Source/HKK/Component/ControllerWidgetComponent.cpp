@@ -189,7 +189,9 @@ void UControllerWidgetComponent::Callback_OnKeyTriggered(FKey Key)
 		else WidgetFloating &= ~1 << (uint8)EUserWidget::EUW_Inventory;
 
 		WidgetController->SetCurorVisibility(!WasOn);
-		Widget_Inventory->SetVisibility(WasOn ? ESlateVisibility::Collapsed : ESlateVisibility::Visible);
+		//Widget_Inventory->SetVisibility(WasOn ? ESlateVisibility::Collapsed : ESlateVisibility::Visible);
+		Widget_Inventory->Execute_OnSetVisibility(Widget_Inventory, !WasOn);
+		Widget_HUD->Execute_OnSetVisibility(Widget_HUD, WasOn);
 		InventoryInterval = 1.f;
 	}
 	if (Widget_HUD != nullptr)

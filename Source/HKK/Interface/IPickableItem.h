@@ -17,6 +17,10 @@ class HKK_API IIPickableItem
 	GENERATED_BODY()
 
 public:
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	bool GetPickableItem();
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void SetPickableItem(bool e);
 
 	virtual void OnItemStencilValueChange(ECustomStencilValue CustomStencilValue) {};
 	virtual FComponentBeginOverlapSignature* GetComponentBeginOverlapSignature() { return nullptr; };

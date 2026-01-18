@@ -1,9 +1,13 @@
 #include "GameFramework/WidgetLibrary.h"
 #include "Interface/Controller/IWidgetController.h"
+#include "Interface/IPickableItem.h"
 
 void UWidgetLibrary::ItemInteractWidget(bool IsOn, UObject* OwningPlayerController, UObject* PickableItemObject, const FItemConfig& ItemConfig)
 {
-	IIWidgetController::Execute_ItemInteractPickUpWidget(OwningPlayerController, IsOn, PickableItemObject, ItemConfig);
+	if (IIPickableItem::Execute_GetPickableItem(PickableItemObject) || !IsOn)
+	{
+		IIWidgetController::Execute_ItemInteractPickUpWidget(OwningPlayerController, IsOn, PickableItemObject, ItemConfig);
+	}
 }
 
 void UWidgetLibrary::QuickSlotChanged(UObject* ChangedPlayerController, UObject* ChangedItemObject, FKey ChangedKey)

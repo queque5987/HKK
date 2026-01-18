@@ -33,6 +33,8 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	bool bRotating;
 
+	UPROPERTY(ReplicatedUsing = OnRep_PickableItem, EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	bool bPickableItem;
 	FVector SMCurrentRelativeLocation;
 
 	bool bFloatingUp = false;
@@ -46,6 +48,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	FItemConfig ItemConfig;
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 	virtual void BeginPlay() override;
 
 	FOnChangeStencilValue OnChangeStencilValue;
@@ -54,6 +59,8 @@ public:
 	/*
 ----- Pickable Item Start
 	*/
+	virtual bool GetPickableItem_Implementation() override;
+	virtual void SetPickableItem_Implementation(bool e) override;
 	virtual void OnItemStencilValueChange(ECustomStencilValue CustomStencilValue) override;
 	virtual FComponentBeginOverlapSignature* GetComponentBeginOverlapSignature() override;
 	virtual FComponentEndOverlapSignature* GetComponentEndOverlapSignature() override;
@@ -61,4 +68,9 @@ public:
 	/*
 ----- Pickable Item End
 	*/
+	UFUNCTION(Server, Reliable)
+	void Server_SetPickableItem(bool e);
+
+	UFUNCTION()
+	void OnRep_PickableItem();
 };

@@ -40,6 +40,8 @@ protected:
 
 	UPROPERTY(Replicated)
 	float AimingYaw;
+	UPROPERTY(Replicated)
+	bool RotatePawnBasedOnControlRotation = false;
 
 	class IICharacterAnimInstance* IAnimInstace;
 
@@ -72,14 +74,15 @@ public:
 	void Server_OnAiming(float Yaw);
 	UFUNCTION(Server, Unreliable)
 	void Server_RefreshVelocity();
-	
+	UFUNCTION(Server, Reliable)
+	void Server_RotatePawnBasedOnConrolRotation();
 
 	UFUNCTION()
 	void Callback_OnAttack(const EPlayerAnimation AttackType);
-	UFUNCTION()
-	void Callback_OnKeyTriggered(const FKey Key);
-	UFUNCTION()
-	void Callback_OnKeyReleased(const FKey Key);
+	UFUNCTION(Server, Reliable)
+	void Server_Callback_OnKeyTriggered(const FKey Key);
+	UFUNCTION(Server, Reliable)
+	void Server_Callback_OnKeyReleased(const FKey Key);
 	/*
 ----- ICharacter Movement Start
 	*/
@@ -111,6 +114,9 @@ public:
 	virtual void Multicast_KnockBack(FVector Direction) override;
 	virtual UObject* GetPlayerStateObject() override { return (UObject*)GetPlayerState(); };
 	virtual bool AttachItem_Implementation(AActor* AttachItemActor, FName AttachSocketName) override;
+	virtual bool DetachItem_Implementation(AActor* AttachItemActor) override;
+	virtual void RotatePawnBasedOnControlRotation_Implementation() override;
+
 	/*
 ----- ICharacter Combat End
 	*/
@@ -123,6 +129,6 @@ public:
 ----- ICharacter Widget End
 	*/
 	UFUNCTION()
-	void OnEquipmentSlotSwitched(const FItemConfig& EquipItemConfig, TWeakObjectPtr<UItemDataObject> EquipItemDataObject);
+	void OnEquipmentSlotSwitched(const FItemConfig& EquipItemConfig);
 
 };

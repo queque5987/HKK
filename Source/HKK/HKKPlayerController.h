@@ -82,6 +82,8 @@ public:
 	FORCEINLINE FOnPlayAnimation& GetOnPlayAnimation() { return OnPlayAnimation; }
 	FORCEINLINE FOnAttack& GetOnAttack() { return OnAttack; }
 
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 	/*
 -----IIWidgetController Start
 	*/
@@ -146,6 +148,8 @@ protected:
 	bool DelegateBind = false;
 	bool WidgetControllerSetup = false;
 	bool WidgetHUDBind = false;
+
+	UPROPERTY(Replicated)
 	bool bShiftPressed = false;
 
 	virtual void SetupInputComponent() override;
@@ -176,6 +180,9 @@ protected:
 	void InteractReleased();
 	void UISwitchTriggered(const FInputActionValue& Value);
 	void QuickSlotTriggered(const FInputActionValue& Value);
+
+	UFUNCTION(Server, Reliable)
+	void Server_SetShiftPressed(bool e);
 private:
 	FVector CachedDestination;
 	FVector CachedDirection;

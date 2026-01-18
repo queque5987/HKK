@@ -3,6 +3,7 @@
 #include "Component/PickableComponent.h"
 #include "Component/WearableComponent.h"
 #include "Components/SphereComponent.h"
+#include "Net/UnrealNetwork.h"
 
 
 AItem::AItem()
@@ -32,6 +33,12 @@ AItem::AItem()
 
 }
 
+void AItem::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AItem, bPickableItem);
+}
+
 void AItem::BeginPlay()
 {
 	Super::BeginPlay();
@@ -47,19 +54,30 @@ void AItem::BeginPlay()
 void AItem::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	if (bFloating)
+	if (bPickableItem)
 	{
 		fElipsedTime += DeltaTime * fFloatingSpeed;
 		const float HeightOffset = (FMath::Sin(fElipsedTime) + 1.f) / 2.f * fMaxFloatingHeight;
 		StaticMeshComponent->SetRelativeLocation(SMCurrentRelativeLocation + FVector(0.f, 0.f, HeightOffset));
-	}
-	if (bRotating)
-	{
+
 		const float AnglePerTick = DeltaTime * fRotatingSpeed;
-		const FQuat NewRotation{ FVector(0.f, 0.f, 1.f), FMath::DegreesToRadians(AnglePerTick)};
+		const FQuat NewRotation{ FVector(0.f, 0.f, 1.f), FMath::DegreesToRadians(AnglePerTick) };
 		StaticMeshComponent->AddRelativeRotation(NewRotation);
 	}
+}
+
+bool AItem::GetPickableItem_Implementation()
+{
+	return bPickableItem;
+}
+
+void AItem::SetPickableItem_Implementation(bool e)
+{
+	bPickableItem = e;
+	bFloating = e;
+	bRotating = e;
+	//Server_SetPickableItem(e);
+	if (HasAuthority()) OnRep_PickableItem();
 }
 
 void AItem::OnItemStencilValueChange(ECustomStencilValue CustomStencilValue)
@@ -75,4 +93,20 @@ FComponentBeginOverlapSignature* AItem::GetComponentBeginOverlapSignature()
 FComponentEndOverlapSignature* AItem::GetComponentEndOverlapSignature()
 {
 	return &Collider->OnComponentEndOverlap;
+}
+
+void AItem::OnRep_PickableItem()
+{
+	if (StaticMeshComponent)
+	{
+		StaticMeshComponent->SetRelativeLocation(SMCurrentRelativeLocation);
+		StaticMeshComponent->SetRelativeRotation(FRotator::ZeroRotator);
+	}
+}
+
+void AItem::Server_SetPickableItem_Implementation(bool e)
+{
+	bPickableItem = e;
+	bFloating = e;
+	bRotating = e;
 }

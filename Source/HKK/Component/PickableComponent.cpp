@@ -38,11 +38,6 @@ void UPickableComponent::OnComponentBeginOverlap(UPrimitiveComponent* Overlapped
 	if (OtherActor == CurrentPlayer)
 	{
 		UWidgetLibrary::ItemInteractWidget(true, CurrentPlayer->GetInstigatorController(), IPickable->_getUObject(), IPickable->GetItemConfig());
-		//IICharacterWidget* CharacterWidget = Cast<IICharacterWidget>(OtherActor);
-		//if (CharacterWidget != nullptr)
-		//{
-		//	CharacterWidget->SetItemInteractWidget(true, IPickable, IPickable->GetItemConfig());
-		//}
 		CurrentStencilValue = CurrentStencilValue == ECustomStencilValue::ECSV_Item ? ECustomStencilValue::ECSV_ItemSelected : ECustomStencilValue::ECSV_Item;
 		IPickable->OnItemStencilValueChange(CurrentStencilValue);
 	}
@@ -55,11 +50,6 @@ void UPickableComponent::OnComponentEndOverlap(UPrimitiveComponent* OverlappedCo
 	if (OtherActor == CurrentPlayer)
 	{
 		UWidgetLibrary::ItemInteractWidget(false, CurrentPlayer->GetInstigatorController(), IPickable->_getUObject(), IPickable->GetItemConfig());
-		//IICharacterWidget* CharacterWidget = Cast<IICharacterWidget>(OtherActor);
-		//if (CharacterWidget != nullptr)
-		//{
-		//	CharacterWidget->SetItemInteractWidget(false, IPickable, IPickable->GetItemConfig());
-		//}
 		CurrentStencilValue = CurrentStencilValue == ECustomStencilValue::ECSV_Item ? ECustomStencilValue::ECSV_ItemSelected : ECustomStencilValue::ECSV_Item;
 		IPickable->OnItemStencilValueChange(CurrentStencilValue);
 	}
