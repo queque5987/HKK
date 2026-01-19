@@ -184,13 +184,22 @@ if (RT_FoliageInteractImpact != nullptr && MID_FoliageInteractRenderTargetGenera
 
 지정한 만큼의(위 코드 기준 4개) 액터를 한 Tick에서 처리하는 FIFO 방식으로 구현하였습니다.
 
-3. Trail 남기기
+2. Trail 남기기
 
 이전의 RenderTarget을 초기화하는 부분을 제거하고, 현재 Tick에서 계산한 RenderTarget과 병합하는 노드를 추가하였습니다.
 
 매 연산마다 이전 RenderTarget의 B(Impulse 벡터의 크기에 해당)를 일정 수준 감소시키고, 현재의 RenderTarget과 병합하여 구현하였습니다.
 
 R, G에 각각 벡터의 (X, Y), (X, Z), (Y, Z) 축에 해당하는 값을 저장해두었기 때문에 R, G 값은 더한 뒤, Normalize하였고, B의 경우 최대 값을 갖도록 구현하였습니다.
+
+![FoliageTest_Trail3_Trail](https://github.com/user-attachments/assets/74690545-3ce6-4a5a-9f1e-21cc43846d33)
+
+> Trail(이전 프레임의 연산된 RenderTarget 병합) 적용한 모습
+
+![FoliageTest_Trial3_Stress](https://github.com/user-attachments/assets/aebb0e00-d0be-4cdd-8488-5b054d55e5ec)
+![FoliageTest_Trial3_StressWithin](https://github.com/user-attachments/assets/a831e494-3cdf-429d-b879-10cc8d78724c)
+
+> Lifespan 약 10초의 액터를 대략 400개 유지하며 테스트한 결과
 
 ## 차후 개선점
 
