@@ -5,7 +5,7 @@
 
 - [수정한 기능](#)
 
-	- [2-1. 리슨서버에서의 UI 중복 생성](#리슨서버에서의-UI-중복-생성)
+	- [2-1. 리슨서버에서의 UI 중복 생성 이슈](#리슨서버에서의-UI-중복-생성-이슈)
 
 	- [2-2. 장비 장착 시스템 구현 중 싱크 이슈](#장비-장착-시스템-구현-중-싱크-이슈)
 
@@ -221,7 +221,7 @@ R, G에 각각 벡터의 (X, Y), (X, Z), (Y, Z) 축에 해당하는 값을 저�
 3. 거리에 따라 액터에 부착된 Component의 개수를 조절하여 최적화
 
 -----
-# 리슨서버에서의 UI 중복 생성
+# 리슨서버에서의 UI 중복 생성 이슈
 -----
 
 1. 피격 시, 피격당한 캐릭터의 PlayerState 내부 CurrHP의 체력 감소
@@ -236,9 +236,13 @@ R, G에 각각 벡터의 (X, Y), (X, Z), (Y, Z) 축에 해당하는 값을 저�
 <img width="1394" height="862" alt="image" src="https://github.com/user-attachments/assets/4a0f6227-cd51-4c7b-8bd4-0f4089712d4b" />
 
 1. 객체 생성 순서 불일치로 인한 Race Condition?
+   
    => 기존 플레이어 컨트롤러의 BeginPlay 단계에서 델리게이트 바인딩을 시도하는 로직에 문제가 있다고 판단.
+   
    => OnRep_PlayerState 함수를 오버라이딩하여 해당 단계에서 바인딩 시도.
+   
    => 디버그용 텍스트를 출력하여 각 클라이언트에서 모든 플레이어의 HP를 확인하였으나, 체력 변수는 정상적으로 Replicate되고 있음.
+   
    => 해결은 실패했으나, BeginPlay 단계에서 PlayerState가 형성되지 않는 문제를 발견함.
 
 ```C++
@@ -261,11 +265,17 @@ void AHKKPlayerController::LoadingRace()
 ```
    
 2. 재귀적인 Initialize을 통한 안정성 확보
+   
    => PlayerState에 국한된 문제였으나 향후 볼륨이 커진 후 초기화 단계에서의 Race Condition은 피할 수 없다고 판단.
+   
    => 순차적으로 초기화를 진행하고, 초기화 결과를 확인하여 초기화 되지 않은 부분은 다음 Tick에서 재시도하는 로직으로 변경.
+   
    => 모든 초기화가 정상적으로 진행됐음을 확신할 수 있게됨.
+   
    => 해결은 여전히 실패했으나, 디버깅을 시도한 결과 모든 델리게이트는 정상적으로 바인드 되어 있고 심지어 바인드된 함수도 정상 호출됨.
+   
    => 위젯의 기본 체력바를 절반으로 설정, 바인드 이후 체력바를 최대한으로 설정한 뒤 에디터에서 게임 실행 도중
+   
    모든 캐릭터 스폰 이후 리슨 서버의 클라이언트에서 체력바가 초기화(절반)되는 현상 발견.
 
 ```C++
@@ -288,10 +298,15 @@ void AHKKPlayerController::LoadingRace()
 ```
 
 3. 리슨서버에서의 UI 중복 생성
+   
    => HUD 위젯이 중복으로 생성되는 것을 확신함.
+   
    => 기존 문제라 판단하였던 Bind_HUD 함수가 아닌 SetController를 재검토.
+   
    => SetController는 ControllerWidgetComponent에서 위젯을 뷰포트에 소환하는 기능이 포함되어 있었음.
+   
    => 모든 클라이언트의 컨트롤러를 보유하는 리슨 서버 환경에서 SetController 함수가 중복되어 호출되고 있었음.
+   
    => 조건에 IsLocalController를 추가하여 허무하게 해결.
 
 해결 방법 : 클라이언트로서 소유하고 있는 Controller인 경우에만 UI를 생성하도록 조건 추가.
@@ -306,3 +321,25 @@ void AHKKPlayerController::LoadingRace()
 # 장비 장착 시스템 구현 중 싱크 이슈
 -----
 
+1. 마우스 스크롤을 통해 장비 스위칭 가능
+2. HKKPlayerController에서 MouseScrolled 함수를 통해 OnKeyTriggered 델리게이트 브로드캐스트
+3. PlayerState에서 현재 장비창에 등록되어 있는 아이템 배열(TArray<FItemConfig>)을 순회하여 장비 가능한 아이템을 검색
+4. Server_SetCuurentEquipSlotIndex를 호출하여 CurrentEquipSlotIndex의 값을 해당 아이템의 인덱스로 변경
+5. OnRep_CurrentEquipSlotIndex를 통해 OnEquipmentSlotSwitched 델리게이트를 통해 아이템 정보(FItemConfig)를 브로드캐스트
+6. HUD, Inventory 위젯 등에서 바인드된 함수를 통해 위젯 애니메이션 재생 및 텍스쳐 교체
+7. PlayerCharacter에서 바인드된 함수 OnEquipmentSlotSwitched를 통해 CombatComponent의 Server_SpawnAndAttachWeapon함수 호출
+8. Server상에서 무기 액터를 스폰 시 WorldSubSystem을 상속한 UObjectPoolSystem을 통해 오브젝트 풀링 사용
+9. 스폰된 무기 액터의 포인터를 EquipActor에 저장한 후, OnRep_ItemEquip 함수 호출
+10. PlayerCharacter의 AttachItem을 통해 각 클라이언트에 Replicated된 무기 액터를 부착시킴
+
+세 개의 델리게이트를 통해 변수를 변경하고 OnRep함수를 통해 애니메이션을 실행, UI의 텍스쳐를 변경하도록 하여 안정적이나 반응속도가 매우 떨어지는 문제 발견
+
+1. 지나치게 안정적인 로직
+   
+	==> 서버에서 아이템 배열을 순회하고, 액터를 소환하고, 부착하는 동안
+
+	==>클라이언트는 서버의 응답을 기다리고, 완료될 경우 애니메이션을 재생하는 형태로 구현되었음
+
+	==> OnKeyTriggered 델리게이트를 통해 키가 입력되었을 경우 변경할 무기가 있는지 정도만 확인 후 애니메이션을 실행시키는 방향으로 개선
+
+	==> 무기가 있는지 여부를 확인하기 위해선 장비 슬롯에 장착 시 Replicate시킬 필요가 있음
