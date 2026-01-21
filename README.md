@@ -31,17 +31,25 @@
 
 ![FoliageTest_Material1](https://github.com/user-attachments/assets/6bdd571f-adb7-413c-b87a-5872256f1486)
 
-기존 마켓플레이스 Foliage의 머티리얼에 WPO를 더하여 구현
+> 기존 퀵셀브릿지에서 다운로드 가능한 Foliage의 머티리얼에 WorldPositionOffset을 더하여 구현하였습니다.
+>
+> 각 WorldPosition에 추가될 벡터는 RenderTarget에 RGBA 형태로 저장하였습니다.
 
-RenderTarget을 4등분하여 각각 XY, XZ, YZ 세 좌표면을 저장하여 3차원 좌표 내의 3차원 벡터를 각 세 평면에 나누어 저장하였습니다.
+<img width="2016" height="701" alt="Material_DrawDirectionalpng" src="https://github.com/user-attachments/assets/e662b8d6-5b7e-46de-8ba4-4fd7e6fc3a17" />
 
-RenderTarget 중 R 값에는 중심으로부터 임의의 위치까지 향하는 방향 벡터에서 Theta를 산출하여 저장하였습니다.
+> RenderTarget을 4등분하여 각각 XY, XZ, YZ 세 좌표면을 저장하여 3차원 좌표 내의 3차원 벡터를 각 세 평면에 나누어 저장하였습니다.
+> 
+> RenderTarget의 R 채널에는 충돌이 발생한 좌표(Center Position)으로부터 임의의 위치까지 향하는 방향 벡터를 산출하였고,
+>
+> Atan2 노드를 사용하여 Radian 값으로 변환하여 저장하였습니다. (Deprecated 부분, 차후 각각의 성분을 R, G 채널에 저장하도록 수정하였습니다.)
 
-Center Position을 파라미터로 받아 Texture Coordinate에 뺀 후, Normalize하여 산출하였고, Atan2를 사용하여 Theta 값으로 치환하여 저장하였습니다. 
+<img width="2043" height="779" alt="Material_DrawRadialLocation" src="https://github.com/user-attachments/assets/dd01ae82-2ad5-4b3e-b027-46af8580a836" />
 
-G 값에는 중점으로부터의 거리를 저장하였습니다.
-
-파라미터로 입력 받은 Center Position과 Radius를 활용하여 Radial Gradient Exponential으로 특정 좌표로부터 원형 그라데이션을 그렸습니다.
+> G 채널에는 중점으로부터의 거리를 저장하였습니다.
+>
+> Radial Gradient Exponential 노드를 통해 충돌이 발생한 좌표로부터 시작되는 원형 그라데이션을 추가하였습니다.
+>
+> (방향 벡터를 R, G 채널에 저장하도록 수정한 이후 B 채널로 변경하였습니다.)
 
 ### Foliage Interact Volume
 
@@ -85,8 +93,8 @@ public:
 };
 ```
 
-Foliage의 충돌을 연산 할 Volume과 해당 Volume 안에서 연산을 수행할 컴포넌트를 구현하였습니다.
-
+> Foliage의 충돌을 연산 할 Volume과 해당 Volume 안에서 연산을 수행할 컴포넌트를 구현하였습니다.
+>
 > FoliageInteractionBound : 충돌을 계산할 바운더리
 > 
 > MI_FoliageInteractRenderTargetGenerator : 충돌을 계산하는 머티리얼 포인터
@@ -121,8 +129,6 @@ void AFoliageInteractVolume::SetImpulse(const FVector& ImpactLocation, float Rad
 > void SetImpulse(const FVector& ImpactLocation, float Radius) : 충돌을 지정하는 함수
 >
 > 파라미터를 설정 후 DrawMaterialToRenderTarget을 사용하여 RT_FoliageInteractImpact에 저장
-
-저장된 RenderTarget은 Foliage의 머티리얼에서 WorldPositionOffset에 더하여 구현.
 
 ## 1차 개선점
 
