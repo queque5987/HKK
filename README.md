@@ -1,9 +1,9 @@
 
-- [구현한 기능](#)
+- [구현한 기능들](#)
    
-	- [1-1. 환경(Foliage) 피드백 시스템 구현](#환경(Foliage)-피드백-시스템-구현)
+	- [1-1. 환경(Foliage) Collision 기능 구현](#환경(Foliage)-피드백-시스템-구현)
 
-- [수정한 기능](#)
+- [해결한 이슈들](#)
 
 	- [2-1. 리슨서버에서의 UI 중복 생성 이슈](#리슨서버에서의-UI-중복-생성-이슈)
 
@@ -130,6 +130,42 @@ void AFoliageInteractVolume::SetImpulse(const FVector& ImpactLocation, float Rad
 >
 > 파라미터를 설정 후 DrawMaterialToRenderTarget을 사용하여 RT_FoliageInteractImpact에 저장
 
+### FoliageInteractSourceComponent
+
+```C++
+void UFoliageInteractSourceComponent::BeginPlay()
+{
+	Super::BeginPlay();
+	TArray<AActor*> FoundActors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AFoliageInteractVolume::StaticClass(), FoundActors);
+	for (AActor* Actor : FoundActors)
+	{
+		if (AFoliageInteractVolume* Volume = Cast<AFoliageInteractVolume>(Actor))
+		{
+			ToCheckFoliageVolumes.Add(Volume);
+		}
+	}
+}
+
+
+void UFoliageInteractSourceComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	//UE_LOG(LogTemp, Log, TEXT("%s"), *GetComponentLocation().ToString());
+	for (AFoliageInteractVolume* FIV :ToCheckFoliageVolumes)
+	{
+		if (FIV->IsInside(GetComponentLocation()))
+		{
+			FIV->SetImpulse(GetComponentLocation(), Collider->GetScaledSphereRadius());
+		}
+	}
+}
+```
+
+> BeginPlay : 레벨에 존재하는 FoliageInteractVolume을 ToCheckFoliageVolumes에 추가
+>
+> TickComponent : ToCheckFoliageVolumes를 순회하며 내부에 있을 경우 SetImpulse 함수 호출
+
 ## 1차 개선점
 
 ### 1. Direction 관련 버그 발견
@@ -158,44 +194,104 @@ Materail Instance Dynamic을 생성 / 소멸시킨다면 오버헤드가 클 것
 
 각각의 충돌을 합쳐 ( R, G에 저장한 방향벡터의 경우 단순 Add 노드로 구현 가능, B의 경우 최대값으로 구현) 병렬로 처리할 수 있도록 하였습니다.
 
+### FoliageInteractSourceComponent
+
 ```C++
-TQueue<TScriptInterface<IICharacterMovement>> tempQueue;
-for (int8 i = 0; i < 4; i++)
+void UFoliageInteractSourceComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
-	//if (InteractingSourceComponentQueue.IsEmpty()) continue;
-	TScriptInterface<IICharacterMovement> SourceComponent;
-	InteractingSourceComponentQueue.Dequeue(SourceComponent);
-	//if (SourceComponent.GetObject() == nullptr || !IsInside(SourceComponent->_GetLocation())) continue;  <<  SetImpulse 내부에서 널포인터일 경우 i번째 파라미터를 초기화하기 때문에 널포인터 체크 하지 않음
-	SetImpulse(SourceComponent, i);
-	if (SourceComponent.GetObject() == nullptr) continue;
-	if (IsInside(SourceComponent->_GetLocation()))
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	if (!bEneable) return;
+	//if (Collider) UE_LOG(LogTemp, Log, TEXT("%s"), *Collider->GetComponentVelocity().ToString());
+	for (AFoliageInteractVolume* FIV :ToCheckFoliageVolumes)
 	{
-		tempQueue.Enqueue(SourceComponent); // Inside Volume : Push Again
+		if (FIV->IsInside(GetComponentLocation()))
+		{
+			if (CurrentOverlappingVolume == FIV) continue;
+			CurrentOverlappingVolume = FIV;
+			//FIV->SetImpulse(Collider->GetComponentLocation(), Collider->GetScaledSphereRadius());
+			TScriptInterface<IICharacterMovement> tempInterface;
+			tempInterface = this;
+			FIV->PushInteractSourceComponent(tempInterface);
+			//DrawDebugSphere(GetWorld(), GetComponentLocation(), Collider->GetScaledSphereRadius(), 32, FColor::Red, false);
+		}
+		else
+		{
+			CurrentOverlappingVolume = nullptr;
+		}
+	}
+}
+
+void UFoliageInteractSourceComponent::UpdateSocketVelocity()
+{
+	if (CachedSkelMeshParent.IsValid())
+	{
+		FVector CurrentBoneLocation;
+		if (SocketName != NAME_None) CurrentBoneLocation = CachedSkelMeshParent->GetSocketLocation(SocketName);
+		else CurrentBoneLocation = CachedSkelMeshParent->GetComponentLocation();
+		CachedVelocity = (CurrentBoneLocation - PreviousBoneLocation) / VelocityUpdateInterval;
+		PreviousBoneLocation = CurrentBoneLocation;
+	}
+	else if (CachedStaticMeshParent.IsValid())
+	{
+		FVector CurrentBoneLocation;
+		if (SocketName != NAME_None) CurrentBoneLocation = CachedStaticMeshParent->GetSocketLocation(SocketName);
+		else CachedStaticMeshParent->GetComponentLocation();
+		CachedVelocity = (CurrentBoneLocation - PreviousBoneLocation) / VelocityUpdateInterval;
+		PreviousBoneLocation = CurrentBoneLocation;
 	}
 	else
 	{
-		InteractingSourceComponentSet.Remove(SourceComponent);	// Outside Volume : Remove From Set
+		GetWorld()->GetTimerManager().ClearTimer(VelocityUpdateTimerHandle);
+		CachedVelocity = FVector::ZeroVector;
 	}
 }
-for (int8 i = 0; i < 4; i++)
+```
+> TickComponent : Voulume 내부에 있을 경우 SetImpulse를 호출하는 방식에서 Volume의 큐에 Push하는 방식으로 수정하였습니다.
+>
+> UpdateSocketVelocity : Parent의 종류에 따라 Velocity를 주기적으로 업데이트하는 함수
+
+### FoliageInteractVolume
+
+```C++
+
+void AFoliageInteractVolume::Tick(float DeltaTime)
 {
-	if (tempQueue.IsEmpty()) break;
-	TScriptInterface<IICharacterMovement> SourceComponent;
-	tempQueue.Dequeue(SourceComponent);
-	if (SourceComponent.GetObject() == nullptr) continue;
-	InteractingSourceComponentQueue.Enqueue(SourceComponent);
-}
-if (RT_FoliageInteractImpact != nullptr && MID_FoliageInteractRenderTargetGenerator != nullptr)
-{
-	UKismetRenderingLibrary::DrawMaterialToRenderTarget(this, RT_FoliageInteractImpact, MID_FoliageInteractRenderTargetGenerator);
+	Super::Tick(DeltaTime);
+	TQueue<TScriptInterface<IICharacterMovement>> tempQueue;
+	for (int8 i = 0; i < 4; i++)
+	{
+		//if (InteractingSourceComponentQueue.IsEmpty()) continue;
+		TScriptInterface<IICharacterMovement> SourceComponent;
+		InteractingSourceComponentQueue.Dequeue(SourceComponent);
+		//if (SourceComponent.GetObject() == nullptr || !IsInside(SourceComponent->_GetLocation())) continue;  <<  SetImpulse 내부에서 널포인터일 경우 i번째 파라미터를 초기화하기 때문에 널포인터 체크 하지 않음
+		SetImpulse(SourceComponent, i);
+		if (SourceComponent.GetObject() == nullptr) continue;
+		if (IsInside(SourceComponent->_GetLocation()))
+		{
+			tempQueue.Enqueue(SourceComponent); // Inside Volume : Push Again
+		}
+		else
+		{
+			InteractingSourceComponentSet.Remove(SourceComponent);	// Outside Volume : Remove From Set
+		}
+	}
+	for (int8 i = 0; i < 4; i++)
+	{
+		if (tempQueue.IsEmpty()) break;
+		TScriptInterface<IICharacterMovement> SourceComponent;
+		tempQueue.Dequeue(SourceComponent);
+		if (SourceComponent.GetObject() == nullptr) continue;
+		InteractingSourceComponentQueue.Enqueue(SourceComponent);
+	}
+	if (RT_FoliageInteractImpact != nullptr && MID_FoliageInteractRenderTargetGenerator != nullptr)
+	{
+		UKismetRenderingLibrary::DrawMaterialToRenderTarget(this, RT_FoliageInteractImpact, MID_FoliageInteractRenderTargetGenerator);
+	}
 }
 ```
-
-기존의 충돌한 액터의 컴포넌트(UFoliageInteractSourceComponent)의 Tick에서 RenderTarget을 업데이트 하는 방식에서
-
-지정한 만큼의(위 코드 기준 4개) 액터를 한 Tick에서 처리하는 FIFO 방식으로 구현하였습니다.
-
-이렇게 한다면 지정한 만큼의 파라미터를 동시에 처리하여 합칠 수 있으며, 하드웨어 성능에 따라 병렬적으로 처리할 액터의 수를 제한할 수 있습니다.
+> Tick : 기존에는 액터에 부착된 컴포넌트에서 SetImpulse를 호출하는 방식에서 Volume의 큐에서 Pop하여 처리하는 방식으로 구현하였습니다.
+>
+> 	FIFO 방식으로 다수의 액터를 동시에 처리하여 합칠 수 있게 되었으며, 하드웨어 성능에 따라 병렬적으로 처리할 액터의 수를 제한할 수 있게되었습니다.
 
 ### 2. Trail 남기기
 
