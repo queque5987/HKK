@@ -73,10 +73,10 @@ bool AItem::GetPickableItem_Implementation()
 
 void AItem::SetPickableItem_Implementation(bool e)
 {
-	bPickableItem = e;
-	bFloating = e;
-	bRotating = e;
-	//Server_SetPickableItem(e);
+	//bPickableItem = e;
+	//bFloating = e;
+	//bRotating = e;
+	Server_SetPickableItem(e);
 	if (HasAuthority()) OnRep_PickableItem();
 }
 
@@ -101,6 +101,9 @@ void AItem::OnRep_PickableItem()
 	{
 		StaticMeshComponent->SetRelativeLocation(SMCurrentRelativeLocation);
 		StaticMeshComponent->SetRelativeRotation(FRotator::ZeroRotator);
+		StaticMeshComponent->SetCustomDepthStencilValue(
+			(int32)(bPickableItem ? ECustomStencilValue::ECSV_Item : ECustomStencilValue::ECSV_Default)
+		);
 	}
 }
 

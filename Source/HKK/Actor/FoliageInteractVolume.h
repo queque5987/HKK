@@ -32,11 +32,7 @@ protected:
 
 	TQueue<TScriptInterface<IICharacterMovement>> InteractingSourceComponentQueue;
 	TSet<TScriptInterface<IICharacterMovement>> InteractingSourceComponentSet;
-	//UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	//TObjectPtr<UTextureRenderTarget2D> RT_FoliageInteractImpact_B;
 
-	
-	bool bFlipRT;
 	virtual void BeginPlay() override;
 
 public:	

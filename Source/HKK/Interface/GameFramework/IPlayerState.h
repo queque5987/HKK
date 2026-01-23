@@ -46,4 +46,7 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void GetItem(const FItemConfig& ItemConfig);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void GetEquipmentSlotItemConfig(TArray<FItemConfig>& InEquipmentSlotItemConfig);
 };

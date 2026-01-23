@@ -13,6 +13,7 @@
 #include "Engine/LocalPlayer.h"
 #include "DrawDebugHelpers.h"
 #include "GameFramework/CombatLibrary.h"
+//#include "GameFramework/WidgetLibrary.h"
 #include "Interface/GameFramework/IPlayerState.h"
 #include "Net/UnrealNetwork.h"
 
@@ -382,6 +383,21 @@ void AHKKPlayerController::MouseScrolled(const FInputActionValue& Value)
 {
 	float ScrollValue = Value.Get<float>();
 	OnKeyTriggered.Broadcast(ScrollValue >= 0 ? FKey("MouseScrollUp") : FKey("MouseScrollDown"));
+	if (UCombatLibrary::CanWeaponScrollSwitch(GetPlayerStateObject()))
+	{
+		OnAttack.Broadcast(EPlayerAnimation::EPA_EquipWeapon_R);
+	}
+	if (GEngine)
+	{
+		if (ScrollValue >= 0)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Orange, FString("MouseScrollUp"));
+		}
+		else
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Orange, FString("MouseScrollDown"));
+		}
+	}
 }
 
 void AHKKPlayerController::Attack0_RFistTriggered(const FInputActionValue& Value)

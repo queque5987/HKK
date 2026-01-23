@@ -2,12 +2,14 @@
 #include "Interface/Controller/IWidgetController.h"
 #include "Interface/IPickableItem.h"
 
-void UWidgetLibrary::ItemInteractWidget(bool IsOn, UObject* OwningPlayerController, UObject* PickableItemObject, const FItemConfig& ItemConfig)
+bool UWidgetLibrary::ItemInteractWidget(bool IsOn, UObject* OwningPlayerController, UObject* PickableItemObject, const FItemConfig& ItemConfig)
 {
 	if (IIPickableItem::Execute_GetPickableItem(PickableItemObject) || !IsOn)
 	{
 		IIWidgetController::Execute_ItemInteractPickUpWidget(OwningPlayerController, IsOn, PickableItemObject, ItemConfig);
+		return true;
 	}
+	return false;
 }
 
 void UWidgetLibrary::QuickSlotChanged(UObject* ChangedPlayerController, UObject* ChangedItemObject, FKey ChangedKey)

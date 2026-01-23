@@ -26,7 +26,6 @@ private:
 	float MaxStamina;
 	UPROPERTY(ReplicatedUsing = OnRep_RecentlyAddedItemConfig)
 	FItemConfig RecentlyAddedItemConfig;
-	//TArray<FItemConfig> PossesingItem;
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TArray<FItemConfig> PosseingItemConfig;
 	TArray<TObjectPtr<UItemDataObject>> PossingItemData;
@@ -61,6 +60,7 @@ public:
 	virtual bool BindDelegate_Equipment_Implementation(UObject* BindCharacter) override;
 
 	virtual void GetItem_Implementation(const FItemConfig& ItemConfig) override;
+	virtual void GetEquipmentSlotItemConfig_Implementation(TArray<FItemConfig>& InEquipmentSlotItemConfig) override;
 
 	UFUNCTION(Server, Reliable)
 	void Server_GetItem(const FItemConfig& ItemConfig);
@@ -72,9 +72,6 @@ public:
 	void Server_SetMaxHP(float e);
 	UFUNCTION(Server, Reliable)
 	void Server_SetMaxStamina(float e);
-	// Deprecated
-	//UFUNCTION(Server, Reliable)
-	//void Server_EquipmentSlotChanged(UObject* ChangedItemObject, EEquipmentSlotType EquipmentSlotType);
 	UFUNCTION(Server, Reliable)
 	void Server_EquipmentSlotChanged(FItemConfig ChangedItemConfig, EEquipmentSlotType EquipmentSlotType);
 	UFUNCTION(Server, Reliable)

@@ -59,6 +59,11 @@ void AHKK_PlayerState::GetItem_Implementation(const FItemConfig& ItemConfig)
 	return;
 }
 
+void AHKK_PlayerState::GetEquipmentSlotItemConfig_Implementation(TArray<FItemConfig>& InEquipmentSlotItemConfig)
+{
+	InEquipmentSlotItemConfig = EquipmentSlotItemConfig;
+}
+
 void AHKK_PlayerState::Server_SetCurrHP_Implementation(float e)
 {
 	CurrHP = e;
@@ -291,7 +296,8 @@ void AHKK_PlayerState::Callback_OnEquipmentItemSlotChanged(UObject* ChangedItemO
 
 void AHKK_PlayerState::Callback_ChangedQuickSlot(UObject* ChangedItemObject, FKey ChangedKey)
 {
-	Server_QuickSlotChanged(ChangedItemObject, ChangedKey);
+	//Server_QuickSlotChanged(ChangedItemObject, ChangedKey);
+	// TODO : Change To FItemConfig
 }
 
 void AHKK_PlayerState::Callback_KeyTriggered(FKey Key)

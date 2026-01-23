@@ -130,6 +130,17 @@ bool UCombatLibrary::ReturnToPool(const UObject* WorldObject, UClass* ReturnActo
 	return ObjectPoolSystem->ReturnToPool(ReturnActorClass, ReturnActor);
 }
 
+bool UCombatLibrary::CanWeaponScrollSwitch(UObject* OwningPlayerState)
+{
+	TArray<FItemConfig> EquipmentSlotItemConfig;
+	IIPlayerState::Execute_GetEquipmentSlotItemConfig(OwningPlayerState, EquipmentSlotItemConfig);
+	for (FItemConfig Config : EquipmentSlotItemConfig)
+	{
+		if (Config.WearableSpawnClass != nullptr) return true;
+	}
+	return false;
+}
+
 //bool UCombatLibrary::RefreshQuickSlot(UObject* OwningPlayerController, UObject* ChangedItemDataObject)
 //{
 //	if (OwningPlayerController == nullptr)

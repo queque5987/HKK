@@ -30,6 +30,8 @@ public:
 	static AActor* SpawnFromPool(const UObject* WorldObject, UClass* SpawnActorClass);
 	static bool ReturnToPool(const UObject* WorldObject, UClass* ReturnActorClass, AActor* ReturnActor);
 
+	/* Atleast 1 Item Equipped */
+	static bool CanWeaponScrollSwitch(UObject* OwningPlayerState);
 private:
 	template<typename...Args>
 	static void LogWarning(float DisplayTime, const FString& LogText)

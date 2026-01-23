@@ -37,9 +37,14 @@ void UPickableComponent::OnComponentBeginOverlap(UPrimitiveComponent* Overlapped
 	AActor* CurrentPlayer = Cast<AActor>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 	if (OtherActor == CurrentPlayer)
 	{
-		UWidgetLibrary::ItemInteractWidget(true, CurrentPlayer->GetInstigatorController(), IPickable->_getUObject(), IPickable->GetItemConfig());
-		CurrentStencilValue = CurrentStencilValue == ECustomStencilValue::ECSV_Item ? ECustomStencilValue::ECSV_ItemSelected : ECustomStencilValue::ECSV_Item;
-		IPickable->OnItemStencilValueChange(CurrentStencilValue);
+		if (UWidgetLibrary::ItemInteractWidget(true, CurrentPlayer->GetInstigatorController(), IPickable->_getUObject(), IPickable->GetItemConfig()))
+		{
+			if (CurrentStencilValue == ECustomStencilValue::ECSV_Item || CurrentStencilValue == ECustomStencilValue::ECSV_ItemSelected)
+			{
+				CurrentStencilValue = CurrentStencilValue == ECustomStencilValue::ECSV_Item ? ECustomStencilValue::ECSV_ItemSelected : ECustomStencilValue::ECSV_Item;
+				IPickable->OnItemStencilValueChange(CurrentStencilValue);
+			}
+		}
 	}
 }
 
@@ -49,8 +54,13 @@ void UPickableComponent::OnComponentEndOverlap(UPrimitiveComponent* OverlappedCo
 	AActor* CurrentPlayer = Cast<AActor>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 	if (OtherActor == CurrentPlayer)
 	{
-		UWidgetLibrary::ItemInteractWidget(false, CurrentPlayer->GetInstigatorController(), IPickable->_getUObject(), IPickable->GetItemConfig());
-		CurrentStencilValue = CurrentStencilValue == ECustomStencilValue::ECSV_Item ? ECustomStencilValue::ECSV_ItemSelected : ECustomStencilValue::ECSV_Item;
-		IPickable->OnItemStencilValueChange(CurrentStencilValue);
+		if (UWidgetLibrary::ItemInteractWidget(false, CurrentPlayer->GetInstigatorController(), IPickable->_getUObject(), IPickable->GetItemConfig()))
+		{
+			if (CurrentStencilValue == ECustomStencilValue::ECSV_Item || CurrentStencilValue == ECustomStencilValue::ECSV_ItemSelected)
+			{
+				CurrentStencilValue = CurrentStencilValue == ECustomStencilValue::ECSV_Item ? ECustomStencilValue::ECSV_ItemSelected : ECustomStencilValue::ECSV_Item;
+				IPickable->OnItemStencilValueChange(CurrentStencilValue);
+			}
+		}
 	}
 }
