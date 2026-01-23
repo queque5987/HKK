@@ -1,9 +1,9 @@
 
-- [구현한 기능들](#)
+- [구현한 기능들](#구현한-기능)
    
 	- [1-1. 환경(Foliage) Collision 기능 구현](#환경(Foliage)-피드백-시스템-구현)
 
-- [해결한 이슈들](#)
+- [해결한 이슈들](#해결한-이슈)
 
 	- [2-1. 리슨서버에서의 UI 중복 생성 이슈](#리슨서버에서의-UI-중복-생성-이슈)
 
@@ -186,13 +186,15 @@ Theta로 변환하여 저장할 경우 RGBA 중 하나의 채널만을 사용하
 
 ### 1. 여러개의 Impulse 병합
 
-여러개의 Impulse가 들어왔을 경우도 고려하였습니다. 각 Impulse가 Volume에 들어오거나 나갈 때마다
+여러개의 Impulse가 들어왔을 경우도 고려하였습니다.
 
-Materail Instance Dynamic을 생성 / 소멸시킨다면 오버헤드가 클 것이라 판단하였습니다.
+각 Impulse가 Volume에 들어오거나 나갈 때마다 렌더타깃을 생성하는 다이나믹 머리티얼 인스턴스를 생성한다면 쉽게 해결할 수 있겠지만,
+
+매번 인스턴스를 생성 / 소멸시킨다면 오버헤드가 클 것이라 판단하였습니다.
 
 따라서 Material에 충돌이 일어나고 있는 부분을 여러개의 (현재 기준 4개) 파라미터로 대입할 수 있게하였고,
 
-각각의 충돌을 합쳐 ( R, G에 저장한 방향벡터의 경우 단순 Add 노드로 구현 가능, B의 경우 최대값으로 구현) 병렬로 처리할 수 있도록 하였습니다.
+각각의 충돌을 합쳐 ( R, G에 저장한 2차원 방향벡터의 경우 단순 Add 노드로 구현 가능, B에 저장한 스칼라의 경우 최대값으로 구현) 병렬로 처리할 수 있도록 하였습니다.
 
 ### FoliageInteractSourceComponent
 
@@ -288,18 +290,62 @@ void AFoliageInteractVolume::Tick(float DeltaTime)
 		UKismetRenderingLibrary::DrawMaterialToRenderTarget(this, RT_FoliageInteractImpact, MID_FoliageInteractRenderTargetGenerator);
 	}
 }
+
+void AFoliageInteractVolume::SetImpulse(TScriptInterface<IICharacterMovement>& InSourceComponent, int8 SlotIndex)
+{
+	if (RT_FoliageInteractImpact == nullptr || MID_FoliageInteractRenderTargetGenerator == nullptr) return;
+
+	const FString RadiusParamName = FString::Printf(TEXT("Radius_%d"), SlotIndex);
+	const FString CenterPosParamName = FString::Printf(TEXT("CenterPosition_%d"), SlotIndex);
+	const FString PowerParamName = FString::Printf(TEXT("Power_%d"), SlotIndex);
+
+	float Radius = 0.f;
+	FLinearColor CenterPosition{0.f, 0.f, 0.f, 0.f};
+	float Power = 0.f;
+
+	if (InSourceComponent.GetObject() != nullptr && InSourceComponent.GetInterface() != nullptr)
+	{
+		FBox Bounds = FoliageInteractionBound->Bounds.GetBox();
+		FVector RelativeLocation = InSourceComponent->_GetLocation();
+		CenterPosition.R = (float)((RelativeLocation.X - Bounds.Min.X) / Bounds.GetSize().X);
+		CenterPosition.G = (float)((RelativeLocation.Y - Bounds.Min.Y) / Bounds.GetSize().Y);
+		CenterPosition.B = (float)((RelativeLocation.Z - Bounds.Min.Z) / Bounds.GetSize().Z);
+		//FLinearColor Color{ (float)RelativeLocation.X, (float)RelativeLocation.Y, (float)RelativeLocation.Z, 0.f };
+		Radius = InSourceComponent->GetComponentCollideRadius() / FoliageInteractionBound->Bounds.GetBox().GetSize().X;
+		Power = FMath::Max(InSourceComponent->_GetVelocity().Size() / 100.f, 1.f);
+	}
+
+	MID_FoliageInteractRenderTargetGenerator->SetScalarParameterValue(FName(*RadiusParamName), Radius);
+	MID_FoliageInteractRenderTargetGenerator->SetVectorParameterValue(FName(*CenterPosParamName), CenterPosition);
+	MID_FoliageInteractRenderTargetGenerator->SetScalarParameterValue(FName(*PowerParamName), Power);
+
+	if (GEngine)
+	{
+		const FString DebugMessage = FString::Printf(TEXT("Slot %d: Radius=%.2f, Center=(%.2f, %.2f, %.2f), Power=%.1f"),
+			SlotIndex,
+			Radius,
+			CenterPosition.R, CenterPosition.G, CenterPosition.B,
+			Power);
+		GEngine->AddOnScreenDebugMessage(SlotIndex, 0.0f, FColor::White, DebugMessage);
+	}
+}
 ```
 > Tick : 기존에는 액터에 부착된 컴포넌트에서 SetImpulse를 호출하는 방식에서 Volume의 큐에서 Pop하여 처리하는 방식으로 구현하였습니다.
 >
 > 	FIFO 방식으로 다수의 액터를 동시에 처리하여 합칠 수 있게 되었으며, 하드웨어 성능에 따라 병렬적으로 처리할 액터의 수를 제한할 수 있게되었습니다.
+>
+> SetImpulse(TScriptInterface<IICharacterMovement>& InSourceComponent, int8 SlotIndex) :
+>
+> 	기존 파라미터를 설정 후 렌더타깃에 저장하는 방식에서 SlotIndex번째 파라미터를 변경하는 방식으로 수정하였습니다.
+> 	B 채널에 저장할 값 또한 충돌중인 액터의 Velocity의 크기를 전달하여 구현하였습니다.
 
 ### 2. Trail 남기기
 
-이전의 RenderTarget을 초기화하는 부분을 제거하고, 현재 Tick에서 계산한 RenderTarget과 병합하는 노드를 추가하였습니다.
+SetImpulse에서 이전의 렌더타깃을 초기화하는 부분을 제거하고, 현재 Tick에서 계산한 RenderTarget과 병합하는 노드를 추가하였습니다.
 
-매 연산마다 이전 RenderTarget의 B(Impulse 벡터의 크기에 해당)를 일정 수준 감소시키고, 현재의 RenderTarget과 병합하여 구현하였습니다.
+매 연산마다 이전 렌더타깃의 B(Impulse 벡터의 크기에 해당)를 일정 수준 감소시키고, 현재의 렌더타깃과 병합하여 구현하였습니다.
 
-R, G에 각각 벡터의 (X, Y), (X, Z), (Y, Z) 축에 해당하는 값을 저장해두었기 때문에 R, G 값은 더한 뒤, Normalize하였고, B의 경우 최대 값을 갖도록 구현하였습니다.
+R, G에 각각 벡터의 (X, Y), (X, Z), (Y, Z) 축에 해당하는 값을 저장해두었기 때문에 R, G 값은 더한 뒤, Normalize하였고, B의 경우 두 스칼라 값 중 최대 값을 갖도록 구현하였습니다.
 
 ![FoliageTest_Trail3_Trail](https://github.com/user-attachments/assets/74690545-3ce6-4a5a-9f1e-21cc43846d33)
 
