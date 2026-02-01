@@ -155,7 +155,7 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME(APlayerCharacter, RotatePawnBasedOnControlRotation);
 }
 
-void APlayerCharacter::Multicast_PlayAnimation_Implementation(UAnimSequence* PlayAnimation)
+void APlayerCharacter::Multicast_PlayAnimation_Implementation(UAnimSequence* PlayAnimation, FName SlotName)
 {
 	if (IAnimInstace == nullptr)
 	{
@@ -164,7 +164,7 @@ void APlayerCharacter::Multicast_PlayAnimation_Implementation(UAnimSequence* Pla
 	}
 	if (IAnimInstace != nullptr)
 	{
-		IAnimInstace->PlaySlotAnimation(PlayAnimation, TEXT("AttackSlot"));
+		IAnimInstace->PlaySlotAnimation(PlayAnimation, SlotName);
 	}
 	else
 	{
@@ -172,9 +172,9 @@ void APlayerCharacter::Multicast_PlayAnimation_Implementation(UAnimSequence* Pla
 	}
 }
 
-void APlayerCharacter::Server_PlayAnimation_Implementation(UAnimSequence* PlayAnimation)
+void APlayerCharacter::Server_PlayAnimation_Implementation(UAnimSequence* PlayAnimation, FName SlotName)
 {
-	Multicast_PlayAnimation(PlayAnimation);
+	Multicast_PlayAnimation(PlayAnimation, SlotName);
 }
 
 void APlayerCharacter::Server_RotatePawnBasedOnConrolRotation_Implementation()
@@ -186,6 +186,15 @@ void APlayerCharacter::Callback_OnAttack(const EPlayerAnimation AttackType)
 {
 	if (AnimationComponent == nullptr) return;
 	Server_PlayAnimation(AnimationComponent->GetAnimationSequence(AttackType));
+}
+
+void APlayerCharacter::Server_Callback_OnPlayerMovingStateChanged_Implementation(EPlayerMovingState NewMovingState)
+{
+	if (AnimationComponent == nullptr) return;
+	if (NewMovingState == EPlayerMovingState::EPMS_ForwardToStop)
+	{
+		Server_PlayAnimation(AnimationComponent->GetAnimationSequence(EPlayerAnimation::EPA_ForwardToStop), TEXT("MovingSlot"));
+	}
 }
 
 void APlayerCharacter::Server_Callback_OnKeyTriggered_Implementation(const FKey Key)
@@ -218,11 +227,6 @@ void APlayerCharacter::LoadingRace()
 {
 	EquipmentBind = UCombatLibrary::Bind_Equipment(this, GetPlayerState());
 	ControllerBind = UCombatLibrary::Bind_Character((UObject*)GetController(), (UObject*)this);
-
-	if (AnimationComponent)
-	{
-
-	}
 
 	if (EquipmentBind && ControllerBind) return;
 	GetWorld()->GetTimerManager().SetTimerForNextTick(this, &APlayerCharacter::LoadingRace);

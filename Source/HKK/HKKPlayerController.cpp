@@ -145,8 +145,14 @@ bool AHKKPlayerController::Bind_Character_Implementation(UObject* PlayerCharacte
 			GetOnKeyReleased().Remove(DelegateHandle_OnKeyReleased);
 			DelegateHandle_OnKeyReleased.Reset();
 		}
+		if (!GetOnPlayerMovingStateChanged().IsBoundToObject(PlayerCharacterObject) && DelegateHandle_OnPlayerMovingStateChanged.IsValid())
+		{
+			GetOnPlayerMovingStateChanged().Remove(DelegateHandle_OnPlayerMovingStateChanged);
+			DelegateHandle_OnPlayerMovingStateChanged.Reset();
+		}
 		DelegateHandle_OnKeyTriggered = GetOnKeyTriggered().AddUFunction(PlayerCharacterObject, TEXT("Server_Callback_OnKeyTriggered"));
 		DelegateHandle_OnKeyReleased = GetOnKeyReleased().AddUFunction(PlayerCharacterObject, TEXT("Server_Callback_OnKeyReleased"));
+		DelegateHandle_OnPlayerMovingStateChanged = GetOnPlayerMovingStateChanged().AddUFunction(PlayerCharacterObject, TEXT("Server_Callback_OnPlayerMovingStateChanged"));
 		return true;
 	}
 	return false;
@@ -295,7 +301,7 @@ void AHKKPlayerController::Move(const FInputActionValue& Value)
 	if (!WidgetComponent->IsControllable()) return;
 
 	FVector2D InputVector = Value.Get<FVector2D>();
-	if (InputVector.X >= 0.f && bShiftPressed) InputVector.Y = 0.f;
+	//if (InputVector.X >= 0.f && bShiftPressed) InputVector.Y = 0.f;
 	//UE_LOG(LogTemp, Log, TEXT("Input Vector : %s"), *InputVector.ToString());
 	FVector InputDirection{ InputVector.X, InputVector.Y, 0.f };
 	float CurrentInputSec = GetWorld() ? GetWorld()->GetTimeSeconds() : -1.f;
@@ -321,11 +327,11 @@ void AHKKPlayerController::Move(const FInputActionValue& Value)
 		{
 			XScaleValue *= 0.75f;
 			YScaleValue *= 0.75f;
-			if (bShiftPressed)
-			{
-				XScaleValue *= 3.f / 5.f;
-				YScaleValue *= 3.f / 5.f;
-			}
+			//if (bShiftPressed)
+			//{
+			//	XScaleValue *= 3.f / 5.f;
+			//	YScaleValue *= 3.f / 5.f;
+			//}
 		}
 		MovePawn(ControlledPawn, FVector(XScaleValue, YScaleValue, 0.f));
 	}
@@ -501,8 +507,11 @@ void AHKKPlayerController::SetCachedInput(FVector NewInput)
 
 	if (TempDirection.X > 0 && CachedInput.X <= 0)
 	{
-		UE_LOG(LogTemp, Log, TEXT("Moveing State : Front To Stop"));
 		SetPlayerMovingState(EPlayerMovingState::EPMS_ForwardToStop);
+	}
+	else
+	{
+		SetPlayerMovingState(EPlayerMovingState::EPMS_Default);
 	}
 }
 
@@ -511,6 +520,7 @@ void AHKKPlayerController::SetPlayerMovingState(EPlayerMovingState NewMovingStat
 	if (PlayerMovingState != NewMovingState)
 	{
 		PlayerMovingState = NewMovingState;
+		OnPlayerMovingStateChanged.Broadcast(PlayerMovingState);
 	}
 }
 

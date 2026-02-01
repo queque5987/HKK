@@ -67,9 +67,9 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	UFUNCTION(Server, Reliable)
-	void Server_PlayAnimation(class UAnimSequence* PlayAnimation);
+	void Server_PlayAnimation(class UAnimSequence* PlayAnimation, FName SlotName = TEXT("AttackSlot"));
 	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_PlayAnimation(class UAnimSequence* PlayAnimation);
+	void Multicast_PlayAnimation(class UAnimSequence* PlayAnimation, FName SlotName);
 
 	UFUNCTION(Server, Unreliable)
 	void Server_OnAiming(float Yaw);
@@ -84,6 +84,8 @@ public:
 	void Server_Callback_OnKeyTriggered(const FKey Key);
 	UFUNCTION(Server, Reliable)
 	void Server_Callback_OnKeyReleased(const FKey Key);
+	UFUNCTION(Server, Reliable)
+	void Server_Callback_OnPlayerMovingStateChanged(EPlayerMovingState NewMovingState);
 	/*
 ----- ICharacter Movement Start
 	*/

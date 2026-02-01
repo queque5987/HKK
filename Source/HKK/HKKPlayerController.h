@@ -88,6 +88,7 @@ public:
 	FORCEINLINE FOnAiming& GetOnAiming() { return OnAiming; }
 	FORCEINLINE FOnPlayAnimation& GetOnPlayAnimation() { return OnPlayAnimation; }
 	FORCEINLINE FOnAttack& GetOnAttack() { return OnAttack; }
+	FORCEINLINE FOnPlayerMovingStateChanged& GetOnPlayerMovingStateChanged() { return OnPlayerMovingStateChanged; }
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
@@ -145,9 +146,11 @@ protected:
 	FOnSetWalkSpeed OnSetWalkSpeed;
 	FOnQuickSlotUpdated OnQuickSlotUpdated;
 	FOnItemEquiped OnItemEquiped;
+	FOnPlayerMovingStateChanged OnPlayerMovingStateChanged;
 
 	FDelegateHandle DelegateHandle_OnKeyTriggered;
 	FDelegateHandle DelegateHandle_OnKeyReleased;
+	FDelegateHandle DelegateHandle_OnPlayerMovingStateChanged;
 
 
 	/*

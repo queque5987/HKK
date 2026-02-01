@@ -34,6 +34,14 @@ void UCharacterAnimationComponent::TickComponent(float DeltaTime, ELevelTick Tic
 }
 UAnimSequence* UCharacterAnimationComponent::GetAnimationSequence(const EPlayerAnimation PlayerAnimation)
 {
-	return *AnimationMap.Find(PlayerAnimation);
+	TObjectPtr<UAnimSequence>* rtn = AnimationMap.Find(PlayerAnimation);
+	if (rtn != nullptr)
+	{
+		return *rtn;
+	}
+	else
+	{
+		return nullptr;
+	}
 }
 
