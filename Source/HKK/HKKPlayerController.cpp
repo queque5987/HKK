@@ -102,6 +102,7 @@ void AHKKPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AHKKPlayerController, bShiftPressed);
+	DOREPLIFETIME(AHKKPlayerController, PlayerMovingState);
 }
 
 void AHKKPlayerController::ChangeQuickSlot_Implementation(UObject* ChangedItemObject, FKey ChangedKey)
@@ -130,6 +131,27 @@ void AHKKPlayerController::ItemInteractPickUpWidget_Implementation(bool IsOn, UO
 	if (WidgetComponent) WidgetComponent->SetItemInteractPickupWidget(IsOn, EUserWidget::EUW_ItemInteract, ItemConfig, PickableItemObject);
 }
 
+bool AHKKPlayerController::Bind_Character_Implementation(UObject* PlayerCharacterObject)
+{
+	if (PlayerCharacterObject)
+	{
+		if (!GetOnKeyTriggered().IsBoundToObject(PlayerCharacterObject) && DelegateHandle_OnKeyTriggered.IsValid())
+		{
+			GetOnKeyTriggered().Remove(DelegateHandle_OnKeyTriggered);
+			DelegateHandle_OnKeyTriggered.Reset();
+		}
+		if (!GetOnKeyReleased().IsBoundToObject(PlayerCharacterObject) && DelegateHandle_OnKeyReleased.IsValid())
+		{
+			GetOnKeyReleased().Remove(DelegateHandle_OnKeyReleased);
+			DelegateHandle_OnKeyReleased.Reset();
+		}
+		DelegateHandle_OnKeyTriggered = GetOnKeyTriggered().AddUFunction(PlayerCharacterObject, TEXT("Server_Callback_OnKeyTriggered"));
+		DelegateHandle_OnKeyReleased = GetOnKeyReleased().AddUFunction(PlayerCharacterObject, TEXT("Server_Callback_OnKeyReleased"));
+		return true;
+	}
+	return false;
+}
+
 void AHKKPlayerController::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
@@ -144,7 +166,6 @@ void AHKKPlayerController::OnPossess(APawn* InPawn)
 void AHKKPlayerController::InitPlayerState()
 {
 	Super::InitPlayerState();
-
 }
 
 void AHKKPlayerController::SetupInputComponent()
@@ -187,6 +208,8 @@ void AHKKPlayerController::SetupInputComponent()
 		EnhancedInputComponent->BindAction(MouseMoveAction, ETriggerEvent::Triggered, this, &AHKKPlayerController::MouseMoved);
 		EnhancedInputComponent->BindAction(MouseScrollAction, ETriggerEvent::Triggered, this, &AHKKPlayerController::MouseScrolled);
 		EnhancedInputComponent->BindAction(MouseAttackAction, ETriggerEvent::Triggered, this, &AHKKPlayerController::Attack0_RFistTriggered);
+		EnhancedInputComponent->BindAction(MouseRMBAction, ETriggerEvent::Triggered, this, &AHKKPlayerController::MouseRMBTriggered);
+		EnhancedInputComponent->BindAction(MouseRMBAction, ETriggerEvent::Completed, this, &AHKKPlayerController::MouseRMBCompleted);
 
 		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Triggered, this, &AHKKPlayerController::InteractTriggered);
 		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Completed, this, &AHKKPlayerController::InteractReleased);
@@ -273,36 +296,28 @@ void AHKKPlayerController::Move(const FInputActionValue& Value)
 
 	FVector2D InputVector = Value.Get<FVector2D>();
 	if (InputVector.X >= 0.f && bShiftPressed) InputVector.Y = 0.f;
+	//UE_LOG(LogTemp, Log, TEXT("Input Vector : %s"), *InputVector.ToString());
 	FVector InputDirection{ InputVector.X, InputVector.Y, 0.f };
 	float CurrentInputSec = GetWorld() ? GetWorld()->GetTimeSeconds() : -1.f;
 	APawn* ControlledPawn = GetPawn();
 
 	if (FMath::IsNearlyZero(CachedDirection.Size()))
 	{
-		CachedDirection.X = InputDirection.X;
-		CachedDirection.Y = InputDirection.Y;
+		SetCachedDirection(FVector(InputDirection.X, InputDirection.Y, 0.f));
 	}
 	else
 	{
 		float HoldingSec = CurrentInputSec - LastInputSec;
-		CachedDirection = FMath::Lerp(CachedDirection, InputDirection, FMath::Min(HoldingSec, 2.f) / 2.f);
+		SetCachedDirection(FMath::Lerp(CachedDirection, InputDirection, FMath::Min(HoldingSec, 2.f) / 2.f));
 	}
 
 	bool debugMoveBasedOnCamera = false;
 	if (ControlledPawn != nullptr)
 	{
-		const FRotator YawRotation(0, GetControlRotation().Yaw, 0);
-		const FVector ForwardDirection = (
-			debugMoveBasedOnCamera ? 
-			FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X) : ControlledPawn->GetActorForwardVector()
-			);
-		const FVector RightDirection = (
-			debugMoveBasedOnCamera ? 
-			FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y) : ControlledPawn->GetActorRightVector()
-			);
-		float XScaleValue = CachedDirection.X;
-		float YScaleValue = CachedDirection.Y;
-		if (CachedDirection.X < 0.f)
+		FVector TempDirection = GetCachedDirection();
+		float XScaleValue = TempDirection.X;
+		float YScaleValue = TempDirection.Y;
+		if (XScaleValue < 0.f)
 		{
 			XScaleValue *= 0.75f;
 			YScaleValue *= 0.75f;
@@ -312,21 +327,23 @@ void AHKKPlayerController::Move(const FInputActionValue& Value)
 				YScaleValue *= 3.f / 5.f;
 			}
 		}
-
-		ControlledPawn->AddMovementInput(ForwardDirection, XScaleValue);
-		ControlledPawn->AddMovementInput(RightDirection, YScaleValue);
+		MovePawn(ControlledPawn, FVector(XScaleValue, YScaleValue, 0.f));
 	}
 	if (CachedInput != InputDirection)
 	{
 		LastInputSec = CurrentInputSec;
 	}
-	CachedInput = InputDirection;
+	SetCachedInput(InputDirection);
 }
 
 void AHKKPlayerController::MoveReleased()
 {
-	CachedInput *= 0.f;
-	CachedDirection *= 0.f;
+	//CachedInput *= 0.f;
+	//CachedDirection *= 0.f;
+	SetCachedInput(FVector::ZeroVector);
+
+	LastInputSec = GetWorld() ? GetWorld()->GetTimeSeconds() : -1.f;
+	GetWorld()->GetTimerManager().SetTimerForNextTick(this, &AHKKPlayerController::MoveStop_Gradual);
 }
 
 void AHKKPlayerController::ShiftTriggered()
@@ -400,6 +417,16 @@ void AHKKPlayerController::MouseScrolled(const FInputActionValue& Value)
 	}
 }
 
+void AHKKPlayerController::MouseRMBTriggered()
+{
+	OnKeyTriggered.Broadcast(FKey("RightMouseButton"));
+}
+
+void AHKKPlayerController::MouseRMBCompleted()
+{
+	OnKeyReleased.Broadcast(FKey("RightMouseButton"));
+}
+
 void AHKKPlayerController::Attack0_RFistTriggered(const FInputActionValue& Value)
 {
 	if (!WidgetComponent->IsControllable()) return;
@@ -434,6 +461,57 @@ void AHKKPlayerController::QuickSlotTriggered(const FInputActionValue& Value)
 {
 	float QuickslotIndex = Value.Get<float>();
 	uint8 QIdx = FMath::Floor(QuickslotIndex);
+}
+
+void AHKKPlayerController::MovePawn(APawn* ControlledPawn, FVector MovementInput)
+{
+	const FRotator YawRotation(0, GetControlRotation().Yaw, 0);
+	const FVector ForwardDirection = (ControlledPawn->GetActorForwardVector());
+	const FVector RightDirection = (ControlledPawn->GetActorRightVector());
+	ControlledPawn->AddMovementInput(ForwardDirection, MovementInput.X);
+	ControlledPawn->AddMovementInput(RightDirection, MovementInput.Y);
+}
+
+void AHKKPlayerController::MoveStop_Gradual()
+{
+	float CurrentSec = GetWorld() ? GetWorld()->GetTimeSeconds() : -1.f;
+	float NotPressingSec = CurrentSec - LastInputSec;
+	FVector TempDirection = GetCachedDirection();
+	SetCachedDirection(FMath::Lerp(TempDirection, FVector::ZeroVector, FMath::Min(NotPressingSec, 2.f) / 2.f));
+	APawn* ControlledPawn = GetPawn();
+	if (ControlledPawn != nullptr)
+	{
+		MovePawn(ControlledPawn, GetCachedDirection());
+		if (NotPressingSec < 1.f)
+		{
+			GetWorld()->GetTimerManager().SetTimerForNextTick(this, &AHKKPlayerController::MoveStop_Gradual);
+		}
+	}
+}
+
+void AHKKPlayerController::SetCachedDirection(FVector NewDirection)
+{
+	CachedDirection = NewDirection;
+}
+
+void AHKKPlayerController::SetCachedInput(FVector NewInput)
+{
+	CachedInput = NewInput;
+	FVector TempDirection = GetCachedDirection();
+
+	if (TempDirection.X > 0 && CachedInput.X <= 0)
+	{
+		UE_LOG(LogTemp, Log, TEXT("Moveing State : Front To Stop"));
+		SetPlayerMovingState(EPlayerMovingState::EPMS_ForwardToStop);
+	}
+}
+
+void AHKKPlayerController::SetPlayerMovingState(EPlayerMovingState NewMovingState)
+{
+	if (PlayerMovingState != NewMovingState)
+	{
+		PlayerMovingState = NewMovingState;
+	}
 }
 
 void AHKKPlayerController::Server_SetShiftPressed_Implementation(bool e)

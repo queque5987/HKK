@@ -7,7 +7,7 @@
 AGameMode_Stage::AGameMode_Stage() : Super()
 {
 	PlayerControllerClass = AHKKPlayerController::StaticClass();
-	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Game/_Player/Blueprint/BP_Robo"));
+	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Game/_Player/Blueprint/BP_Trooper"));
 	if (PlayerPawnBPClass.Class != nullptr)
 	{
 		DefaultPawnClass = PlayerPawnBPClass.Class;

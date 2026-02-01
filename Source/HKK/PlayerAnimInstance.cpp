@@ -48,7 +48,6 @@ void UPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			//UE_LOG(LogTemp, Log, TEXT("Speed : %f"), CurrentSpeedXY);
 		}
 	}
-	
 }
 
 void UPlayerAnimInstance::CallBack_OnPlayAnimation(UAnimSequence* PlayAnimation)
@@ -56,10 +55,19 @@ void UPlayerAnimInstance::CallBack_OnPlayAnimation(UAnimSequence* PlayAnimation)
 	PlaySlotAnimationAsDynamicMontage(PlayAnimation, TEXT("AttackSlot"));
 }
 
+void UPlayerAnimInstance::AnimInstance_SetBoolValue_Implementation(EPlayerState ToSetPlayerState, bool e)
+{
+	if (ToSetPlayerState == EPlayerState::EPS_Aiming)
+	{
+		RMBAiming = e;
+	}
+}
+
 void UPlayerAnimInstance::PlaySlotAnimation(UAnimSequence* ToPlayAnimation, FName SlotName, float BlendInTime, float BlendOutTime, float InPlayRate, int32 LoopCount, float BlendOutTriggerTime, float InTimeToStartMontageAt)
 {
 	PlaySlotAnimationAsDynamicMontage(ToPlayAnimation, SlotName, BlendInTime, BlendOutTime, InPlayRate, LoopCount, BlendOutTriggerTime, InTimeToStartMontageAt);
 }
+
 
 //void UPlayerAnimInstance::CallBack_OnAiming(float Yaw)
 //{

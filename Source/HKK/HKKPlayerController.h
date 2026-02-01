@@ -10,6 +10,7 @@
 #include "Interface/Controller/IWidgetController.h"
 #include "Interface/Controller/ICombatController.h"
 #include "GameFramework/Character.h"
+#include "HKK_PCH.h"
 #include "HKKPlayerController.generated.h"
 
 /** Forward declaration to improve compiling times */
@@ -70,6 +71,9 @@ public:
 	UInputAction* MouseAttackAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
+	UInputAction* MouseRMBAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
 	UInputAction* InteractAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
@@ -77,6 +81,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UControllerWidgetComponent> WidgetComponent;
+
+	UPROPERTY(Replicated, BlueprintReadOnly)
+	EPlayerMovingState PlayerMovingState;
 
 	FORCEINLINE FOnAiming& GetOnAiming() { return OnAiming; }
 	FORCEINLINE FOnPlayAnimation& GetOnPlayAnimation() { return OnPlayAnimation; }
@@ -112,7 +119,7 @@ public:
 	/*
 -----IICombatController Start
 	*/
-
+	virtual bool Bind_Character_Implementation(UObject* PlayerCharacterObject) override;
 	/*
 -----IICombatController End
 	*/
@@ -138,6 +145,10 @@ protected:
 	FOnSetWalkSpeed OnSetWalkSpeed;
 	FOnQuickSlotUpdated OnQuickSlotUpdated;
 	FOnItemEquiped OnItemEquiped;
+
+	FDelegateHandle DelegateHandle_OnKeyTriggered;
+	FDelegateHandle DelegateHandle_OnKeyReleased;
+
 
 	/*
 		Delegates End
@@ -175,6 +186,8 @@ protected:
 	void JumpReleased();
 	void MouseMoved(const FInputActionValue& Value);
 	void MouseScrolled(const FInputActionValue& Value);
+	void MouseRMBTriggered();
+	void MouseRMBCompleted();
 	void Attack0_RFistTriggered(const FInputActionValue& Value);
 	void InteractTriggered();
 	void InteractReleased();
@@ -183,13 +196,25 @@ protected:
 
 	UFUNCTION(Server, Reliable)
 	void Server_SetShiftPressed(bool e);
+
+	void MovePawn(APawn* ControlledPawn, FVector MovementInput);
+	void MoveStop_Gradual();
 private:
 	FVector CachedDestination;
+	// Input + Momentum
 	FVector CachedDirection;
+	// Currently Being Presed Input
 	FVector CachedInput;
 	float LastInputSec;
 	bool bIsTouch; // Is it a touch device
 	float FollowTime; // For how long it has been pressed
+
+	void SetCachedDirection(FVector NewDirection);
+	FVector GetCachedDirection() { return CachedDirection; };
+	void SetCachedInput(FVector NewInput);
+	FVector GetCachedInput() { return CachedInput; }
+
+	void SetPlayerMovingState(EPlayerMovingState NewMovingState);
 };
 
 

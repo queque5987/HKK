@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "HKK_Structs.h"
+#include "HKK_PCH.h"
 #include "CombatLibrary.generated.h"
 
 class IICharacterCombat;
@@ -17,6 +18,7 @@ public:
 	static void SendDamage(TScriptInterface<IICharacterCombat> CausedPlayer, TScriptInterface<IICharacterCombat> DamagedPlayer, FHitDamageConfig HitDamageConfig);
 	static void RotatePawnBasedOnControlRotation(UObject* PlayerPawnObject);
 
+	static bool Bind_Character(UObject* PlayerControllerObject, UObject* PlayerCharacterObject);
 	static bool Bind_HUD(UObject* PlayerHUDObject, UObject* PlayerStateObject);
 	static bool Bind_Inventory(UObject* PlayerInventoryObject, UObject* PlayerStateObject);
 	static bool Bind_Equipment(UObject* PlayerCharacterObject, UObject* PlayerStateObject);
@@ -32,6 +34,8 @@ public:
 
 	/* Atleast 1 Item Equipped */
 	static bool CanWeaponScrollSwitch(UObject* OwningPlayerState);
+
+	static void AnimInstance_SetBoolValue(UObject* OwningPlayerAnimInatceObject, EPlayerState ToSetPlayerState, bool e);
 private:
 	template<typename...Args>
 	static void LogWarning(float DisplayTime, const FString& LogText)

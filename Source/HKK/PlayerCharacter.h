@@ -57,11 +57,12 @@ protected:
 	*/
 
 	virtual void BeginPlay() override;
+	virtual void Restart() override;
 
 public:	
 
 	FORCEINLINE float GetAimingYaw() { return AimingYaw; }
-
+	virtual UObject* GetAnimInstanceObject_Implementation() override;
 	virtual void Tick(float DeltaTime) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
@@ -91,6 +92,7 @@ protected:
 	FCharacterMovementState CharacterMovementState;
 	
 	bool EquipmentBind = false;
+	bool ControllerBind = false;
 
 	void LoadingRace();
 public:

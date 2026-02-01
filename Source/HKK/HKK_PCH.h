@@ -3,6 +3,12 @@
 #include "CoreMinimal.h"
 
 UENUM(BlueprintType)
+enum class EPlayerState : uint8
+{
+	EPS_Default,
+	EPS_Aiming
+};
+UENUM(BlueprintType)
 enum class EEquipmentSlotType : uint8
 {
 	EEST_EquipSlot_Default,
@@ -41,6 +47,12 @@ enum class ECustomStencilValue : uint8
 	ECSV_ItemOccupied
 };
 
+UENUM(BlueprintType)
+enum class EPlayerMovingState : uint8
+{
+	EPMS_Default,
+	EPMS_ForwardToStop
+};
 UENUM(BlueprintType)
 enum class EPlayerAnimation : uint8
 {

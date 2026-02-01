@@ -54,7 +54,7 @@ APlayerCharacter::APlayerCharacter()
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 500.0f, 0.0f); // ...at this rotation rate
 	GetCharacterMovement()->bConstrainToPlane = false;
 	GetCharacterMovement()->bSnapToPlaneAtStart = false;
-	GetCharacterMovement()->MaxWalkSpeed = 300.f;
+	GetCharacterMovement()->MaxWalkSpeed = 500.f;
 	GetCharacterMovement()->bUseControllerDesiredRotation = false;
 
 	// Create a camera boom (pulls in towards the player if there is a collision)
@@ -95,14 +95,25 @@ void APlayerCharacter::BeginPlay()
 	);
 	tempController->GetOnAttack().AddUFunction(this, TEXT("Callback_OnAttack"));
 	OnSetItemInteractPickupWidget = &tempController->GetOnSetItemInteractPickupWidget();
-	tempController->GetOnKeyTriggered().AddUFunction(this, TEXT("Server_Callback_OnKeyTriggered"));
-	tempController->GetOnKeyReleased().AddUFunction(this, TEXT("Server_Callback_OnKeyReleased"));
+	//tempController->GetOnKeyTriggered().AddUFunction(this, TEXT("Server_Callback_OnKeyTriggered"));
+	//tempController->GetOnKeyReleased().AddUFunction(this, TEXT("Server_Callback_OnKeyReleased"));
 	IAnimInstace = Cast<IICharacterAnimInstance>(GetMesh()->GetAnimInstance());
 
 	CombatComponent->Server_SetOwnerMeshComp(GetMesh());
 	FoliageInteractSourceComponent->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, TEXT("eye_Parent"));
 
+}
+
+void APlayerCharacter::Restart()
+{
+	Super::Restart();
+
 	LoadingRace();
+}
+
+UObject* APlayerCharacter::GetAnimInstanceObject_Implementation()
+{
+	return GetMesh() ? Cast<UObject>(GetMesh()->GetAnimInstance()) : nullptr;
 }
 
 void APlayerCharacter::Tick(float DeltaTime)
@@ -182,7 +193,11 @@ void APlayerCharacter::Server_Callback_OnKeyTriggered_Implementation(const FKey 
 	//UE_LOG(LogTemp, Log, TEXT("Key Triggered : %s"), *Key.GetFName().ToString());
 	if (Key.GetFName() == FName("Shift"))
 	{
-		GetCharacterMovement()->MaxWalkSpeed = 500.f;
+		GetCharacterMovement()->MaxWalkSpeed = 800.f;
+	}
+	else if (Key.GetFName() == FName("RightMouseButton"))
+	{
+		UCombatLibrary::AnimInstance_SetBoolValue(Execute_GetAnimInstanceObject(this), EPlayerState::EPS_Aiming, true);
 	}
 }
 
@@ -191,15 +206,25 @@ void APlayerCharacter::Server_Callback_OnKeyReleased_Implementation(const FKey K
 	//UE_LOG(LogTemp, Log, TEXT("Key Released : %s"), *Key.GetFName().ToString());
 	if (Key.GetFName() == FName("Shift"))
 	{
-		GetCharacterMovement()->MaxWalkSpeed = 300.f;
+		GetCharacterMovement()->MaxWalkSpeed = 500.f;
+	}
+	else if (Key.GetFName() == FName("RightMouseButton"))
+	{
+		UCombatLibrary::AnimInstance_SetBoolValue(Execute_GetAnimInstanceObject(this), EPlayerState::EPS_Aiming, false);
 	}
 }
 
 void APlayerCharacter::LoadingRace()
 {
 	EquipmentBind = UCombatLibrary::Bind_Equipment(this, GetPlayerState());
+	ControllerBind = UCombatLibrary::Bind_Character((UObject*)GetController(), (UObject*)this);
 
-	if (EquipmentBind) return;
+	if (AnimationComponent)
+	{
+
+	}
+
+	if (EquipmentBind && ControllerBind) return;
 	GetWorld()->GetTimerManager().SetTimerForNextTick(this, &APlayerCharacter::LoadingRace);
 }
 

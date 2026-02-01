@@ -18,6 +18,7 @@ class HKK_API IICombatController
 	GENERATED_BODY()
 
 public:
-	
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	bool Bind_Character(UObject* PlayerCharacterObject);
 	//virtual TScriptInterface<IIPlayerState> _GetPlayerState() = 0;
 };

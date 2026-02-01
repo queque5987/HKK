@@ -26,6 +26,8 @@ public:
 	virtual void Multicast_KnockBack(FVector Direction) = 0;
 	virtual class UObject* GetPlayerStateObject() = 0;
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	UObject* GetAnimInstanceObject();
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	bool AttachItem(AActor* AttachItemActor, FName AttachSocketName);
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	bool DetachItem(AActor* AttachItemActor);

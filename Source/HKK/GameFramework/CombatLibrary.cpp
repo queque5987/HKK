@@ -2,7 +2,9 @@
 #include "Interface/Character/ICharacterCombat.h"
 #include "Interface/GameFramework/IPlayerState.h"
 #include "Interface/Controller/IWidgetController.h"
+#include "Interface/Controller/ICombatController.h"
 #include "Interface/IPickableItem.h"
+#include "Interface/Character/ICharacterAnimInstance.h"
 #include "Interface/GameFramework/IObjectPoolSystem.h"
 #include "GameFramework/ObjectPoolSystem.h"
 
@@ -37,6 +39,21 @@ void UCombatLibrary::RotatePawnBasedOnControlRotation(UObject* PlayerPawnObject)
 		return;
 	}
 	IICharacterCombat::Execute_RotatePawnBasedOnControlRotation(PlayerPawnObject);
+}
+
+bool UCombatLibrary::Bind_Character(UObject* PlayerControllerObject, UObject* PlayerCharacterObject)
+{
+	if (PlayerControllerObject == nullptr)
+	{
+		LogWarning(3.f, TEXT("PlayerControllerObject Not Found"));
+		return false;
+	}
+	if (PlayerCharacterObject == nullptr)
+	{
+		LogWarning(3.f, TEXT("PlayerCharacterObject Not Found"));
+		return false;
+	}
+	return IICombatController::Execute_Bind_Character(PlayerControllerObject, PlayerCharacterObject);
 }
 
 bool UCombatLibrary::Bind_HUD(UObject* PlayerHUDObject, UObject* PlayerStateObject)
@@ -139,6 +156,16 @@ bool UCombatLibrary::CanWeaponScrollSwitch(UObject* OwningPlayerState)
 		if (Config.WearableSpawnClass != nullptr) return true;
 	}
 	return false;
+}
+
+void UCombatLibrary::AnimInstance_SetBoolValue(UObject* OwningPlayerAnimInatceObject, EPlayerState ToSetPlayerState, bool e)
+{
+	if (OwningPlayerAnimInatceObject == nullptr)
+	{
+		LogWarning(3.f, TEXT("OwningPlayerAnimInatceObject Not Found"));
+		return;
+	}
+	IICharacterAnimInstance::Execute_AnimInstance_SetBoolValue(OwningPlayerAnimInatceObject, ToSetPlayerState, e);
 }
 
 //bool UCombatLibrary::RefreshQuickSlot(UObject* OwningPlayerController, UObject* ChangedItemDataObject)
