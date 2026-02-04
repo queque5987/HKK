@@ -29,6 +29,8 @@ protected:
 	TScriptInterface<IIWidgetController> WidgetController;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<UWidget_ItemInteract> Widget_ItemInteractClass;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UWidget_ItemInteract> Widget_ItemInteract;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UWidget_HUD> Widget_HUD;
@@ -46,7 +48,7 @@ protected:
 
 	TObjectPtr<AActor> InteractingPickableItem;
 	FOnGetItem* OnGetItem;
-
+	TArray<TWeakObjectPtr<UWidget_ItemInteract>> FloatingInteractWidgetArr;
 public:	
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
@@ -63,6 +65,8 @@ public:
 	void Callback_ChangedQuickSlot(UObject* ChangedItemObject, FKey ChangedKey);
 	UFUNCTION()
 	void Callback_ChangedEquipment(UObject* ChangedItemObject, EEquipmentSlotType EquipmentSlotType);
+	UFUNCTION()
+	void Callback_OnCreateInteractWidget(EInteractWidgetType InteractWidgetType, bool ToSet);
 
 	bool IsControllable();
 	void OnEquipmentItemDragDetected(bool IsOn);

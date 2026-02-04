@@ -21,10 +21,11 @@ DECLARE_MULTICAST_DELEGATE_OneParam(FOnKeyInputEvent, const FKey);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnSetWalkSpeed, float);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnItemSlotUpdated, UObject*);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnEquipmentSlotSwitched, const FItemConfig&);
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnPlayerMovingStateChanged, EPlayerMovingState);
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnPlayerMovingStateChanged, EPlayerMovingState, FVector);
 
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnQuickSlotUpdated, UObject*, FKey);
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnItemEquiped, UObject*, EEquipmentSlotType);
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnCreateInteractWidget, EInteractWidgetType, bool);
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnGetItem, const FItemConfig&, UObject*);
 DECLARE_MULTICAST_DELEGATE_ThreeParams(FOnUpdateStatFloat, const EPlayerStatType, float, float);
 

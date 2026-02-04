@@ -168,6 +168,33 @@ void UCombatLibrary::AnimInstance_SetBoolValue(UObject* OwningPlayerAnimInatceOb
 	IICharacterAnimInstance::Execute_AnimInstance_SetBoolValue(OwningPlayerAnimInatceObject, ToSetPlayerState, e);
 }
 
+FVector UCombatLibrary::GetCachedInput(UObject* OwningPlayerController)
+{
+	if (OwningPlayerController == nullptr)
+	{
+		LogWarning(3.f, TEXT("OwningPlayerController Not Found"));
+		return FVector();
+	}
+	return IICombatController::Execute_GetCachedInput(OwningPlayerController);
+}
+
+void UCombatLibrary::SetWallCoverable(UObject* OwningPlayerCharacterObject, bool e)
+{
+	if (OwningPlayerCharacterObject == nullptr)
+	{
+		LogWarning(3.f, TEXT("OwningPlayerCharacterObject Not Found"));
+		return;
+	}
+	UObject* TempControllerObject = IICharacterCombat::Execute_GetControllerObject(OwningPlayerCharacterObject);
+	if (TempControllerObject == nullptr)
+	{
+		LogWarning(3.f, TEXT("TempControllerObject Not Found"));
+		return;
+	}
+	IICombatController::Execute_SetWallCoverable(TempControllerObject, e);
+	IICharacterCombat::Execute_SetWallCoverable(OwningPlayerCharacterObject, e);
+}
+
 //bool UCombatLibrary::RefreshQuickSlot(UObject* OwningPlayerController, UObject* ChangedItemDataObject)
 //{
 //	if (OwningPlayerController == nullptr)

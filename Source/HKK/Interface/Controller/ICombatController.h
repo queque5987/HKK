@@ -20,5 +20,9 @@ class HKK_API IICombatController
 public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	bool Bind_Character(UObject* PlayerCharacterObject);
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	FVector GetCachedInput();
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void SetWallCoverable(bool e);
 	//virtual TScriptInterface<IIPlayerState> _GetPlayerState() = 0;
 };

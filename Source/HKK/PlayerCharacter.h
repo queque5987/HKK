@@ -42,6 +42,10 @@ protected:
 	float AimingYaw;
 	UPROPERTY(Replicated)
 	bool RotatePawnBasedOnControlRotation = false;
+	UPROPERTY(ReplicatedUsing = OnRep_MaxWalkSpeed)
+	float MaxWalkSpeed = 500.f;
+	UPROPERTY(ReplicatedUsing = OnRep_MaxAcceleration)
+	float MaxAcceleration = 512.f;
 
 	class IICharacterAnimInstance* IAnimInstace;
 
@@ -60,6 +64,10 @@ protected:
 	virtual void Restart() override;
 
 public:	
+	UFUNCTION()
+	void OnRep_MaxWalkSpeed();
+	UFUNCTION()
+	void OnRep_MaxAcceleration();
 
 	FORCEINLINE float GetAimingYaw() { return AimingYaw; }
 	virtual UObject* GetAnimInstanceObject_Implementation() override;
@@ -80,12 +88,14 @@ public:
 
 	UFUNCTION()
 	void Callback_OnAttack(const EPlayerAnimation AttackType);
+	UFUNCTION(Client, Unreliable)
+	void Client_RefreshCharacterMovementState();
+	UFUNCTION(Server, Unreliable)
+	void Server_SetCharacterMovementState(FCharacterMovementState NewCharacterMovementState);
 	UFUNCTION(Server, Reliable)
 	void Server_Callback_OnKeyTriggered(const FKey Key);
 	UFUNCTION(Server, Reliable)
 	void Server_Callback_OnKeyReleased(const FKey Key);
-	UFUNCTION(Server, Reliable)
-	void Server_Callback_OnPlayerMovingStateChanged(EPlayerMovingState NewMovingState);
 	/*
 ----- ICharacter Movement Start
 	*/
@@ -117,10 +127,11 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	virtual void Multicast_KnockBack(FVector Direction) override;
 	virtual UObject* GetPlayerStateObject() override { return (UObject*)GetPlayerState(); };
+	virtual UObject* GetControllerObject_Implementation() override { return (UObject*)GetController(); };
 	virtual bool AttachItem_Implementation(AActor* AttachItemActor, FName AttachSocketName) override;
 	virtual bool DetachItem_Implementation(AActor* AttachItemActor) override;
 	virtual void RotatePawnBasedOnControlRotation_Implementation() override;
-
+	virtual void SetWallCoverable_Implementation(bool e) override;
 	/*
 ----- ICharacter Combat End
 	*/

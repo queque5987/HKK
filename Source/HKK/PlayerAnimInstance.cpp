@@ -44,8 +44,8 @@ void UPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			CurrentSpeedZ	= tempState->Velocity.Z;
 			AimingAngle		= tempState->FacingYaw;
 			HeadingRadian	= tempState->HeadingRadian;
-			//UE_LOG(LogTemp, Log, TEXT("Rad : %f"), HeadingRadian);
-			//UE_LOG(LogTemp, Log, TEXT("Speed : %f"), CurrentSpeedXY);
+			LocalVelocity_N = tempState->LocalVelocityNormalized;
+			CachedInput		= tempState->CachedInput;
 		}
 	}
 }
@@ -67,6 +67,21 @@ void UPlayerAnimInstance::PlaySlotAnimation(UAnimSequence* ToPlayAnimation, FNam
 {
 	PlaySlotAnimationAsDynamicMontage(ToPlayAnimation, SlotName, BlendInTime, BlendOutTime, InPlayRate, LoopCount, BlendOutTriggerTime, InTimeToStartMontageAt);
 }
+
+//void UPlayerAnimInstance::PlayStopSlide(FVector PreStopVector)
+//{
+//	if (FMath::IsNearlyZero(PreStopVector.Size()))
+//	{
+//		MovingStopSlide = false;
+//	}
+//	else
+//	{
+//		FVector PreStopVector_N = PreStopVector.GetSafeNormal2D();
+//		float Rad = FMath::Atan2(PreStopVector_N.Y, PreStopVector_N.X);
+//		MovingStopSlideDirection = Rad;
+//		MovingStopSlide = true;
+//	}
+//}
 
 
 //void UPlayerAnimInstance::CallBack_OnAiming(float Yaw)

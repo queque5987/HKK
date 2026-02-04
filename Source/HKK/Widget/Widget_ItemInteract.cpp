@@ -42,6 +42,29 @@ void UWidget_ItemInteract::SetItemConfig(FOnGetItem* InOnGetItem, const FItemCon
 	//if (ItemConfig.SpawnedItemActor == nullptr) return;
 	if (ItemConfig.ItemIcon != nullptr && ItemIcon != nullptr) ItemIcon->SetBrushFromTexture(ItemConfig.ItemIcon);
 	if (ItemName != nullptr) ItemName->SetText(ItemConfig.ItemName);
+
+	SetByWidgetType(EInteractWidgetType::EIWT_ItemPickup);
+}
+
+void UWidget_ItemInteract::SetByWidgetType_Implementation(EInteractWidgetType InteractWidgetType)
+{
+	CurrentWidgetType = InteractWidgetType;
+	if (InteractWidgetType == EInteractWidgetType::EIWT_ItemPickup)
+	{
+		ButtonText->SetText(FText::FromString("E"));
+		ButtonText_Pressed->SetText(FText::FromString("E"));
+	}
+	else if (InteractWidgetType == EInteractWidgetType::EIWT_ItemPickup)
+	{
+		ButtonText->SetText(FText::FromString("W"));
+		ButtonText_Pressed->SetText(FText::FromString("W"));
+		ItemName->SetText(FText::FromString("W"));
+	}
+	else
+	{
+		ButtonText->SetText(FText::FromString("E"));
+		ButtonText_Pressed->SetText(FText::FromString("E"));
+	}
 }
 
 void UWidget_ItemInteract::ProgressCompleted()

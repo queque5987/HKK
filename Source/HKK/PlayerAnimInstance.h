@@ -32,6 +32,12 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	bool RifleEquipped = false;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	FVector CachedInput;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	FVector LocalVelocity_N;
+
 	//Deprecated
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	bool bBusterR = true;
@@ -60,6 +66,7 @@ public:
 	virtual void AnimInstance_SetBoolValue_Implementation(EPlayerState ToSetPlayerState, bool e) override;
 
 	virtual void PlaySlotAnimation(class UAnimSequence* ToPlayAnimation, FName SlotName, float BlendInTime = 0.25f, float BlendOutTime = 0.25f, float InPlayRate = 1.f, int32 LoopCount = 1, float BlendOutTriggerTime = -1.f, float InTimeToStartMontageAt = 0.f) override;
+	//virtual void PlayStopSlide(FVector PreStopVector) override;
 	/*
 		CharacterAnimInstance End
 	*/

@@ -19,11 +19,18 @@ class HKK_API UWidget_ItemInteract : public UUserWidget
 	GENERATED_BODY()
 
 	UWidget_ItemInteract(const FObjectInitializer& ObjectInitializer);
+
 protected:
 	virtual void NativeConstruct() override;
 
 	UPROPERTY(meta = (BindWidget))
 	class UImage* ItemIcon;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* ButtonText;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* ButtonText_Pressed;
 
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* ItemName;
@@ -53,6 +60,7 @@ protected:
 	FOnGetItem* OnGetItem;
 
 	FItemConfig ItemConfig;
+	EInteractWidgetType CurrentWidgetType;
 public:
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
@@ -66,6 +74,10 @@ public:
 		}
 	}
 	void SetItemConfig(FOnGetItem* InOnGetItem, const FItemConfig& InItemConfig, AActor* InPlayerController);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void SetByWidgetType(EInteractWidgetType InteractWidgetType);
+	EInteractWidgetType GetWidgetType() { return CurrentWidgetType; };
 private:
 	void ProgressCompleted();
 };

@@ -33,6 +33,7 @@ public:
 	virtual FOnGetItem& GetOnGetItem() = 0;
 	virtual FOnQuickSlotUpdated& GetOnQuickSlotUpdated() = 0;
 	virtual FOnItemEquiped& GetOnItemEquiped() = 0;
+	virtual FOnCreateInteractWidget& GetOnCreateInteractWidget() = 0;
 	virtual FVector GetPlayerLocation() = 0;
 	virtual class UObject* GetPlayerStateObject() = 0;
 	virtual void SetCurorVisibility(bool e) = 0;

@@ -6,6 +6,7 @@
 #include "Widget/Widget_HUD.h"
 #include "Widget/Widget_Inventory.h"
 #include "GameFramework/CombatLibrary.h"
+#include "GameFramework/WidgetLibrary.h"
 #include "Widget/Object/ItemDataObject.h"
 
 class IIPlayerState;
@@ -32,7 +33,6 @@ void UControllerWidgetComponent::TickComponent(float DeltaTime, ELevelTick TickT
 
 	FVector2D ProjectLocation = FVector2D::ZeroVector;
 	const APlayerController* PC = Cast<APlayerController>(WidgetController->_getUObject());
-	//UGameplayStatics::ProjectWorldToScreen(PC, WidgetController->GetPlayerLocation(), ProjectLocation);
 	int32 ScreensizeX;
 	int32 ScreensizeY;
 	PC->GetViewportSize(ScreensizeX, ScreensizeY);
@@ -46,6 +46,23 @@ void UControllerWidgetComponent::TickComponent(float DeltaTime, ELevelTick TickT
 		Widget_ItemInteract->SetPositionInViewport(ProjectLocation);
 		UE_LOG(LogTemp, Log, TEXT("Projection Location : %s"), *ProjectLocation.ToString());
 	}
+
+	for (auto& FloatingWidget : FloatingInteractWidgetArr)
+	{
+		if (!FloatingWidget.IsValid())
+		{
+			continue;
+		}
+		if (UWidget_ItemInteract* FloatingInteractWidget = FloatingWidget.Get())
+		{
+			if (FloatingInteractWidget->GetWidgetType() == EInteractWidgetType::EIWT_WallCover)
+			{
+				UGameplayStatics::ProjectWorldToScreen(PC, PC->GetPawn()->GetActorLocation(), ProjectLocation);
+				FloatingInteractWidget->SetPositionInViewport(ProjectLocation);
+			}
+		}
+	}
+
 	if (InventoryInterval > 0.f) InventoryInterval -= DeltaTime;
 }
 
@@ -63,7 +80,8 @@ bool UControllerWidgetComponent::SetController(TScriptInterface<IIWidgetControll
 		WidgetController->GetOnQuickSlotUpdated().AddUFunction(WidgetController->GetPlayerStateObject(), TEXT("Callback_ChangedQuickSlot"));
 		WidgetController->GetOnItemEquiped().AddUFunction(this, TEXT("Callback_ChangedEquipment"));
 		WidgetController->GetOnItemEquiped().AddUFunction(WidgetController->GetPlayerStateObject(), TEXT("Callback_OnEquipmentItemSlotChanged"));
-
+		WidgetController->GetOnCreateInteractWidget().AddUFunction(this, TEXT("Callback_OnCreateInteractWidget"));
+		
 		Widget_Inventory->SetQuickSlotEmptyObjects(&QuickslotObjects, &QuickslotKeySetting);
 		Widget_HUD->SetQuickSlotEmptyObjects(&QuickslotObjects, &QuickslotKeySetting);
 	}
@@ -273,6 +291,32 @@ void UControllerWidgetComponent::Callback_ChangedEquipment(UObject* ChangedItemO
 
 	UItemDataObject* UpdatedItemDataObject = Cast<UItemDataObject>(ChangedItemObject);
 	if (UpdatedItemDataObject != nullptr) UpdatedItemDataObject->OnItemSlotUpdated.Broadcast(ChangedItemObject);
+}
+
+void UControllerWidgetComponent::Callback_OnCreateInteractWidget(EInteractWidgetType InteractWidgetType, bool ToSet)
+{
+	if (InteractWidgetType == EInteractWidgetType::EIWT_WallCover)
+	{
+		if (ToSet)
+		{
+			UWidget_ItemInteract* tempWidget = Cast<UWidget_ItemInteract>(UWidgetLibrary::GetWidget(GetOwner(), Widget_ItemInteractClass, EInteractWidgetType::EIWT_WallCover));
+			if (tempWidget != nullptr)
+			{
+				tempWidget->SetByWidgetType(InteractWidgetType);
+
+				FVector2D ProjectLocation = FVector2D::ZeroVector;
+				const APlayerController* PC = Cast<APlayerController>(WidgetController->_getUObject());
+				int32 ScreensizeX;
+				int32 ScreensizeY;
+				PC->GetViewportSize(ScreensizeX, ScreensizeY);
+				UGameplayStatics::ProjectWorldToScreen(PC, PC->GetPawn()->GetActorLocation(), ProjectLocation);
+				tempWidget->AddToViewport();
+				tempWidget->SetPositionInViewport(ProjectLocation);
+				FloatingInteractWidgetArr.Emplace(tempWidget);
+				return;
+			}
+		}
+	}
 }
 
 bool UControllerWidgetComponent::IsControllable()

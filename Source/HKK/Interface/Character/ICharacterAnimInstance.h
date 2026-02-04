@@ -20,5 +20,5 @@ public:
 	void AnimInstance_SetBoolValue(EPlayerState ToSetPlayerState, bool e);
 
 	virtual void PlaySlotAnimation(class UAnimSequence* ToPlayAnimation, FName SlotName, float BlendInTime = 0.25f, float BlendOutTime = 0.25f, float InPlayRate = 1.f, int32 LoopCount = 1, float BlendOutTriggerTime = -1.f, float InTimeToStartMontageAt = 0.f) {};
-	
+	//virtual void PlayStopSlide(FVector PreStopVector) {};
 };

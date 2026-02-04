@@ -1,6 +1,8 @@
 #include "GameFramework/WidgetLibrary.h"
 #include "Interface/Controller/IWidgetController.h"
 #include "Interface/IPickableItem.h"
+#include "GameFramework/PlayerController.h"
+#include "Blueprint/UserWidget.h"
 
 bool UWidgetLibrary::ItemInteractWidget(bool IsOn, UObject* OwningPlayerController, UObject* PickableItemObject, const FItemConfig& ItemConfig)
 {
@@ -30,4 +32,19 @@ void UWidgetLibrary::EquipmentItemDragDetected(UObject* OwningPlayerController, 
 EEquipmentSlotType UWidgetLibrary::GetLeftEquipmentSlotIndex(UObject* OwningPlayerController)
 {
 	return IIWidgetController::Execute_GetLeftEquipmentSlotIndex(OwningPlayerController);
+}
+
+UUserWidget* UWidgetLibrary::GetWidget(UObject* OwningPlayerControllerObject, TSubclassOf<UUserWidget> CreateWidgetClass, EInteractWidgetType InteractWidgetType)
+{
+	APlayerController* tempController = Cast<APlayerController>(OwningPlayerControllerObject);
+	if (tempController != nullptr)
+	{
+		return CreateWidget<UUserWidget>(tempController, CreateWidgetClass);
+	}
+	return nullptr;
+}
+
+void UWidgetLibrary::Returnwidget(EInteractWidgetType ReturnType)
+{
+
 }

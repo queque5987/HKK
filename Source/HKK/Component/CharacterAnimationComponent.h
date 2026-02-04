@@ -7,7 +7,6 @@
 
 class UAnimSequence;
 
-//UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent), Blueprintable)
 class HKK_API UCharacterAnimationComponent : public UActorComponent
 {
@@ -22,8 +21,18 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TMap<EPlayerAnimation, TObjectPtr<UAnimSequence>> AnimationMap;
 
+	UPROPERTY(ReplicatedUsing = OnRep_WallCoverableObjectCheck)
+	uint8 WallCoverableObjectCheck = 0;
+
 public:	
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;	
 	
 	UAnimSequence* GetAnimationSequence(const EPlayerAnimation PlayerAnimation);
+
+	UFUNCTION()
+	void OnRep_WallCoverableObjectCheck();
+private:
+	UFUNCTION(Server, Reliable)
+	void Server_ForwardLineTrace_WallCover();
 };

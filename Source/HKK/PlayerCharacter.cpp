@@ -56,6 +56,7 @@ APlayerCharacter::APlayerCharacter()
 	GetCharacterMovement()->bSnapToPlaneAtStart = false;
 	GetCharacterMovement()->MaxWalkSpeed = 500.f;
 	GetCharacterMovement()->bUseControllerDesiredRotation = false;
+	GetCharacterMovement()->MaxAcceleration = 512.f;
 
 	// Create a camera boom (pulls in towards the player if there is a collision)
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
@@ -111,6 +112,22 @@ void APlayerCharacter::Restart()
 	LoadingRace();
 }
 
+void APlayerCharacter::OnRep_MaxWalkSpeed()
+{
+	if (GetCharacterMovement() != nullptr)
+	{
+		GetCharacterMovement()->MaxWalkSpeed = MaxWalkSpeed;
+	}
+}
+
+void APlayerCharacter::OnRep_MaxAcceleration()
+{
+	if (GetCharacterMovement() != nullptr)
+	{
+		GetCharacterMovement()->MaxAcceleration = MaxAcceleration;
+	}
+}
+
 UObject* APlayerCharacter::GetAnimInstanceObject_Implementation()
 {
 	return GetMesh() ? Cast<UObject>(GetMesh()->GetAnimInstance()) : nullptr;
@@ -119,7 +136,8 @@ UObject* APlayerCharacter::GetAnimInstanceObject_Implementation()
 void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	Server_RefreshVelocity_Implementation();
+	Client_RefreshCharacterMovementState();
+	//Server_RefreshVelocity_Implementation();
 	IIPlayerState* PS = Cast<IIPlayerState>(GetPlayerState());
 	if (PS != nullptr)
 	{
@@ -145,6 +163,12 @@ void APlayerCharacter::Tick(float DeltaTime)
 			}
 		}
 	}
+	FRotator R = { 0.f, GetControlRotation().Yaw, 0.f };
+	FVector V = CharacterMovementState.LocalVelocityNormalized;
+	FVector C = CharacterMovementState.CachedInput;
+
+	DrawDebugDirectionalArrow(GetWorld(), GetActorLocation(), GetActorLocation() + V * CharacterMovementState.Velocity.Size(), 32.f, FColor::Green);
+	DrawDebugDirectionalArrow(GetWorld(), GetActorLocation(), GetActorLocation() + C * 100.f, 32.f, FColor::Yellow);
 }
 
 void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -153,6 +177,8 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 
 	DOREPLIFETIME(APlayerCharacter, CharacterMovementState);
 	DOREPLIFETIME(APlayerCharacter, RotatePawnBasedOnControlRotation);
+	DOREPLIFETIME(APlayerCharacter, MaxWalkSpeed);
+	DOREPLIFETIME(APlayerCharacter, MaxAcceleration);
 }
 
 void APlayerCharacter::Multicast_PlayAnimation_Implementation(UAnimSequence* PlayAnimation, FName SlotName)
@@ -188,21 +214,39 @@ void APlayerCharacter::Callback_OnAttack(const EPlayerAnimation AttackType)
 	Server_PlayAnimation(AnimationComponent->GetAnimationSequence(AttackType));
 }
 
-void APlayerCharacter::Server_Callback_OnPlayerMovingStateChanged_Implementation(EPlayerMovingState NewMovingState)
+void APlayerCharacter::Client_RefreshCharacterMovementState_Implementation()
 {
-	if (AnimationComponent == nullptr) return;
-	if (NewMovingState == EPlayerMovingState::EPMS_ForwardToStop)
+	FVector V = GetVelocity();
+	CharacterMovementState.Velocity = V;
+	FRotator R = { 0.f, GetControlRotation().Yaw, 0.f };
+	FVector LocalVelocity = R.UnrotateVector(V.GetSafeNormal2D());
+	float Rad = FMath::Atan2(LocalVelocity.Y, LocalVelocity.X);
+	CharacterMovementState.HeadingRadian = Rad;
+	CharacterMovementState.LocalVelocityNormalized = R.UnrotateVector(V.GetSafeNormal2D());
+	if (GetController() != nullptr)
 	{
-		Server_PlayAnimation(AnimationComponent->GetAnimationSequence(EPlayerAnimation::EPA_ForwardToStop), TEXT("MovingSlot"));
+		CharacterMovementState.CachedInput = UCombatLibrary::GetCachedInput((UObject*)GetController());
+		Server_SetCharacterMovementState(CharacterMovementState);
 	}
+}
+
+void APlayerCharacter::Server_SetCharacterMovementState_Implementation(FCharacterMovementState NewCharacterMovementState)
+{
+	CharacterMovementState = NewCharacterMovementState;
 }
 
 void APlayerCharacter::Server_Callback_OnKeyTriggered_Implementation(const FKey Key)
 {
-	//UE_LOG(LogTemp, Log, TEXT("Key Triggered : %s"), *Key.GetFName().ToString());
+	UE_LOG(LogTemp, Log, TEXT("Key Triggered : %s"), *Key.GetFName().ToString());
 	if (Key.GetFName() == FName("Shift"))
 	{
-		GetCharacterMovement()->MaxWalkSpeed = 800.f;
+		MaxWalkSpeed = 800.f;
+		MaxAcceleration = 2048.f;
+		if (HasAuthority())
+		{
+			OnRep_MaxWalkSpeed();
+			OnRep_MaxAcceleration();
+		}
 	}
 	else if (Key.GetFName() == FName("RightMouseButton"))
 	{
@@ -212,10 +256,16 @@ void APlayerCharacter::Server_Callback_OnKeyTriggered_Implementation(const FKey 
 
 void APlayerCharacter::Server_Callback_OnKeyReleased_Implementation(const FKey Key)
 {
-	//UE_LOG(LogTemp, Log, TEXT("Key Released : %s"), *Key.GetFName().ToString());
+	UE_LOG(LogTemp, Log, TEXT("Key Released : %s"), *Key.GetFName().ToString());
 	if (Key.GetFName() == FName("Shift"))
 	{
-		GetCharacterMovement()->MaxWalkSpeed = 500.f;
+		MaxWalkSpeed = 500.f;
+		MaxAcceleration = 512.f;
+		if (HasAuthority())
+		{
+			OnRep_MaxWalkSpeed();
+			OnRep_MaxAcceleration();
+		}
 	}
 	else if (Key.GetFName() == FName("RightMouseButton"))
 	{
@@ -278,6 +328,11 @@ bool APlayerCharacter::DetachItem_Implementation(AActor* AttachItemActor)
 void APlayerCharacter::RotatePawnBasedOnControlRotation_Implementation()
 {
 	Server_RotatePawnBasedOnConrolRotation();
+}
+
+void APlayerCharacter::SetWallCoverable_Implementation(bool e)
+{
+	// :p
 }
 
 void APlayerCharacter::Multicast_KnockBack_Implementation(FVector Direction)
@@ -354,6 +409,23 @@ void APlayerCharacter::Server_RefreshVelocity_Implementation()
 	FVector LocalVelocity = R.UnrotateVector(V.GetSafeNormal2D());
 	float Rad = FMath::Atan2(LocalVelocity.Y, LocalVelocity.X);
 	CharacterMovementState.HeadingRadian = Rad;
+	CharacterMovementState.LocalVelocityNormalized = R.UnrotateVector(V.GetSafeNormal2D());
+	if (GetController() != nullptr) CharacterMovementState.CachedInput = UCombatLibrary::GetCachedInput((UObject*)GetController());
+	//else if (GetWorld())
+	//{
+	//	ENetMode NetMode = GetWorld()->GetNetMode();
+	//	FString EnvName;
+
+	//	if (NetMode == NM_Client) EnvName = TEXT("CLIENT");
+	//	else if (NetMode == NM_DedicatedServer) EnvName = TEXT("DEDICATED SERVER");
+	//	else if (NetMode == NM_ListenServer) EnvName = TEXT("LISTEN SERVER");
+
+	//	if (GEngine)
+	//	{
+	//		const FString DebugMessage = FString::Printf(TEXT("[%s] Controller Nullptr"), *EnvName);
+	//		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Orange, *DebugMessage);
+	//	}
+	//}
 }
 
 void APlayerCharacter::Server_OnAiming_Implementation(float Yaw)

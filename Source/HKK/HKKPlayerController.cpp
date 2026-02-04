@@ -103,6 +103,7 @@ void AHKKPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AHKKPlayerController, bShiftPressed);
 	DOREPLIFETIME(AHKKPlayerController, PlayerMovingState);
+	DOREPLIFETIME(AHKKPlayerController, bWallCoverable);
 }
 
 void AHKKPlayerController::ChangeQuickSlot_Implementation(UObject* ChangedItemObject, FKey ChangedKey)
@@ -145,17 +146,28 @@ bool AHKKPlayerController::Bind_Character_Implementation(UObject* PlayerCharacte
 			GetOnKeyReleased().Remove(DelegateHandle_OnKeyReleased);
 			DelegateHandle_OnKeyReleased.Reset();
 		}
-		if (!GetOnPlayerMovingStateChanged().IsBoundToObject(PlayerCharacterObject) && DelegateHandle_OnPlayerMovingStateChanged.IsValid())
-		{
-			GetOnPlayerMovingStateChanged().Remove(DelegateHandle_OnPlayerMovingStateChanged);
-			DelegateHandle_OnPlayerMovingStateChanged.Reset();
-		}
+		//if (!GetOnPlayerMovingStateChanged().IsBoundToObject(PlayerCharacterObject) && DelegateHandle_OnPlayerMovingStateChanged.IsValid())
+		//{
+		//	GetOnPlayerMovingStateChanged().Remove(DelegateHandle_OnPlayerMovingStateChanged);
+		//	DelegateHandle_OnPlayerMovingStateChanged.Reset();
+		//}
 		DelegateHandle_OnKeyTriggered = GetOnKeyTriggered().AddUFunction(PlayerCharacterObject, TEXT("Server_Callback_OnKeyTriggered"));
 		DelegateHandle_OnKeyReleased = GetOnKeyReleased().AddUFunction(PlayerCharacterObject, TEXT("Server_Callback_OnKeyReleased"));
-		DelegateHandle_OnPlayerMovingStateChanged = GetOnPlayerMovingStateChanged().AddUFunction(PlayerCharacterObject, TEXT("Server_Callback_OnPlayerMovingStateChanged"));
+		//DelegateHandle_OnPlayerMovingStateChanged = GetOnPlayerMovingStateChanged().AddUFunction(PlayerCharacterObject, TEXT("Server_Callback_OnPlayerMovingStateChanged"));
 		return true;
 	}
 	return false;
+}
+
+FVector AHKKPlayerController::GetCachedInput_Implementation()
+{
+	return CachedInput;
+}
+
+void AHKKPlayerController::SetWallCoverable_Implementation(bool e)
+{
+	bWallCoverable = e;
+	if (IsLocalPlayerController()) OnCreateInteractWidget.Broadcast(EInteractWidgetType::EIWT_WallCover, e);
 }
 
 void AHKKPlayerController::OnRep_PlayerState()
@@ -307,15 +319,19 @@ void AHKKPlayerController::Move(const FInputActionValue& Value)
 	float CurrentInputSec = GetWorld() ? GetWorld()->GetTimeSeconds() : -1.f;
 	APawn* ControlledPawn = GetPawn();
 
-	if (FMath::IsNearlyZero(CachedDirection.Size()))
-	{
-		SetCachedDirection(FVector(InputDirection.X, InputDirection.Y, 0.f));
-	}
-	else
-	{
-		float HoldingSec = CurrentInputSec - LastInputSec;
-		SetCachedDirection(FMath::Lerp(CachedDirection, InputDirection, FMath::Min(HoldingSec, 2.f) / 2.f));
-	}
+	//if (FMath::IsNearlyZero(CachedInput.Size()))
+	//{
+	//	SetCachedDirection(FVector(InputDirection.X, InputDirection.Y, 0.f));
+	//}
+	//else
+	//{
+	float HoldingSec = CurrentInputSec - LastInputSec;
+	//UE_LOG(LogTemp, Log, TEXT("Holding Sec : %f"), HoldingSec);
+	//UE_LOG(LogTemp, Log, TEXT("Do Lerp : %s , %s"), *CachedDirection.ToString(), *InputDirection.ToString());
+	//FMath::VInterpTo()
+	SetCachedDirection(FMath::Lerp(CachedDirection, InputDirection, FMath::Min(HoldingSec, 5.f) / 5.f));
+		//UE_LOG(LogTemp, Log, TEXT("Lerp Alpha : %f"), FMath::Min(HoldingSec, 2.f) / 2.f);
+	//}
 
 	bool debugMoveBasedOnCamera = false;
 	if (ControlledPawn != nullptr)
@@ -410,17 +426,17 @@ void AHKKPlayerController::MouseScrolled(const FInputActionValue& Value)
 	{
 		OnAttack.Broadcast(EPlayerAnimation::EPA_EquipWeapon_R);
 	}
-	if (GEngine)
-	{
-		if (ScrollValue >= 0)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Orange, FString("MouseScrollUp"));
-		}
-		else
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Orange, FString("MouseScrollDown"));
-		}
-	}
+	//if (GEngine)
+	//{
+	//	if (ScrollValue >= 0)
+	//	{
+	//		GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Orange, FString("MouseScrollUp"));
+	//	}
+	//	else
+	//	{
+	//		GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Orange, FString("MouseScrollDown"));
+	//	}
+	//}
 }
 
 void AHKKPlayerController::MouseRMBTriggered()
@@ -483,45 +499,60 @@ void AHKKPlayerController::MoveStop_Gradual()
 	float CurrentSec = GetWorld() ? GetWorld()->GetTimeSeconds() : -1.f;
 	float NotPressingSec = CurrentSec - LastInputSec;
 	FVector TempDirection = GetCachedDirection();
-	SetCachedDirection(FMath::Lerp(TempDirection, FVector::ZeroVector, FMath::Min(NotPressingSec, 2.f) / 2.f));
+	SetCachedDirection(FMath::Lerp(TempDirection, FVector::ZeroVector, FMath::Min(NotPressingSec, 3.f) / 3.f));
 	APawn* ControlledPawn = GetPawn();
 	if (ControlledPawn != nullptr)
 	{
 		MovePawn(ControlledPawn, GetCachedDirection());
-		if (NotPressingSec < 1.f)
+		if (NotPressingSec < 5.f)
 		{
 			GetWorld()->GetTimerManager().SetTimerForNextTick(this, &AHKKPlayerController::MoveStop_Gradual);
 		}
+		//else
+		//{
+		//	if (SetPlayerMovingState(EPlayerMovingState::EPMS_Default))
+		//	{
+		//		OnPlayerMovingStateChanged.Broadcast(EPlayerMovingState::EPMS_Default, FVector::ZeroVector);
+		//	}
+		//}
 	}
 }
 
 void AHKKPlayerController::SetCachedDirection(FVector NewDirection)
 {
 	CachedDirection = NewDirection;
+	UE_LOG(LogTemp, Log, TEXT("CachedDirection : %s"), *CachedDirection.ToString());
 }
 
 void AHKKPlayerController::SetCachedInput(FVector NewInput)
 {
 	CachedInput = NewInput;
-	FVector TempDirection = GetCachedDirection();
-
-	if (TempDirection.X > 0 && CachedInput.X <= 0)
-	{
-		SetPlayerMovingState(EPlayerMovingState::EPMS_ForwardToStop);
-	}
-	else
-	{
-		SetPlayerMovingState(EPlayerMovingState::EPMS_Default);
-	}
+	//FVector TempDirection = GetCachedDirection().GetSafeNormal2D();
+	//if (FVector::DotProduct(TempDirection, CachedInput) < 0.75f || (CachedInput.X == 0 && CachedInput.Y == 0))
+	//{
+	//	//UE_LOG(LogTemp, Log, TEXT("Do Stop Anim : %s, Input : %s"), *TempDirection.ToString(), *CachedInput.ToString());
+	//	if (SetPlayerMovingState(EPlayerMovingState::EPMS_ForwardToStop))
+	//	{
+	//		OnPlayerMovingStateChanged.Broadcast(EPlayerMovingState::EPMS_ForwardToStop, TempDirection);
+	//	}
+	//}
+	//else
+	//{
+	//	if (SetPlayerMovingState(EPlayerMovingState::EPMS_Default))
+	//	{
+	//		OnPlayerMovingStateChanged.Broadcast(EPlayerMovingState::EPMS_Default, FVector::ZeroVector);
+	//	}
+	//}
 }
 
-void AHKKPlayerController::SetPlayerMovingState(EPlayerMovingState NewMovingState)
+bool AHKKPlayerController::SetPlayerMovingState(EPlayerMovingState NewMovingState)
 {
 	if (PlayerMovingState != NewMovingState)
 	{
 		PlayerMovingState = NewMovingState;
-		OnPlayerMovingStateChanged.Broadcast(PlayerMovingState);
+		return true;
 	}
+	return false;
 }
 
 void AHKKPlayerController::Server_SetShiftPressed_Implementation(bool e)

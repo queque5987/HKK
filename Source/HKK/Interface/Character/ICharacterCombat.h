@@ -26,6 +26,8 @@ public:
 	virtual void Multicast_KnockBack(FVector Direction) = 0;
 	virtual class UObject* GetPlayerStateObject() = 0;
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	UObject* GetControllerObject();
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	UObject* GetAnimInstanceObject();
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	bool AttachItem(AActor* AttachItemActor, FName AttachSocketName);
@@ -33,4 +35,6 @@ public:
 	bool DetachItem(AActor* AttachItemActor);
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void RotatePawnBasedOnControlRotation();
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void SetWallCoverable(bool e);
 };

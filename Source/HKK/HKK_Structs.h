@@ -79,6 +79,12 @@ struct FCharacterMovementState
 
 	UPROPERTY(BlueprintReadWrite)
 	float HeadingRadian;
+
+	UPROPERTY(BlueprintReadWrite)
+	FVector LocalVelocityNormalized;
+
+	UPROPERTY(BlueprintReadWrite)
+	FVector CachedInput;
 };
 
 class HKK_API HKK_Structs

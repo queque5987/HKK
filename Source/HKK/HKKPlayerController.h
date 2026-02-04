@@ -88,7 +88,7 @@ public:
 	FORCEINLINE FOnAiming& GetOnAiming() { return OnAiming; }
 	FORCEINLINE FOnPlayAnimation& GetOnPlayAnimation() { return OnPlayAnimation; }
 	FORCEINLINE FOnAttack& GetOnAttack() { return OnAttack; }
-	FORCEINLINE FOnPlayerMovingStateChanged& GetOnPlayerMovingStateChanged() { return OnPlayerMovingStateChanged; }
+	//FORCEINLINE FOnPlayerMovingStateChanged& GetOnPlayerMovingStateChanged() { return OnPlayerMovingStateChanged; }
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
@@ -102,6 +102,7 @@ public:
 	FORCEINLINE virtual FOnGetItem& GetOnGetItem() override { return OnGetItem; }
 	FORCEINLINE virtual FOnQuickSlotUpdated& GetOnQuickSlotUpdated() override { return OnQuickSlotUpdated; }
 	FORCEINLINE virtual FOnItemEquiped& GetOnItemEquiped() override { return OnItemEquiped; }
+	FORCEINLINE virtual FOnCreateInteractWidget& GetOnCreateInteractWidget() override { return OnCreateInteractWidget; }
 	virtual FVector GetPlayerLocation() override { return GetCharacter() != nullptr ? GetCharacter()->GetActorLocation() : FVector::ZeroVector; };
 	virtual UObject* GetPlayerStateObject() override { return (UObject*)PlayerState; };
 	virtual void SetCurorVisibility(bool e) override { bShowMouseCursor = e; };
@@ -121,6 +122,8 @@ public:
 -----IICombatController Start
 	*/
 	virtual bool Bind_Character_Implementation(UObject* PlayerCharacterObject) override;
+	virtual FVector GetCachedInput_Implementation() override;
+	virtual void SetWallCoverable_Implementation(bool e) override;
 	/*
 -----IICombatController End
 	*/
@@ -146,11 +149,12 @@ protected:
 	FOnSetWalkSpeed OnSetWalkSpeed;
 	FOnQuickSlotUpdated OnQuickSlotUpdated;
 	FOnItemEquiped OnItemEquiped;
-	FOnPlayerMovingStateChanged OnPlayerMovingStateChanged;
+	FOnCreateInteractWidget OnCreateInteractWidget;
+	//FOnPlayerMovingStateChanged OnPlayerMovingStateChanged;
 
 	FDelegateHandle DelegateHandle_OnKeyTriggered;
 	FDelegateHandle DelegateHandle_OnKeyReleased;
-	FDelegateHandle DelegateHandle_OnPlayerMovingStateChanged;
+	//FDelegateHandle DelegateHandle_OnPlayerMovingStateChanged;
 
 
 	/*
@@ -165,6 +169,8 @@ protected:
 
 	UPROPERTY(Replicated)
 	bool bShiftPressed = false;
+	UPROPERTY(Replicated)
+	bool bWallCoverable = false;
 
 	virtual void SetupInputComponent() override;
 	virtual void BeginPlay();
@@ -215,9 +221,8 @@ private:
 	void SetCachedDirection(FVector NewDirection);
 	FVector GetCachedDirection() { return CachedDirection; };
 	void SetCachedInput(FVector NewInput);
-	FVector GetCachedInput() { return CachedInput; }
 
-	void SetPlayerMovingState(EPlayerMovingState NewMovingState);
+	bool SetPlayerMovingState(EPlayerMovingState NewMovingState);
 };
 
 
