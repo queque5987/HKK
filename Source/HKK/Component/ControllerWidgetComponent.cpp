@@ -57,12 +57,19 @@ void UControllerWidgetComponent::TickComponent(float DeltaTime, ELevelTick TickT
 		{
 			if (FloatingInteractWidget->GetWidgetType() == EInteractWidgetType::EIWT_WallCover)
 			{
-				UGameplayStatics::ProjectWorldToScreen(PC, PC->GetPawn()->GetActorLocation(), ProjectLocation);
+				UGameplayStatics::ProjectWorldToScreen(PC, PC->GetPawn()->GetActorLocation() + PC->GetPawn()->GetActorForwardVector() * 50.f, ProjectLocation);
 				FloatingInteractWidget->SetPositionInViewport(ProjectLocation);
 			}
 		}
 	}
 
+	if (FloatingInteractWidgetArr.Num() > 32)
+	{
+		FloatingInteractWidgetArr.RemoveAll([](const TWeakObjectPtr<UWidget_ItemInteract>& Iter) {
+			return !Iter.IsValid();
+			}
+		);
+	}
 	if (InventoryInterval > 0.f) InventoryInterval -= DeltaTime;
 }
 
@@ -297,23 +304,33 @@ void UControllerWidgetComponent::Callback_OnCreateInteractWidget(EInteractWidget
 {
 	if (InteractWidgetType == EInteractWidgetType::EIWT_WallCover)
 	{
+		auto& WidgetRef = ActiveInteractWidgets.FindOrAdd(InteractWidgetType);
+		if (WidgetRef != nullptr) WidgetRef->SetVisibility(ESlateVisibility::Collapsed);
 		if (ToSet)
 		{
-			UWidget_ItemInteract* tempWidget = Cast<UWidget_ItemInteract>(UWidgetLibrary::GetWidget(GetOwner(), Widget_ItemInteractClass, EInteractWidgetType::EIWT_WallCover));
+			if (WidgetRef != nullptr)
+			{
+				if (UWidgetLibrary::ReturnWidget(GetOwner(), Widget_ItemInteractClass, WidgetRef))
+				{
+					WidgetRef = nullptr;
+				}
+			}
+			UUserWidget* W = UWidgetLibrary::GetWidget(GetOwner(), Widget_ItemInteractClass);
+			UWidget_ItemInteract* tempWidget = Cast<UWidget_ItemInteract>(W);
 			if (tempWidget != nullptr)
 			{
 				tempWidget->SetByWidgetType(InteractWidgetType);
-
-				FVector2D ProjectLocation = FVector2D::ZeroVector;
-				const APlayerController* PC = Cast<APlayerController>(WidgetController->_getUObject());
-				int32 ScreensizeX;
-				int32 ScreensizeY;
-				PC->GetViewportSize(ScreensizeX, ScreensizeY);
-				UGameplayStatics::ProjectWorldToScreen(PC, PC->GetPawn()->GetActorLocation(), ProjectLocation);
-				tempWidget->AddToViewport();
-				tempWidget->SetPositionInViewport(ProjectLocation);
+				WidgetRef = tempWidget;
+				WidgetRef->SetVisibility(ESlateVisibility::HitTestInvisible);
 				FloatingInteractWidgetArr.Emplace(tempWidget);
 				return;
+			}
+		}
+		else
+		{
+			if (UWidgetLibrary::ReturnWidget(GetOwner(), Widget_ItemInteractClass, WidgetRef))
+			{
+				WidgetRef = nullptr;
 			}
 		}
 	}
@@ -342,4 +359,34 @@ EEquipmentSlotType UControllerWidgetComponent::GetLeftEquipmentSlotIndex()
 		}
 	}
 	return EEquipmentSlotType::EEST_EquipSlot_Default;
+}
+
+UUserWidget* UControllerWidgetComponent::CreateSimpleWidget(APlayerController* OwningControllerObject, TSubclassOf<UUserWidget> InClass)
+{
+	UUserWidget* rtn = CreateWidget<UUserWidget>(OwningControllerObject, InClass);
+	if (rtn != nullptr) rtn->AddToViewport();
+	return rtn;
+}
+
+void UControllerWidgetComponent::OnCurrentPlayerStateChanged(EPlayerState OldPlayerState, EPlayerState NewPlayerState)
+{
+	UE_LOG(LogTemp, Log, TEXT("%d ->> %d"), (uint8)OldPlayerState, (uint8)NewPlayerState);
+
+	if (UCombatLibrary::IsWallCoveringPlayerState(OldPlayerState) && !UCombatLibrary::IsWallCoveringPlayerState(NewPlayerState))
+	{
+		auto* tempWidget = ActiveInteractWidgets.Find(EInteractWidgetType::EIWT_WallCover);
+		if (tempWidget != nullptr && tempWidget->Get() != nullptr)
+		{
+			tempWidget->Get()->SetVisibility(ESlateVisibility::HitTestInvisible);
+		}
+	}
+	else if (!UCombatLibrary::IsWallCoveringPlayerState(OldPlayerState) && UCombatLibrary::IsWallCoveringPlayerState(NewPlayerState))
+	{
+		auto* tempWidget = ActiveInteractWidgets.Find(EInteractWidgetType::EIWT_WallCover);
+		if (tempWidget != nullptr && tempWidget->Get() != nullptr)
+		{
+			tempWidget->Get()->SetVisibility(ESlateVisibility::Collapsed);
+		}
+	}
+
 }

@@ -13,7 +13,9 @@ UENUM(BlueprintType)
 enum class EPlayerState : uint8
 {
 	EPS_Default,
-	EPS_Aiming
+	EPS_Aiming,
+	EPS_WallCover,
+	EPS_WallCover_R,
 };
 UENUM(BlueprintType)
 enum class EEquipmentSlotType : uint8
@@ -70,7 +72,9 @@ enum class EPlayerAnimation : uint8
 	EPA_HitReact_B,
 	EPA_BusterFireR,
 	EPA_EquipWeapon_R,
-	EPA_ForwardToStop
+	EPA_ForwardToStop,
+	EPA_WallCover_StandToCover,
+	EPA_WallCover_CoverToStand
 };
 
 class HKK_API HKK_PCH

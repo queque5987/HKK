@@ -12,6 +12,7 @@ class UIObjectPoolSystem : public UInterface
 };
 
 class AActor;
+class UUserWidget;
 
 class HKK_API IIObjectPoolSystem
 {
@@ -21,4 +22,6 @@ public:
 	
 	virtual AActor* GetFromPool(UClass* InClass) { return nullptr; };
 	virtual bool ReturnToPool(UClass* InClass, AActor* InActor) { return bool(); };
+	virtual UUserWidget* GetWidgetFromPool(TSubclassOf<UUserWidget> InClass, UObject* PlayerControllerObject) { return nullptr; };
+	virtual bool ReturnWidgetToPool(UClass* InClass, UUserWidget* InWidget) { return bool(); };
 };

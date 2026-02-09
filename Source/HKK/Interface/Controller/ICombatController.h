@@ -2,7 +2,6 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
-
 #include "ICombatController.generated.h"
 
 class IIPlayerState;
@@ -18,6 +17,8 @@ class HKK_API IICombatController
 	GENERATED_BODY()
 
 public:
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void SetCurrentPlayerState(EPlayerState NewPlayerState);
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	bool Bind_Character(UObject* PlayerCharacterObject);
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)

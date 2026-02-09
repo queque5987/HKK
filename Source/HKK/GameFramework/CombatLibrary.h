@@ -35,11 +35,12 @@ public:
 	/* Atleast 1 Item Equipped */
 	static bool CanWeaponScrollSwitch(UObject* OwningPlayerState);
 
-	static void AnimInstance_SetBoolValue(UObject* OwningPlayerAnimInatceObject, EPlayerState ToSetPlayerState, bool e);
+	static void AnimInstance_SetBoolValue(UObject* OwningPlayerPawnObject, EPlayerState ToSetPlayerState, bool e);
 
 	static FVector GetCachedInput(UObject* OwningPlayerController);
 
 	static void SetWallCoverable(UObject* OwningPlayerCharacterObject, bool e);
+	static bool IsWallCoveringPlayerState(EPlayerState InPlayerState);
 private:
 	template<typename...Args>
 	static void LogWarning(float DisplayTime, const FString& LogText)

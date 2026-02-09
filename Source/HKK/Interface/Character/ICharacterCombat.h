@@ -26,6 +26,8 @@ public:
 	virtual void Multicast_KnockBack(FVector Direction) = 0;
 	virtual class UObject* GetPlayerStateObject() = 0;
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void AnimInstance_SetBoolValue(EPlayerState ToSetPlayerState, bool e);
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	UObject* GetControllerObject();
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	UObject* GetAnimInstanceObject();

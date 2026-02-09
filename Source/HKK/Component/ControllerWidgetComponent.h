@@ -49,6 +49,9 @@ protected:
 	TObjectPtr<AActor> InteractingPickableItem;
 	FOnGetItem* OnGetItem;
 	TArray<TWeakObjectPtr<UWidget_ItemInteract>> FloatingInteractWidgetArr;
+	
+	UPROPERTY()
+	TMap<EInteractWidgetType, TObjectPtr<UUserWidget>> ActiveInteractWidgets;
 public:	
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
@@ -72,4 +75,8 @@ public:
 	void OnEquipmentItemDragDetected(bool IsOn);
 
 	EEquipmentSlotType GetLeftEquipmentSlotIndex();
+
+	UUserWidget* CreateSimpleWidget(APlayerController* OwningControllerObject, TSubclassOf<UUserWidget> InClass);
+
+	void OnCurrentPlayerStateChanged(EPlayerState OldPlayerState, EPlayerState NewPlayerState);
 };

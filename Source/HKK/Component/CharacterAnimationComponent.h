@@ -23,6 +23,8 @@ protected:
 
 	UPROPERTY(ReplicatedUsing = OnRep_WallCoverableObjectCheck)
 	uint8 WallCoverableObjectCheck = 0;
+	UPROPERTY(Replicated)
+	FVector WallCoverNormalVector;
 
 public:	
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
@@ -32,7 +34,10 @@ public:
 
 	UFUNCTION()
 	void OnRep_WallCoverableObjectCheck();
+	UFUNCTION()
+	FVector GetWallCoverNormal() { return WallCoverNormalVector; };;
 private:
 	UFUNCTION(Server, Reliable)
 	void Server_ForwardLineTrace_WallCover();
+	FVector GetMostNormalVector(const TArray<FVector_NetQuantizeNormal>& Normals);
 };

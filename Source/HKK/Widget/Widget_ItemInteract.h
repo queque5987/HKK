@@ -75,8 +75,9 @@ public:
 	}
 	void SetItemConfig(FOnGetItem* InOnGetItem, const FItemConfig& InItemConfig, AActor* InPlayerController);
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void SetByWidgetType(EInteractWidgetType InteractWidgetType);
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void BP_SetByWidgetType(EInteractWidgetType InteractWidgetType);
 	EInteractWidgetType GetWidgetType() { return CurrentWidgetType; };
 private:
 	void ProgressCompleted();

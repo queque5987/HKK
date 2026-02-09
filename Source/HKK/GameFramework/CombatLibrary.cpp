@@ -158,14 +158,28 @@ bool UCombatLibrary::CanWeaponScrollSwitch(UObject* OwningPlayerState)
 	return false;
 }
 
-void UCombatLibrary::AnimInstance_SetBoolValue(UObject* OwningPlayerAnimInatceObject, EPlayerState ToSetPlayerState, bool e)
+void UCombatLibrary::AnimInstance_SetBoolValue(UObject* OwningPlayerPawnObject, EPlayerState ToSetPlayerState, bool e)
 {
-	if (OwningPlayerAnimInatceObject == nullptr)
+	if (OwningPlayerPawnObject == nullptr)
 	{
-		LogWarning(3.f, TEXT("OwningPlayerAnimInatceObject Not Found"));
+		LogWarning(3.f, TEXT("OwningPlayerPawnObject Not Found"));
 		return;
 	}
-	IICharacterAnimInstance::Execute_AnimInstance_SetBoolValue(OwningPlayerAnimInatceObject, ToSetPlayerState, e);
+	UObject* OwningPlayerAnimInstanceObject = IICharacterCombat::Execute_GetAnimInstanceObject(OwningPlayerPawnObject);
+	UObject* OwningPlayerControllerObject = IICharacterCombat::Execute_GetControllerObject(OwningPlayerPawnObject);
+	if (OwningPlayerAnimInstanceObject == nullptr)
+	{
+		LogWarning(3.f, TEXT("OwningPlayerAnimInstanceObject Not Found"));
+		return;
+	}
+	if (OwningPlayerControllerObject == nullptr)
+	{
+		LogWarning(3.f, TEXT("OwningPlayerControllerObject Not Found"));
+		return;
+	}
+	IICharacterCombat::Execute_AnimInstance_SetBoolValue(OwningPlayerPawnObject, ToSetPlayerState, e);
+	IICombatController::Execute_SetCurrentPlayerState(OwningPlayerControllerObject, ToSetPlayerState);
+	//IICharacterAnimInstance::Execute_AnimInstance_SetBoolValue(OwningPlayerAnimInstanceObject, ToSetPlayerState, e);
 }
 
 FVector UCombatLibrary::GetCachedInput(UObject* OwningPlayerController)
@@ -193,6 +207,11 @@ void UCombatLibrary::SetWallCoverable(UObject* OwningPlayerCharacterObject, bool
 	}
 	IICombatController::Execute_SetWallCoverable(TempControllerObject, e);
 	IICharacterCombat::Execute_SetWallCoverable(OwningPlayerCharacterObject, e);
+}
+
+bool UCombatLibrary::IsWallCoveringPlayerState(EPlayerState InPlayerState)
+{
+	return (InPlayerState == EPlayerState::EPS_WallCover || InPlayerState == EPlayerState::EPS_WallCover_R);
 }
 
 //bool UCombatLibrary::RefreshQuickSlot(UObject* OwningPlayerController, UObject* ChangedItemDataObject)

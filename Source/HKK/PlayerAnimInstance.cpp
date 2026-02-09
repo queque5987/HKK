@@ -4,6 +4,7 @@
 #include "Interface/ICharacterMovement.h"
 #include "HKK_Structs.h"
 #include "HKKPlayerController.h"
+#include "GameFramework/CombatLibrary.h"
 
 UPlayerAnimInstance::UPlayerAnimInstance() : Super()
 {
@@ -46,6 +47,7 @@ void UPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			HeadingRadian	= tempState->HeadingRadian;
 			LocalVelocity_N = tempState->LocalVelocityNormalized;
 			CachedInput		= tempState->CachedInput;
+			CurrentPlayerState = tempState->PlayerState;
 		}
 	}
 }
@@ -57,9 +59,14 @@ void UPlayerAnimInstance::CallBack_OnPlayAnimation(UAnimSequence* PlayAnimation)
 
 void UPlayerAnimInstance::AnimInstance_SetBoolValue_Implementation(EPlayerState ToSetPlayerState, bool e)
 {
+	CurrentPlayerState = ToSetPlayerState;
 	if (ToSetPlayerState == EPlayerState::EPS_Aiming)
 	{
 		RMBAiming = e;
+	}
+	else if (ToSetPlayerState == EPlayerState::EPS_WallCover)
+	{
+		RMBAiming = false;
 	}
 }
 

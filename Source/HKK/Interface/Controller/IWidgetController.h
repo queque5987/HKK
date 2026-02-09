@@ -12,11 +12,15 @@ class UIWidgetController : public UInterface
 	GENERATED_BODY()
 };
 
+class UUserWidget;
+
 class HKK_API IIWidgetController
 {
 	GENERATED_BODY()
 
 public:
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	UUserWidget* CreateSimpleWidget(TSubclassOf<UUserWidget> InClass);
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void ItemInteractPickUpWidget(bool IsOn, UObject* PickableItemObject, const FItemConfig& ItemConfig);
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)

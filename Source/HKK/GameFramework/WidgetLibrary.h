@@ -12,12 +12,6 @@ UCLASS()
 class HKK_API UWidgetLibrary : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
-	
-private:
-
-	TQueue<TObjectPtr<UUserWidget>> CreatedInteractWidgetsQueue;
-	TSet<EInteractWidgetType> CreatedInteractWidgetsSet;
-
 
 public:
 	static bool ItemInteractWidget(bool IsOn, UObject* OwningPlayerController, UObject* PickableItemObject, const FItemConfig& ItemConfig);
@@ -25,6 +19,18 @@ public:
 	static void EquipmentSlotChanged(UObject* ChangedPlayerController, UObject* ChangedItemObject, EEquipmentSlotType EquipmentSlotType);
 	static void EquipmentItemDragDetected(UObject* OwningPlayerController, bool e);
 	static EEquipmentSlotType GetLeftEquipmentSlotIndex(UObject* OwningPlayerController);
-	static UUserWidget* GetWidget(UObject* OwningPlayerControllerObject, TSubclassOf<UUserWidget> CreateWidgetClass, EInteractWidgetType InteractWidgetType);
-	static void Returnwidget(EInteractWidgetType ReturnType);
+	static UUserWidget* GetWidget(UObject* OwningPlayerControllerObject, TSubclassOf<UUserWidget> CreateWidgetClass);
+	static bool ReturnWidget(UObject* WorldContextObject, TSubclassOf<UUserWidget> ReturnWidgetClass, UUserWidget* InWidget);
+
+private:
+	template<typename...Args>
+	static void LogWarning(float DisplayTime, const FString& LogText)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("%s"), *LogText);
+
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, DisplayTime, FColor::Orange, *LogText);
+		}
+	};
 };

@@ -1,4 +1,4 @@
-#include "Widget/Widget_ItemInteract.h"
+﻿#include "Widget/Widget_ItemInteract.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Materials/MaterialInstance.h"
 #include "Interface/Controller/IWidgetController.h"
@@ -46,7 +46,7 @@ void UWidget_ItemInteract::SetItemConfig(FOnGetItem* InOnGetItem, const FItemCon
 	SetByWidgetType(EInteractWidgetType::EIWT_ItemPickup);
 }
 
-void UWidget_ItemInteract::SetByWidgetType_Implementation(EInteractWidgetType InteractWidgetType)
+void UWidget_ItemInteract::SetByWidgetType(EInteractWidgetType InteractWidgetType)
 {
 	CurrentWidgetType = InteractWidgetType;
 	if (InteractWidgetType == EInteractWidgetType::EIWT_ItemPickup)
@@ -54,17 +54,21 @@ void UWidget_ItemInteract::SetByWidgetType_Implementation(EInteractWidgetType In
 		ButtonText->SetText(FText::FromString("E"));
 		ButtonText_Pressed->SetText(FText::FromString("E"));
 	}
-	else if (InteractWidgetType == EInteractWidgetType::EIWT_ItemPickup)
+	else if (InteractWidgetType == EInteractWidgetType::EIWT_WallCover)
 	{
 		ButtonText->SetText(FText::FromString("W"));
 		ButtonText_Pressed->SetText(FText::FromString("W"));
-		ItemName->SetText(FText::FromString("W"));
 	}
 	else
 	{
 		ButtonText->SetText(FText::FromString("E"));
 		ButtonText_Pressed->SetText(FText::FromString("E"));
 	}
+	BP_SetByWidgetType(InteractWidgetType);
+}
+
+void UWidget_ItemInteract::BP_SetByWidgetType_Implementation(EInteractWidgetType InteractWidgetType)
+{
 }
 
 void UWidget_ItemInteract::ProgressCompleted()

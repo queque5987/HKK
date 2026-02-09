@@ -102,7 +102,7 @@ void AHKKPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AHKKPlayerController, bShiftPressed);
-	DOREPLIFETIME(AHKKPlayerController, PlayerMovingState);
+	DOREPLIFETIME(AHKKPlayerController, PlayerPoseState);
 	DOREPLIFETIME(AHKKPlayerController, bWallCoverable);
 }
 
@@ -132,6 +132,11 @@ void AHKKPlayerController::ItemInteractPickUpWidget_Implementation(bool IsOn, UO
 	if (WidgetComponent) WidgetComponent->SetItemInteractPickupWidget(IsOn, EUserWidget::EUW_ItemInteract, ItemConfig, PickableItemObject);
 }
 
+UUserWidget* AHKKPlayerController::CreateSimpleWidget_Implementation(TSubclassOf<UUserWidget> InClass)
+{
+	return WidgetComponent->CreateSimpleWidget((APlayerController*)this, InClass);
+}
+
 bool AHKKPlayerController::Bind_Character_Implementation(UObject* PlayerCharacterObject)
 {
 	if (PlayerCharacterObject)
@@ -146,13 +151,14 @@ bool AHKKPlayerController::Bind_Character_Implementation(UObject* PlayerCharacte
 			GetOnKeyReleased().Remove(DelegateHandle_OnKeyReleased);
 			DelegateHandle_OnKeyReleased.Reset();
 		}
-		//if (!GetOnPlayerMovingStateChanged().IsBoundToObject(PlayerCharacterObject) && DelegateHandle_OnPlayerMovingStateChanged.IsValid())
-		//{
-		//	GetOnPlayerMovingStateChanged().Remove(DelegateHandle_OnPlayerMovingStateChanged);
-		//	DelegateHandle_OnPlayerMovingStateChanged.Reset();
-		//}
+		if (!GetOnPlaySimpleAnimation().IsBoundToObject(PlayerCharacterObject) && DelegateHandle_OnPlaySimpleAnimation.IsValid())
+		{
+			GetOnPlaySimpleAnimation().Remove(DelegateHandle_OnPlaySimpleAnimation);
+			DelegateHandle_OnPlaySimpleAnimation.Reset();
+		}
 		DelegateHandle_OnKeyTriggered = GetOnKeyTriggered().AddUFunction(PlayerCharacterObject, TEXT("Server_Callback_OnKeyTriggered"));
 		DelegateHandle_OnKeyReleased = GetOnKeyReleased().AddUFunction(PlayerCharacterObject, TEXT("Server_Callback_OnKeyReleased"));
+		DelegateHandle_OnPlaySimpleAnimation = GetOnPlaySimpleAnimation().AddUFunction(PlayerCharacterObject, TEXT("Server_Callback_PlaySimpleAnimation"));
 		//DelegateHandle_OnPlayerMovingStateChanged = GetOnPlayerMovingStateChanged().AddUFunction(PlayerCharacterObject, TEXT("Server_Callback_OnPlayerMovingStateChanged"));
 		return true;
 	}
@@ -168,6 +174,17 @@ void AHKKPlayerController::SetWallCoverable_Implementation(bool e)
 {
 	bWallCoverable = e;
 	if (IsLocalPlayerController()) OnCreateInteractWidget.Broadcast(EInteractWidgetType::EIWT_WallCover, e);
+}
+
+void AHKKPlayerController::SetCurrentPlayerState_Implementation(EPlayerState NewPlayerState)
+{
+	if (WidgetComponent) WidgetComponent->OnCurrentPlayerStateChanged(PlayerPoseState, NewPlayerState);
+	Server_SetCurrentPlayerState(NewPlayerState);
+}
+
+void AHKKPlayerController::Server_SetCurrentPlayerState_Implementation(EPlayerState NewPlayerState)
+{
+	PlayerPoseState = NewPlayerState;
 }
 
 void AHKKPlayerController::OnRep_PlayerState()
@@ -313,25 +330,28 @@ void AHKKPlayerController::Move(const FInputActionValue& Value)
 	if (!WidgetComponent->IsControllable()) return;
 
 	FVector2D InputVector = Value.Get<FVector2D>();
-	//if (InputVector.X >= 0.f && bShiftPressed) InputVector.Y = 0.f;
-	//UE_LOG(LogTemp, Log, TEXT("Input Vector : %s"), *InputVector.ToString());
+	if (UCombatLibrary::IsWallCoveringPlayerState(PlayerPoseState))
+	{
+		if (InputVector.X < 0)
+		{
+			Server_SetWallCovering(false);
+			InputVector.Y = 0.f;
+		}
+		else
+		{
+			InputVector.X = 0.f;
+		}
+	}
+	if (bWallCoverable && InputVector.X > 0)
+	{
+		Server_SetWallCovering(true);
+	}
+
 	FVector InputDirection{ InputVector.X, InputVector.Y, 0.f };
 	float CurrentInputSec = GetWorld() ? GetWorld()->GetTimeSeconds() : -1.f;
 	APawn* ControlledPawn = GetPawn();
-
-	//if (FMath::IsNearlyZero(CachedInput.Size()))
-	//{
-	//	SetCachedDirection(FVector(InputDirection.X, InputDirection.Y, 0.f));
-	//}
-	//else
-	//{
 	float HoldingSec = CurrentInputSec - LastInputSec;
-	//UE_LOG(LogTemp, Log, TEXT("Holding Sec : %f"), HoldingSec);
-	//UE_LOG(LogTemp, Log, TEXT("Do Lerp : %s , %s"), *CachedDirection.ToString(), *InputDirection.ToString());
-	//FMath::VInterpTo()
 	SetCachedDirection(FMath::Lerp(CachedDirection, InputDirection, FMath::Min(HoldingSec, 5.f) / 5.f));
-		//UE_LOG(LogTemp, Log, TEXT("Lerp Alpha : %f"), FMath::Min(HoldingSec, 2.f) / 2.f);
-	//}
 
 	bool debugMoveBasedOnCamera = false;
 	if (ControlledPawn != nullptr)
@@ -348,6 +368,11 @@ void AHKKPlayerController::Move(const FInputActionValue& Value)
 			//	XScaleValue *= 3.f / 5.f;
 			//	YScaleValue *= 3.f / 5.f;
 			//}
+		}
+		if (UCombatLibrary::IsWallCoveringPlayerState(PlayerPoseState))
+		{
+			XScaleValue *= 0.15f;
+			YScaleValue *= 0.15f;
 		}
 		MovePawn(ControlledPawn, FVector(XScaleValue, YScaleValue, 0.f));
 	}
@@ -442,11 +467,15 @@ void AHKKPlayerController::MouseScrolled(const FInputActionValue& Value)
 void AHKKPlayerController::MouseRMBTriggered()
 {
 	OnKeyTriggered.Broadcast(FKey("RightMouseButton"));
+
+	UCombatLibrary::AnimInstance_SetBoolValue((UObject*)GetPawn(), EPlayerState::EPS_Aiming, true);
 }
 
 void AHKKPlayerController::MouseRMBCompleted()
 {
 	OnKeyReleased.Broadcast(FKey("RightMouseButton"));
+
+	UCombatLibrary::AnimInstance_SetBoolValue((UObject*)GetPawn(), EPlayerState::EPS_Default, false);
 }
 
 void AHKKPlayerController::Attack0_RFistTriggered(const FInputActionValue& Value)
@@ -545,17 +574,31 @@ void AHKKPlayerController::SetCachedInput(FVector NewInput)
 	//}
 }
 
-bool AHKKPlayerController::SetPlayerMovingState(EPlayerMovingState NewMovingState)
-{
-	if (PlayerMovingState != NewMovingState)
-	{
-		PlayerMovingState = NewMovingState;
-		return true;
-	}
-	return false;
-}
+//bool AHKKPlayerController::SetPlayerMovingState(EPlayerMovingState NewMovingState)
+//{
+//	if (PlayerMovingState != NewMovingState)
+//	{
+//		PlayerMovingState = NewMovingState;
+//		return true;
+//	}
+//	return false;
+//}
 
 void AHKKPlayerController::Server_SetShiftPressed_Implementation(bool e)
 {
 	bShiftPressed = e;
+}
+
+void AHKKPlayerController::Server_SetWallCovering_Implementation(bool e)
+{
+	if (e)
+	{
+		GetOnPlaySimpleAnimation().Broadcast(EPlayerAnimation::EPA_WallCover_StandToCover, TEXT("MovingSlot"));
+		//UCombatLibrary::AnimInstance_SetBoolValue((UObject*)GetPawn(), EPlayerState::EPS_WallCover, true);
+	}
+	else
+	{
+		GetOnPlaySimpleAnimation().Broadcast(EPlayerAnimation::EPA_WallCover_CoverToStand, TEXT("MovingSlot"));
+		//UCombatLibrary::AnimInstance_SetBoolValue((UObject*)GetPawn(), EPlayerState::EPS_Default, false);
+	}
 }

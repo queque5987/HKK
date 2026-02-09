@@ -6,6 +6,61 @@
 #include "HKK_Structs.generated.h"
 
 class AActor;
+class UUserWidget;
+
+USTRUCT()
+struct FActorPool
+{
+	GENERATED_BODY()
+	
+private:
+	UPROPERTY()
+	TArray<TObjectPtr<AActor>> Pool;
+public:
+	void Push(AActor* InActor) 
+	{
+		Pool.Push(InActor);
+	}
+	bool Pop(TObjectPtr<AActor>& OutActor)
+	{
+		if (Pool.Num() > 0)
+		{
+			OutActor = Pool.Pop();
+		}
+		return OutActor != nullptr;
+	}
+	int32 Num()
+	{
+		return Pool.Num();
+	}
+};
+
+USTRUCT()
+struct FWidgetPool
+{
+	GENERATED_BODY()
+	
+private:
+	UPROPERTY()
+	TArray<TObjectPtr<UUserWidget>> Pool;
+public:
+	void Push(UUserWidget* InWidget)
+	{
+		Pool.Push(InWidget);
+	}
+	bool Pop(TObjectPtr<UUserWidget>& OutWidget)
+	{
+		if (Pool.Num() > 0)
+		{
+			OutWidget = Pool.Pop();
+		}
+		return OutWidget != nullptr;
+	}
+	int32 Num()
+	{
+		return Pool.Num();
+	}
+};
 
 USTRUCT(BlueprintType)
 struct FItemConfig
@@ -85,6 +140,9 @@ struct FCharacterMovementState
 
 	UPROPERTY(BlueprintReadWrite)
 	FVector CachedInput;
+
+	UPROPERTY(BlueprintReadWrite)
+	EPlayerState PlayerState;
 };
 
 class HKK_API HKK_Structs

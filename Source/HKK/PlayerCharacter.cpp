@@ -144,8 +144,16 @@ void APlayerCharacter::Tick(float DeltaTime)
 		FString Temp = FString::Printf(TEXT("HP : %f"), PS->Execute_GetCurrHP(GetPlayerState()));
 		DrawDebugString(GetWorld(), FVector(0.f, 0.f, 150.f), *Temp, this, FColor::Red, DeltaTime);
 	}
-
-	if (RotatePawnBasedOnControlRotation)
+	if (RotatePawnBasedFacingWallNormal)
+	{
+		if (AnimationComponent)
+		{
+			FVector WallNormalVector = AnimationComponent->GetWallCoverNormal();
+			FRotator WallNormalRotator = (-WallNormalVector).Rotation();
+			SetActorRotation(WallNormalRotator);
+		}
+	}
+	else if (RotatePawnBasedOnControlRotation)
 	{
 		const FRotator ControlRot = GetControlRotation();
 		const FRotator TargetRot = FRotator(0.f, ControlRot.Yaw, 0.f);
@@ -179,6 +187,8 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME(APlayerCharacter, RotatePawnBasedOnControlRotation);
 	DOREPLIFETIME(APlayerCharacter, MaxWalkSpeed);
 	DOREPLIFETIME(APlayerCharacter, MaxAcceleration);
+	DOREPLIFETIME(APlayerCharacter, RotatePawnBasedFacingWallNormal);
+	DOREPLIFETIME(APlayerCharacter, CurrentPlayerState);
 }
 
 void APlayerCharacter::Multicast_PlayAnimation_Implementation(UAnimSequence* PlayAnimation, FName SlotName)
@@ -188,14 +198,21 @@ void APlayerCharacter::Multicast_PlayAnimation_Implementation(UAnimSequence* Pla
 		IAnimInstace = Cast<IICharacterAnimInstance>(GetMesh()->GetAnimInstance());
 		UE_LOG(LogTemp, Warning, TEXT("[%s] Multicast_PlayAnimation_Implementation Called_AnimInstance Casted."), *UEnum::GetValueAsString(GetLocalRole()));
 	}
-	if (IAnimInstace != nullptr)
+	if (IAnimInstace != nullptr && PlayAnimation != nullptr)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("[%s] Multicast_PlayAnimation_Implementation %s."), *UEnum::GetValueAsString(GetLocalRole()), *PlayAnimation->GetName());
 		IAnimInstace->PlaySlotAnimation(PlayAnimation, SlotName);
 	}
 	else
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[%s] Multicast_PlayAnimation_Implementation Called_AnimInstance Failed."), *UEnum::GetValueAsString(GetLocalRole()));
 	}
+}
+
+void APlayerCharacter::Server_Callback_PlaySimpleAnimation_Implementation(EPlayerAnimation ToPlayAnimation, FName SlotName)
+{
+	if (AnimationComponent == nullptr) return;
+	Server_PlayAnimation(AnimationComponent->GetAnimationSequence(ToPlayAnimation), SlotName);
 }
 
 void APlayerCharacter::Server_PlayAnimation_Implementation(UAnimSequence* PlayAnimation, FName SlotName)
@@ -214,6 +231,11 @@ void APlayerCharacter::Callback_OnAttack(const EPlayerAnimation AttackType)
 	Server_PlayAnimation(AnimationComponent->GetAnimationSequence(AttackType));
 }
 
+void APlayerCharacter::Server_AnimInstance_SetBoolValue_Implementation(EPlayerState ToSetPlayerState, bool e)
+{
+	CurrentPlayerState = ToSetPlayerState;
+}
+
 void APlayerCharacter::Client_RefreshCharacterMovementState_Implementation()
 {
 	FVector V = GetVelocity();
@@ -223,6 +245,7 @@ void APlayerCharacter::Client_RefreshCharacterMovementState_Implementation()
 	float Rad = FMath::Atan2(LocalVelocity.Y, LocalVelocity.X);
 	CharacterMovementState.HeadingRadian = Rad;
 	CharacterMovementState.LocalVelocityNormalized = R.UnrotateVector(V.GetSafeNormal2D());
+	CharacterMovementState.PlayerState = CurrentPlayerState;
 	if (GetController() != nullptr)
 	{
 		CharacterMovementState.CachedInput = UCombatLibrary::GetCachedInput((UObject*)GetController());
@@ -248,10 +271,10 @@ void APlayerCharacter::Server_Callback_OnKeyTriggered_Implementation(const FKey 
 			OnRep_MaxAcceleration();
 		}
 	}
-	else if (Key.GetFName() == FName("RightMouseButton"))
-	{
-		UCombatLibrary::AnimInstance_SetBoolValue(Execute_GetAnimInstanceObject(this), EPlayerState::EPS_Aiming, true);
-	}
+	//else if (Key.GetFName() == FName("RightMouseButton"))
+	//{
+	//	UCombatLibrary::AnimInstance_SetBoolValue(Execute_GetAnimInstanceObject(this), EPlayerState::EPS_Aiming, true);
+	//}
 }
 
 void APlayerCharacter::Server_Callback_OnKeyReleased_Implementation(const FKey Key)
@@ -267,10 +290,10 @@ void APlayerCharacter::Server_Callback_OnKeyReleased_Implementation(const FKey K
 			OnRep_MaxAcceleration();
 		}
 	}
-	else if (Key.GetFName() == FName("RightMouseButton"))
-	{
-		UCombatLibrary::AnimInstance_SetBoolValue(Execute_GetAnimInstanceObject(this), EPlayerState::EPS_Aiming, false);
-	}
+	//else if (Key.GetFName() == FName("RightMouseButton"))
+	//{
+	//	UCombatLibrary::AnimInstance_SetBoolValue(Execute_GetAnimInstanceObject(this), EPlayerState::EPS_Aiming, false);
+	//}
 }
 
 void APlayerCharacter::LoadingRace()
@@ -299,6 +322,36 @@ bool APlayerCharacter::HitTrace(FHitTraceConfig* HitTraceConfig)
 {
 	UE_LOG(LogTemp, Warning, TEXT("[%s] HitTrace Called."), *UEnum::GetValueAsString(GetLocalRole()));
 	return false;
+}
+
+void APlayerCharacter::AnimInstance_SetBoolValue_Implementation(EPlayerState ToSetPlayerState, bool e)
+{
+	if (ToSetPlayerState == EPlayerState::EPS_Default)
+	{
+		RotatePawnBasedFacingWallNormal = false;
+	}
+	else if (ToSetPlayerState == EPlayerState::EPS_WallCover || ToSetPlayerState == EPlayerState::EPS_WallCover_R)
+	{
+		RotatePawnBasedFacingWallNormal = e;
+	}
+
+	bool IsOldStateWallCover = UCombatLibrary::IsWallCoveringPlayerState(CurrentPlayerState);
+	bool IsNewStateWallCover = UCombatLibrary::IsWallCoveringPlayerState(ToSetPlayerState);
+
+	//if (AnimationComponent != nullptr)
+	//{
+	//	if (!IsOldStateWallCover && IsNewStateWallCover)
+	//	{
+	//		Server_PlayAnimation(AnimationComponent->GetAnimationSequence(EPlayerAnimation::EPA_WallCover_StandToCover), TEXT("MovingSlot"));
+	//	}
+	//	else if (!IsOldStateWallCover && IsNewStateWallCover)
+	//	{
+	//		Server_PlayAnimation(AnimationComponent->GetAnimationSequence(EPlayerAnimation::EPA_WallCover_CoverToStand), TEXT("MovingSlot"));
+	//	}
+	//}
+
+	CurrentPlayerState = ToSetPlayerState;
+	Server_AnimInstance_SetBoolValue(ToSetPlayerState, e);
 }
 
 bool APlayerCharacter::AttachItem_Implementation(AActor* AttachItemActor, FName AttachSocketName)

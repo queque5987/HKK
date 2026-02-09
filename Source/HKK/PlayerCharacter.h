@@ -42,10 +42,14 @@ protected:
 	float AimingYaw;
 	UPROPERTY(Replicated)
 	bool RotatePawnBasedOnControlRotation = false;
+	UPROPERTY(Replicated)
+	bool RotatePawnBasedFacingWallNormal = false;
 	UPROPERTY(ReplicatedUsing = OnRep_MaxWalkSpeed)
 	float MaxWalkSpeed = 500.f;
 	UPROPERTY(ReplicatedUsing = OnRep_MaxAcceleration)
 	float MaxAcceleration = 512.f;
+	UPROPERTY(Replicated)
+	EPlayerState CurrentPlayerState;
 
 	class IICharacterAnimInstance* IAnimInstace;
 
@@ -75,6 +79,8 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	UFUNCTION(Server, Reliable)
+	void Server_Callback_PlaySimpleAnimation(EPlayerAnimation ToPlayAnimation, FName SlotName);
+	UFUNCTION(Server, Reliable)
 	void Server_PlayAnimation(class UAnimSequence* PlayAnimation, FName SlotName = TEXT("AttackSlot"));
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_PlayAnimation(class UAnimSequence* PlayAnimation, FName SlotName);
@@ -96,6 +102,8 @@ public:
 	void Server_Callback_OnKeyTriggered(const FKey Key);
 	UFUNCTION(Server, Reliable)
 	void Server_Callback_OnKeyReleased(const FKey Key);
+	UFUNCTION(Server, Unreliable)
+	void Server_AnimInstance_SetBoolValue(EPlayerState ToSetPlayerState, bool e);
 	/*
 ----- ICharacter Movement Start
 	*/
@@ -117,7 +125,6 @@ public:
 	/*
 ----- ICharacter Combat Start
 	*/
-
 	virtual bool HitTraceStart(FHitTraceConfig* HitTraceConfig, float MaxTraceTime) override;
 	virtual bool HitTraceEnd() override;
 	virtual bool HitTrace(FHitTraceConfig* HitTraceConfig) override;
@@ -128,10 +135,12 @@ public:
 	virtual void Multicast_KnockBack(FVector Direction) override;
 	virtual UObject* GetPlayerStateObject() override { return (UObject*)GetPlayerState(); };
 	virtual UObject* GetControllerObject_Implementation() override { return (UObject*)GetController(); };
+	virtual void AnimInstance_SetBoolValue_Implementation(EPlayerState ToSetPlayerState, bool e) override;
 	virtual bool AttachItem_Implementation(AActor* AttachItemActor, FName AttachSocketName) override;
 	virtual bool DetachItem_Implementation(AActor* AttachItemActor) override;
 	virtual void RotatePawnBasedOnControlRotation_Implementation() override;
 	virtual void SetWallCoverable_Implementation(bool e) override;
+
 	/*
 ----- ICharacter Combat End
 	*/

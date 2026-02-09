@@ -83,19 +83,22 @@ public:
 	TObjectPtr<class UControllerWidgetComponent> WidgetComponent;
 
 	UPROPERTY(Replicated, BlueprintReadOnly)
-	EPlayerMovingState PlayerMovingState;
+	EPlayerState PlayerPoseState;
 
 	FORCEINLINE FOnAiming& GetOnAiming() { return OnAiming; }
 	FORCEINLINE FOnPlayAnimation& GetOnPlayAnimation() { return OnPlayAnimation; }
 	FORCEINLINE FOnAttack& GetOnAttack() { return OnAttack; }
+	FORCEINLINE FOnPlaySimpleAnimation& GetOnPlaySimpleAnimation() { return OnPlaySimpleAnimation; }
 	//FORCEINLINE FOnPlayerMovingStateChanged& GetOnPlayerMovingStateChanged() { return OnPlayerMovingStateChanged; }
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+	UFUNCTION(Server, Reliable)
+	void Server_SetCurrentPlayerState(EPlayerState NewPlayerState);
+
 	/*
 -----IIWidgetController Start
 	*/
-
 	FORCEINLINE virtual FOnSetItemInteractWidget& GetOnSetItemInteractPickupWidget() override { return OnSetItemInteractPickupWidget; }
 	FORCEINLINE virtual FOnKeyInputEvent& GetOnKeyTriggered() override { return OnKeyTriggered; }
 	FORCEINLINE virtual FOnKeyInputEvent& GetOnKeyReleased() override { return OnKeyReleased; }
@@ -113,6 +116,7 @@ public:
 	virtual void EquipmentItemDragDetected_Implementation(bool e) override;
 	virtual EEquipmentSlotType GetLeftEquipmentSlotIndex_Implementation() override;
 	virtual void ItemInteractPickUpWidget_Implementation(bool IsOn, UObject* PickableItemObject, const FItemConfig& ItemConfig) override;
+	virtual UUserWidget* CreateSimpleWidget_Implementation(TSubclassOf<UUserWidget> InClass) override;
 
 	/*
 -----IIWidgetController End
@@ -124,6 +128,8 @@ public:
 	virtual bool Bind_Character_Implementation(UObject* PlayerCharacterObject) override;
 	virtual FVector GetCachedInput_Implementation() override;
 	virtual void SetWallCoverable_Implementation(bool e) override;
+	virtual void SetCurrentPlayerState_Implementation(EPlayerState NewPlayerState) override;
+
 	/*
 -----IICombatController End
 	*/
@@ -150,10 +156,12 @@ protected:
 	FOnQuickSlotUpdated OnQuickSlotUpdated;
 	FOnItemEquiped OnItemEquiped;
 	FOnCreateInteractWidget OnCreateInteractWidget;
+	FOnPlaySimpleAnimation OnPlaySimpleAnimation;
 	//FOnPlayerMovingStateChanged OnPlayerMovingStateChanged;
 
 	FDelegateHandle DelegateHandle_OnKeyTriggered;
 	FDelegateHandle DelegateHandle_OnKeyReleased;
+	FDelegateHandle DelegateHandle_OnPlaySimpleAnimation;
 	//FDelegateHandle DelegateHandle_OnPlayerMovingStateChanged;
 
 
@@ -171,6 +179,8 @@ protected:
 	bool bShiftPressed = false;
 	UPROPERTY(Replicated)
 	bool bWallCoverable = false;
+	UPROPERTY(Replicated)
+	bool bWallCovering = false;
 
 	virtual void SetupInputComponent() override;
 	virtual void BeginPlay();
@@ -205,6 +215,8 @@ protected:
 
 	UFUNCTION(Server, Reliable)
 	void Server_SetShiftPressed(bool e);
+	UFUNCTION(Server, Reliable)
+	void Server_SetWallCovering(bool e);
 
 	void MovePawn(APawn* ControlledPawn, FVector MovementInput);
 	void MoveStop_Gradual();
@@ -222,7 +234,7 @@ private:
 	FVector GetCachedDirection() { return CachedDirection; };
 	void SetCachedInput(FVector NewInput);
 
-	bool SetPlayerMovingState(EPlayerMovingState NewMovingState);
+	//bool SetPlayerMovingState(EPlayerMovingState NewMovingState);
 };
 
 
