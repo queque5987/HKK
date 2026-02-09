@@ -211,7 +211,12 @@ void UCombatLibrary::SetWallCoverable(UObject* OwningPlayerCharacterObject, bool
 
 bool UCombatLibrary::IsWallCoveringPlayerState(EPlayerState InPlayerState)
 {
-	return (InPlayerState == EPlayerState::EPS_WallCover || InPlayerState == EPlayerState::EPS_WallCover_R);
+	return (
+		InPlayerState == EPlayerState::EPS_WallCover || 
+		InPlayerState == EPlayerState::EPS_WallCover_R ||
+		InPlayerState == EPlayerState::EPS_WallCover_SneakPeek_L ||
+		InPlayerState == EPlayerState::EPS_WallCover_SneakPeek_R
+		);
 }
 
 //bool UCombatLibrary::RefreshQuickSlot(UObject* OwningPlayerController, UObject* ChangedItemDataObject)

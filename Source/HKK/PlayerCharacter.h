@@ -66,6 +66,7 @@ protected:
 
 	virtual void BeginPlay() override;
 	virtual void Restart() override;
+	virtual void AddMovementInput(FVector WorldDirection, float ScaleValue = 1.0f, bool bForce = false) override;
 
 public:	
 	UFUNCTION()

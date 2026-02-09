@@ -40,6 +40,7 @@ public:
 	static FVector GetCachedInput(UObject* OwningPlayerController);
 
 	static void SetWallCoverable(UObject* OwningPlayerCharacterObject, bool e);
+	UFUNCTION(BlueprintPure, Category = "HKK|StateCheck", meta = (BlueprintThreadSafe))
 	static bool IsWallCoveringPlayerState(EPlayerState InPlayerState);
 private:
 	template<typename...Args>

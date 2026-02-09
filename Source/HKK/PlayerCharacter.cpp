@@ -112,6 +112,34 @@ void APlayerCharacter::Restart()
 	LoadingRace();
 }
 
+void APlayerCharacter::AddMovementInput(FVector WorldDirection, float ScaleValue, bool bForce)
+{
+	if (UCombatLibrary::IsWallCoveringPlayerState(CharacterMovementState.PlayerState))
+	{
+		float Rad = FVector::DotProduct(WorldDirection, GetActorRightVector());
+		if (Rad >= 0.99f) // HorizontalMove
+		{
+			bool bFlag = false;
+			if (ScaleValue > 0.f)
+			{
+				bFlag = AnimationComponent->WallCover_IsPossibleHorizontalMovement(true);
+				if (!bFlag) UCombatLibrary::AnimInstance_SetBoolValue(this, EPlayerState::EPS_WallCover_SneakPeek_R, true);
+			}
+			else if (ScaleValue < 0.f)
+			{
+				bFlag = AnimationComponent->WallCover_IsPossibleHorizontalMovement(false);
+				if (!bFlag) UCombatLibrary::AnimInstance_SetBoolValue(this, EPlayerState::EPS_WallCover_SneakPeek_L, true);
+			}
+			if (!bFlag)
+			{
+				return;
+			}
+		}
+	}
+
+	Super::AddMovementInput(WorldDirection, ScaleValue, bForce);
+}
+
 void APlayerCharacter::OnRep_MaxWalkSpeed()
 {
 	if (GetCharacterMovement() != nullptr)
@@ -326,32 +354,24 @@ bool APlayerCharacter::HitTrace(FHitTraceConfig* HitTraceConfig)
 
 void APlayerCharacter::AnimInstance_SetBoolValue_Implementation(EPlayerState ToSetPlayerState, bool e)
 {
-	if (ToSetPlayerState == EPlayerState::EPS_Default)
+	bool IsOldStateWallCover = UCombatLibrary::IsWallCoveringPlayerState(CurrentPlayerState);
+	bool IsNewStateWallCover = UCombatLibrary::IsWallCoveringPlayerState(ToSetPlayerState);
+
+	if (!IsNewStateWallCover)
 	{
 		RotatePawnBasedFacingWallNormal = false;
 	}
-	else if (ToSetPlayerState == EPlayerState::EPS_WallCover || ToSetPlayerState == EPlayerState::EPS_WallCover_R)
+	else
 	{
 		RotatePawnBasedFacingWallNormal = e;
 	}
 
-	bool IsOldStateWallCover = UCombatLibrary::IsWallCoveringPlayerState(CurrentPlayerState);
-	bool IsNewStateWallCover = UCombatLibrary::IsWallCoveringPlayerState(ToSetPlayerState);
-
-	//if (AnimationComponent != nullptr)
-	//{
-	//	if (!IsOldStateWallCover && IsNewStateWallCover)
-	//	{
-	//		Server_PlayAnimation(AnimationComponent->GetAnimationSequence(EPlayerAnimation::EPA_WallCover_StandToCover), TEXT("MovingSlot"));
-	//	}
-	//	else if (!IsOldStateWallCover && IsNewStateWallCover)
-	//	{
-	//		Server_PlayAnimation(AnimationComponent->GetAnimationSequence(EPlayerAnimation::EPA_WallCover_CoverToStand), TEXT("MovingSlot"));
-	//	}
-	//}
-
 	CurrentPlayerState = ToSetPlayerState;
 	Server_AnimInstance_SetBoolValue(ToSetPlayerState, e);
+	if (AnimationComponent)
+	{
+		AnimationComponent->Server_SetWallCovering(IsNewStateWallCover);
+	}
 }
 
 bool APlayerCharacter::AttachItem_Implementation(AActor* AttachItemActor, FName AttachSocketName)

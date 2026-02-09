@@ -16,6 +16,8 @@ enum class EPlayerState : uint8
 	EPS_Aiming,
 	EPS_WallCover,
 	EPS_WallCover_R,
+	EPS_WallCover_SneakPeek_L,
+	EPS_WallCover_SneakPeek_R,
 };
 UENUM(BlueprintType)
 enum class EEquipmentSlotType : uint8

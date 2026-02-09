@@ -21,8 +21,13 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TMap<EPlayerAnimation, TObjectPtr<UAnimSequence>> AnimationMap;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	int32 TraceCount = 5;
+
 	UPROPERTY(ReplicatedUsing = OnRep_WallCoverableObjectCheck)
-	uint8 WallCoverableObjectCheck = 0;
+	uint32 WallCoverableObjectCheck = 0;
+	UPROPERTY(Replicated)
+	bool bWallCovering = false;
 	UPROPERTY(Replicated)
 	FVector WallCoverNormalVector;
 
@@ -36,6 +41,9 @@ public:
 	void OnRep_WallCoverableObjectCheck();
 	UFUNCTION()
 	FVector GetWallCoverNormal() { return WallCoverNormalVector; };;
+	bool WallCover_IsPossibleHorizontalMovement(bool IsRight);
+	UFUNCTION(Server, Reliable)
+	void Server_SetWallCovering(bool e);
 private:
 	UFUNCTION(Server, Reliable)
 	void Server_ForwardLineTrace_WallCover();

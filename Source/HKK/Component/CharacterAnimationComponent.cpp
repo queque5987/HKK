@@ -23,6 +23,7 @@ void UCharacterAnimationComponent::GetLifetimeReplicatedProps(TArray<FLifetimePr
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(UCharacterAnimationComponent, WallCoverableObjectCheck);
 	DOREPLIFETIME(UCharacterAnimationComponent, WallCoverNormalVector);
+	DOREPLIFETIME(UCharacterAnimationComponent, bWallCovering);
 }
 
 void UCharacterAnimationComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -47,9 +48,30 @@ UAnimSequence* UCharacterAnimationComponent::GetAnimationSequence(const EPlayerA
 
 void UCharacterAnimationComponent::OnRep_WallCoverableObjectCheck()
 {
-	const bool bLeast8LineChecked = (WallCoverableObjectCheck == 0xFF);
-	UCombatLibrary::SetWallCoverable(GetOwner(), bLeast8LineChecked);
+	const bool b25LineChecked = ((WallCoverableObjectCheck & 0x1FFFFFF) == 0x1FFFFFF);
+	UCombatLibrary::SetWallCoverable(GetOwner(), b25LineChecked);
 	//DrawDebugSphere(GetWorld(), GetOwner()->GetActorLocation(), 50.f, 32, bLeast8LineChecked ? FColor::Blue : FColor::Red, false, 0.25f);
+}
+
+bool UCharacterAnimationComponent::WallCover_IsPossibleHorizontalMovement(bool IsRight)
+{
+	uint32 SideMask = 0;
+	int8 RightValue = IsRight ? (TraceCount - 1) : 0;
+
+	for (int8 i = 0; i < TraceCount; i++)
+	{
+		if ((WallCoverableObjectCheck & (1 << (i * TraceCount + RightValue))) == 0)
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
+void UCharacterAnimationComponent::Server_SetWallCovering_Implementation(bool e)
+{
+	bWallCovering = e;
 }
 
 FVector UCharacterAnimationComponent::GetMostNormalVector(const TArray<FVector_NetQuantizeNormal>& Normals)
@@ -104,43 +126,43 @@ void UCharacterAnimationComponent::Server_ForwardLineTrace_WallCover_Implementat
 	FVector RightVector = GetOwner()->GetActorRightVector();
 	FVector UpVector = GetOwner()->GetActorUpVector();
 	FVector Location = GetOwner()->GetActorLocation() - UpVector * 50.f;
-	uint8 tempWallCoverableObjectCheck = 0;
+
+	uint32 tempWallCoverableObjectCheck = 0;
 	TArray<FVector_NetQuantizeNormal> Normals;
-	for (int8 i = 0; i < 9; i++)
+	for (int8 i = 0; i < TraceCount * TraceCount; i++)
 	{
-		int8 x = i % 3;
-		int8 y = i / 3;
+		int8 x = i % TraceCount;
+		int8 y = i / TraceCount;
 
 		FHitResult HitResult;
 		FCollisionQueryParams CollisionQueryParams;
 		CollisionQueryParams.AddIgnoredActor(GetOwner());
 		bool bFlag = GetWorld()->LineTraceSingleByChannel(
 			HitResult,
-			Location + ForwardVector * 10.f + RightVector * 25.f * (x - 1) + UpVector * 25.f * (y - 1),
-			Location + ForwardVector * 75.f + RightVector * 25.f * (x - 1) + UpVector * 25.f * (y - 1),
+			Location + ForwardVector * 10.f + RightVector * 25.f * (x - 2) + UpVector * 25.f * (y - 2),
+			Location + ForwardVector * 75.f + RightVector * 25.f * (x - 2) + UpVector * 25.f * (y - 2),
 			ECollisionChannel::ECC_Pawn,
 			CollisionQueryParams
 		);
 
 		DrawDebugLine(
 			GetWorld(),
-			Location + ForwardVector * 10.f + RightVector * 25.f * (x - 1) + UpVector * 25.f * (y - 1),
-			Location + ForwardVector * 75.f + RightVector * 25.f * (x - 1) + UpVector * 25.f * (y - 1),
+			Location + ForwardVector * 10.f + RightVector * 25.f * (x - 2) + UpVector * 25.f * (y - 2),
+			Location + ForwardVector * 75.f + RightVector * 25.f * (x - 2) + UpVector * 25.f * (y - 2),
 			bFlag ? FColor::Green : FColor::Red
 		);
 
 		if (bFlag)
 		{
-			tempWallCoverableObjectCheck |= 1 << SucceedCounter;
+			tempWallCoverableObjectCheck |= 1 << i;
 			SucceedCounter++;
 			Normals.Add(HitResult.ImpactNormal);
 		}
-		if (SucceedCounter >= 8) break;
 	}
 
 	if (GetOwner()->HasAuthority())
 	{
-		if (tempWallCoverableObjectCheck == 0xFF)
+		if ((tempWallCoverableObjectCheck & 0x1FFFFFF) == 0x1FFFFFF)
 		{
 			WallCoverNormalVector = GetMostNormalVector(Normals);
 		}
@@ -150,6 +172,5 @@ void UCharacterAnimationComponent::Server_ForwardLineTrace_WallCover_Implementat
 			OnRep_WallCoverableObjectCheck();
 		}
 	}
-
 }
 

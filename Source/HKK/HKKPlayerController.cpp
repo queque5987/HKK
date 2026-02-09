@@ -342,7 +342,7 @@ void AHKKPlayerController::Move(const FInputActionValue& Value)
 			InputVector.X = 0.f;
 		}
 	}
-	if (bWallCoverable && InputVector.X > 0)
+	else if (bWallCoverable && InputVector.X > 0)
 	{
 		Server_SetWallCovering(true);
 	}
